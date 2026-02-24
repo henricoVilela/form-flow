@@ -1,21 +1,21 @@
 services:
   postgres:
     image: postgres:17.4
-    container_name: formsflow-db
+    container_name: formflow-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-formsflow_db}
-      POSTGRES_USER: ${POSTGRES_USER:-formsflow_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-formsflow_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-formflow_db}
+      POSTGRES_USER: ${POSTGRES_USER:-formflow_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-formflow_pass}
       TZ: America/Cuiaba
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - formsflow-network
+      - formflow-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-formsflow_user} -d ${POSTGRES_DB:-formsflow_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-formflow_user} -d ${POSTGRES_DB:-formflow_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,58 +23,58 @@ services:
 
   minio:
     image: minio/minio:latest
-    container_name: formsflow-minio
+    container_name: formflow-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
-      TZ: America/Sao_Paulo
+      TZ: America/Cuiaba
     ports:
-      - "9000:9000"   # API S3
-      - "9001:9001"   # Console Web
+      - "9000:9000"
+      - "9001:9001"
     volumes:
       - minio_data:/data
     networks:
-      - formsflow-network
+      - formflow-network
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 30s
       timeout: 20s
       retries: 3
-      start_period: 10s
+      start_period: 15s
 
-  # minio-setup:
-  #   image: minio/mc:latest
-  #   container_name: formsflow-minio-setup
-  #   depends_on:
-  #     minio:
-  #       condition: service_started
-  #   entrypoint: >
-  #     /bin/sh -c "
-  #       echo 'Aguardando MinIO iniciar...';
-  #       sleep 10;
-  #       mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER:-minioadmin} $${MINIO_ROOT_PASSWORD:-minioadmin};
-  #       mc mb myminio/album-capas --ignore-existing;
-  #       mc anonymous set download myminio/album-capas;
-  #       echo 'Bucket album-capas criado com sucesso!';
-  #       exit 0;
-  #     "
-  #   environment:
-  #     MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-  #     MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
-  #   networks:
-  #     - formsflow-network
+  minio-setup:
+    image: minio/mc:latest
+    container_name: formflow-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        echo 'Configurando MinIO...';
+        mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER:-minioadmin} $${MINIO_ROOT_PASSWORD:-minioadmin};
+        mc mb myminio/formflow-uploads --ignore-existing;
+        mc mb myminio/formflow-public --ignore-existing;
+        mc anonymous set download myminio/formflow-public;
+        echo 'Buckets criados com sucesso!';
+        exit 0;
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    networks:
+      - formflow-network
 
 volumes:
   postgres_data:
     driver: local
-    name: formsflow-postgres-data
-  # minio_data:
-  #   driver: local
-  #   name: formsflow-minio-data
+    name: formflow-postgres-data
+  minio_data:
+    driver: local
+    name: formflow-minio-data
 
 networks:
-  formsflow-network:
+  formflow-network:
     driver: bridge
-    name: formsflow-network
+    name: formflow-network

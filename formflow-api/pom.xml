@@ -28,6 +28,8 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<jwt.version>0.12.6</jwt.version>
+		<minio.version>8.5.17</minio.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -45,6 +47,52 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		
+		<!-- JWT -->
+		<dependency>
+		    <groupId>io.jsonwebtoken</groupId>
+		    <artifactId>jjwt-api</artifactId>
+		    <version>${jwt.version}</version>
+		</dependency>
+		<dependency>
+		    <groupId>io.jsonwebtoken</groupId>
+		    <artifactId>jjwt-impl</artifactId>
+		    <version>${jwt.version}</version>
+		    <scope>runtime</scope>
+		</dependency>
+		<dependency>
+		    <groupId>io.jsonwebtoken</groupId>
+		    <artifactId>jjwt-jackson</artifactId>
+		    <version>${jwt.version}</version>
+		    <scope>runtime</scope>
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+		
+		<!-- Hypersistence (mapeamento JSONB) -->
+		<dependency>
+		    <groupId>io.hypersistence</groupId>
+		    <artifactId>hypersistence-utils-hibernate-63</artifactId>
+		    <version>3.7.3</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.projectlombok</groupId>
+		    <artifactId>lombok</artifactId>
+		    <optional>true</optional>
+		</dependency>
+		
+		<dependency>
+		    <groupId>com.fasterxml.jackson.datatype</groupId>
+		    <artifactId>jackson-datatype-jsr310</artifactId>
 		</dependency>
 
 		<dependency>
