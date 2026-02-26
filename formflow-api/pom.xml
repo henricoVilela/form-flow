@@ -53,6 +53,13 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 		
+		<!-- MinIO SDK -->
+		<dependency>
+		    <groupId>io.minio</groupId>
+		    <artifactId>minio</artifactId>
+		    <version>${minio.version}</version>
+		</dependency>
+		
 		<!-- JWT -->
 		<dependency>
 		    <groupId>io.jsonwebtoken</groupId>
