@@ -1,4 +1,4 @@
-package com.cronos.formflow_api.domain.user;
+package com.cronos.formflow_api.infrastructure.security;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -9,8 +9,6 @@ import javax.crypto.SecretKey;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-
-import com.cronos.formflow_api.infrastructure.security.JwtProperties;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

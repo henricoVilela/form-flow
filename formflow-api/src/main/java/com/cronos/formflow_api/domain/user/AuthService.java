@@ -1,6 +1,6 @@
 package com.cronos.formflow_api.domain.user;
 
-
+import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,6 +15,7 @@ import com.cronos.formflow_api.dto.request.RegisterRequest;
 import com.cronos.formflow_api.dto.request.UpdateProfileRequest;
 import com.cronos.formflow_api.dto.response.AuthResponse;
 import com.cronos.formflow_api.dto.response.UserResponse;
+import com.cronos.formflow_api.infrastructure.security.JwtService;
 import com.cronos.formflow_api.shared.exception.BusinessException;
 
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,12 @@ public class AuthService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager;
+    private final ApplicationContext applicationContext;
+
+    // Lazy via ApplicationContext para evitar dependência circular com SecurityConfig
+    private AuthenticationManager getAuthManager() {
+        return applicationContext.getBean(AuthenticationManager.class);
+    }
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -52,7 +58,7 @@ public class AuthService implements UserDetailsService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(
+        getAuthManager().authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
         User user = userRepository.findByEmail(request.getEmail())
