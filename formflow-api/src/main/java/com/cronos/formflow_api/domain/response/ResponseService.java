@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -23,6 +24,7 @@ import com.cronos.formflow_api.domain.form.FormVersion;
 import com.cronos.formflow_api.domain.form.FormVersionRepository;
 import com.cronos.formflow_api.domain.form.Question;
 import com.cronos.formflow_api.domain.form.QuestionRepository;
+import com.cronos.formflow_api.domain.form.validation.ConditionEvaluator;
 import com.cronos.formflow_api.domain.notfication.EmailNotification;
 import com.cronos.formflow_api.domain.notfication.EmailNotificationRepository;
 import com.cronos.formflow_api.domain.user.User;
@@ -31,9 +33,11 @@ import com.cronos.formflow_api.shared.exception.ResourceNotFoundException;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ResponseService {
 
     private final ResponseRepository responseRepository;
@@ -43,6 +47,7 @@ public class ResponseService {
     private final ResponseAnswerRepository responseAnswerRepository;
     private final UploadedFileRepository uploadedFileRepository;
     private final EmailNotificationRepository emailNotificationRepository;
+    private final ConditionEvaluator conditionEvaluator;
 
     @Transactional
     public ResponseDetailResponse submit(UUID formId, SubmitResponseRequest request) {
@@ -60,20 +65,26 @@ public class ResponseService {
             throw new BusinessException("VERSION_MISMATCH", "Versão não pertence a este formulário");
         }
 
+        JsonNode schema = formVersion.getSchema();
+        JsonNode payload = request.getPayload();
+        
+        Set<String> visibleQuestionIds = conditionEvaluator.evaluateVisibleQuestions(schema, payload);
+
+        validateRequiredFields(schema, payload, visibleQuestionIds);
+
         Response response = Response.builder()
                 .form(form)
                 .formVersion(formVersion)
-                .payload(request.getPayload())
+                .payload(payload)
                 .metadata(request.getMetadata())
                 .build();
 
         responseRepository.save(response);
 
-        // Extrai e persiste respostas individualizadas
-        saveAnswers(response, form, request.getPayload(), formVersion);
+        saveAnswers(response, form, payload, formVersion, visibleQuestionIds);
 
         // Confirma arquivos referenciados
-        confirmFiles(response, request.getPayload());
+        confirmFiles(response, payload);
 
         // Agenda notificação por email
         scheduleEmailNotification(response, form.getUser().getEmail());
@@ -122,7 +133,83 @@ public class ResponseService {
         return csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 
-    private void saveAnswers(Response response, Form form, JsonNode payload, FormVersion formVersion) {
+    /**
+     * Valida que todas as questões required + visíveis possuem resposta no payload.
+     *
+     * REGRA-CHAVE: questões ocultas por condição NÃO são validadas.
+     * Se a questão é required mas está oculta, ela é ignorada na validação.
+     *
+     * @param schema             schema do formulário (sections → questions)
+     * @param payload            payload com as respostas
+     * @param visibleQuestionIds IDs das questões visíveis (retorno do ConditionEvaluator)
+     * @throws BusinessException com código VALIDATION_ERROR e lista de campos faltantes
+     */
+    private void validateRequiredFields(JsonNode schema, JsonNode payload, Set<String> visibleQuestionIds) {
+        List<String> missingFields = new ArrayList<>();
+
+        JsonNode sections = schema.path("sections");
+        if (!sections.isArray()) return;
+
+        for (JsonNode section : sections) {
+            JsonNode questions = section.path("questions");
+            if (!questions.isArray()) continue;
+
+            for (JsonNode q : questions) {
+                String qId = q.path("id").asText("");
+                boolean required = q.path("required").asBoolean(false);
+                String type = q.path("type").asText("");
+                String label = q.path("label").asText("Campo sem label");
+
+                // Pula questões não-obrigatórias
+                if (!required) continue;
+
+                // Pula questões ocultas por condição
+                if (!visibleQuestionIds.contains(qId)) continue;
+
+                // Pula statement (é apenas texto informativo, sem resposta)
+                if ("statement".equals(type)) continue;
+
+                // Verifica se tem resposta no payload
+                JsonNode answerNode = payload.path(qId);
+                if (answerNode.isMissingNode() || answerNode.isNull()) {
+                    missingFields.add(label);
+                    continue;
+                }
+
+                // Verifica se o value não está vazio
+                JsonNode value = answerNode.path("value");
+                if (isValueEmpty(value)) {
+                    missingFields.add(label);
+                }
+            }
+        }
+
+        if (!missingFields.isEmpty()) {
+            String message = "Campos obrigatórios não preenchidos: " + String.join(", ", missingFields);
+            throw new BusinessException("VALIDATION_ERROR", message);
+        }
+    }
+
+    /**
+     * Verifica se um valor de resposta está efetivamente vazio.
+     */
+    private boolean isValueEmpty(JsonNode value) {
+        if (value.isMissingNode() || value.isNull()) return true;
+        if (value.isTextual()) return value.asText("").isBlank();
+        if (value.isArray()) return value.isEmpty();
+        return false;
+    }
+
+    /**
+     * Extrai e persiste as respostas individuais.
+     */
+    private void saveAnswers(
+            Response response,
+            Form form,
+            JsonNode payload,
+            FormVersion formVersion,
+            Set<String> visibleQuestionIds
+    ) {
         List<Question> questions = questionRepository.findByFormVersionIdOrderByOrderIndex(formVersion.getId());
         Map<UUID, Question> questionMap = questions.stream()
                 .collect(Collectors.toMap(Question::getId, q -> q));
@@ -132,6 +219,11 @@ public class ResponseService {
                 UUID questionId = UUID.fromString(entry.getKey());
                 Question question = questionMap.get(questionId);
                 if (question == null) return;
+
+                if (!visibleQuestionIds.contains(entry.getKey())) {
+                    log.debug("Ignorando resposta de questão oculta: {}", entry.getKey());
+                    return;
+                }
 
                 JsonNode answerNode = entry.getValue();
                 ResponseAnswer answer = buildAnswer(response, form, question, answerNode);
@@ -199,7 +291,7 @@ public class ResponseService {
             .response(response)
             .recipient(recipientEmail)
             .build();
-        
+
         emailNotificationRepository.save(notification);
     }
 

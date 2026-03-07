@@ -16,6 +16,7 @@ import com.cronos.formflow_api.api.dto.response.FormResponse;
 import com.cronos.formflow_api.api.dto.response.FormVersionResponse;
 import com.cronos.formflow_api.api.dto.response.PublicFormResponse;
 import com.cronos.formflow_api.api.dto.response.PublishResponse;
+import com.cronos.formflow_api.domain.form.validation.SchemaConditionValidator;
 import com.cronos.formflow_api.domain.user.User;
 import com.cronos.formflow_api.shared.exception.ResourceNotFoundException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,6 +30,7 @@ public class FormService {
     private final FormRepository formRepository;
     private final FormVersionRepository formVersionRepository;
     private final QuestionRepository questionRepository;
+    private final SchemaConditionValidator schemaConditionValidator;
 
     @Transactional
     public FormResponse create(User user, CreateFormRequest request) {
@@ -68,6 +70,9 @@ public class FormService {
     @Transactional
     public PublishResponse publish(User user, UUID id, JsonNode schema) {
         Form form = findFormOwnedBy(user, id);
+
+        // Verifica questionIds existentes, operadores compatíveis e ciclos
+        schemaConditionValidator.validate(schema);
 
         int nextVersion = formVersionRepository.findMaxVersionByFormId(id).orElse(0) + 1;
 
@@ -115,7 +120,28 @@ public class FormService {
         return FormVersionResponse.from(fv);
     }
 
-    // --- helpers ---
+    /**
+     * Retorna os dados públicos de um formulário publicado.
+     * Usado pelo PublicFormController (sem autenticação).
+     *
+     * Regras:
+     * - Formulário deve existir → 404
+     * - Status deve ser PUBLISHED → 404 (não revela existência de rascunhos)
+     * - Deve ter pelo menos uma versão publicada → 404
+     */
+    public PublicFormResponse getPublicForm(UUID formId) {
+        Form form = formRepository.findById(formId)
+                .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
+
+        if (form.getStatus() != FormStatus.PUBLISHED) {
+            throw new ResourceNotFoundException("Formulário não está disponível");
+        }
+
+        FormVersion latestVersion = formVersionRepository.findLatestByFormId(formId)
+                .orElseThrow(() -> new ResourceNotFoundException("Nenhuma versão publicada encontrada"));
+
+        return PublicFormResponse.from(form, latestVersion);
+    }
 
     private Form findFormOwnedBy(User user, UUID id) {
         return formRepository.findByIdAndUserId(id, user.getId())
@@ -149,27 +175,5 @@ public class FormService {
                 questionRepository.save(question);
             }
         }
-    }
-    
-    /**
-     * Retorna os dados públicos de um formulário publicado.
-     * Usado pelo endpoint público (sem autenticação).
-     *
-     * @param formId UUID do formulário
-     * @return dados públicos com schema da última versão
-     * @throws ResourceNotFoundException se não existir ou não estiver publicado
-     */
-    public PublicFormResponse getPublicForm(UUID formId) {
-        Form form = formRepository.findById(formId)
-                .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
-
-        if (form.getStatus() != FormStatus.PUBLISHED) {
-            throw new ResourceNotFoundException("Formulário não está disponível");
-        }
-
-        FormVersion latestVersion = formVersionRepository.findLatestByFormId(formId)
-                .orElseThrow(() -> new ResourceNotFoundException("Nenhuma versão publicada encontrada"));
-
-        return PublicFormResponse.from(form, latestVersion);
     }
 }

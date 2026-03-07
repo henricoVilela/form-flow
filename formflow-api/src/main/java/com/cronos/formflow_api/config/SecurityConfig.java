@@ -1,5 +1,6 @@
 package com.cronos.formflow_api.config;
 
+
 import java.util.List;
 
 import org.springframework.context.annotation.Bean;
@@ -32,7 +33,7 @@ class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
-    private final PasswordEncoder passwordEncoder; // vem do PasswordConfig
+    private final PasswordEncoder passwordEncoder;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -40,22 +41,22 @@ class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-        		// Auth endpoints
+                // ── Autenticação ──
                 .requestMatchers("/auth/register", "/auth/login", "/auth/refresh").permitAll()
 
-                // Formulário público (respondente visualiza sem login)
+                // ── Formulário público (respondente visualiza sem login) ──
                 .requestMatchers(HttpMethod.GET, "/public/forms/**").permitAll()
 
-                // Submissão de respostas (respondente envia sem login)
+                // ── Submissão de respostas (respondente envia sem login) ──
                 .requestMatchers(HttpMethod.POST, "/forms/*/responses").permitAll()
 
-                // Upload de arquivos (respondente faz upload sem login)
+                // ── Upload de arquivos (respondente faz upload sem login) ──
                 .requestMatchers("/upload/**").permitAll()
 
-                // Swagger/OpenAPI
+                // ── Documentação API ──
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
 
-                // Tudo o mais requer autenticação
+                // ── Tudo o mais requer autenticação ──
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

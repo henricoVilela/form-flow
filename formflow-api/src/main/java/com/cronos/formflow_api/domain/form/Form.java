@@ -60,6 +60,12 @@ public class Form {
     @Column(nullable = false)
     @Builder.Default
     private FormLayout layout = FormLayout.MULTI_STEP;
+    
+    @Column
+    private String welcomeMessage;
+    
+    @Column
+    private String thankYouMessage;
 
     @Column(name = "published_at")
     private LocalDateTime publishedAt;

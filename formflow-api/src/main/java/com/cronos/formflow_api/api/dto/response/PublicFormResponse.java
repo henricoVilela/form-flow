@@ -17,6 +17,7 @@ import lombok.Data;
 @Data
 @Builder
 public class PublicFormResponse {
+
     private UUID formId;
     private UUID formVersionId;
     private String title;
@@ -24,16 +25,20 @@ public class PublicFormResponse {
     private FormLayout layout;
     private Integer version;
     private JsonNode schema;
+    private String welcomeMessage;
+    private String thankYouMessage;
 
     public static PublicFormResponse from(Form form, FormVersion formVersion) {
         return PublicFormResponse.builder()
-                .formId(form.getId())
-                .formVersionId(formVersion.getId())
-                .title(form.getTitle())
-                .description(form.getDescription())
-                .layout(form.getLayout())
-                .version(formVersion.getVersion())
-                .schema(formVersion.getSchema())
-                .build();
+            .formId(form.getId())
+            .formVersionId(formVersion.getId())
+            .title(form.getTitle())
+            .description(form.getDescription())
+            .layout(form.getLayout())
+            .version(formVersion.getVersion())
+            .schema(formVersion.getSchema())
+            .welcomeMessage(form.getWelcomeMessage())
+            .thankYouMessage(form.getThankYouMessage())
+            .build();
     }
 }
