@@ -10,11 +10,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.cronos.formflow_api.dto.request.LoginRequest;
-import com.cronos.formflow_api.dto.request.RegisterRequest;
-import com.cronos.formflow_api.dto.request.UpdateProfileRequest;
-import com.cronos.formflow_api.dto.response.AuthResponse;
-import com.cronos.formflow_api.dto.response.UserResponse;
+import com.cronos.formflow_api.api.dto.request.LoginRequest;
+import com.cronos.formflow_api.api.dto.request.RegisterRequest;
+import com.cronos.formflow_api.api.dto.request.UpdateProfileRequest;
+import com.cronos.formflow_api.api.dto.response.AuthResponse;
+import com.cronos.formflow_api.api.dto.response.UserResponse;
 import com.cronos.formflow_api.infrastructure.security.JwtService;
 import com.cronos.formflow_api.shared.exception.BusinessException;
 
