@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cronos.formflow_api.api.dto.response.DownloadResponse;
 import com.cronos.formflow_api.infrastructure.storage.PresignRequest;
 import com.cronos.formflow_api.infrastructure.storage.PresignResponse;
 import com.cronos.formflow_api.infrastructure.storage.StorageService;
@@ -84,13 +85,4 @@ public class FileController {
                 .build());
     }
 
-    /**
-     * DTO interno para resposta de download.
-     */
-    @lombok.Data
-    @lombok.Builder
-    public static class DownloadResponse {
-        private String downloadUrl;
-        private Integer expiresIn;
-    }
 }

@@ -67,3 +67,32 @@ app:
   mail:
     from: ${MAIL_FROM:noreply@formflow.com}
     from-name: ${MAIL_FROM_NAME:FormFlow}
+
+upload:
+  max-file-size: ${UPLOAD_MAX_FILE_SIZE:10485760} # 10MB em bytes
+  max-files-per-response: ${UPLOAD_MAX_FILES:20}
+  max-filename-length: 255
+  allowed-types:
+    - image/jpeg
+    - image/png
+    - image/gif
+    - image/webp
+    - application/pdf
+    - application/msword
+    - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+    - application/vnd.ms-excel
+    - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+    - text/csv
+  blocked-extensions:
+    - exe
+    - bat
+    - cmd
+    - sh
+    - ps1
+    - msi
+    - dll
+    - scr
+    - js
+    - vbs
+    - com
+    - pif
