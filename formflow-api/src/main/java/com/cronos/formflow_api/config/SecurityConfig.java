@@ -40,10 +40,22 @@ class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
+        		// Auth endpoints
                 .requestMatchers("/auth/register", "/auth/login", "/auth/refresh").permitAll()
+
+                // Formulário público (respondente visualiza sem login)
+                .requestMatchers(HttpMethod.GET, "/public/forms/**").permitAll()
+
+                // Submissão de respostas (respondente envia sem login)
                 .requestMatchers(HttpMethod.POST, "/forms/*/responses").permitAll()
+
+                // Upload de arquivos (respondente faz upload sem login)
                 .requestMatchers("/upload/**").permitAll()
+
+                // Swagger/OpenAPI
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+
+                // Tudo o mais requer autenticação
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

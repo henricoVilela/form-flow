@@ -104,4 +104,12 @@ public class StorageService {
         String ext = fileName.contains(".") ? fileName.substring(fileName.lastIndexOf('.')) : "";
         return String.format("forms/%s/%s%s", formId, UUID.randomUUID(), ext);
     }
+    
+    /**
+     * Retorna o tempo de expiração configurado para presigned URLs.
+     * Usado pelo FileController para informar ao frontend.
+     */
+    public Integer getPresignedUrlExpiry() {
+        return minioProperties.getPresignedUrlExpiry();
+    }
 }

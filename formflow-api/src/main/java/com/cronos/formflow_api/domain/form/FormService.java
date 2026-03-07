@@ -14,6 +14,7 @@ import com.cronos.formflow_api.api.dto.request.CreateFormRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateFormRequest;
 import com.cronos.formflow_api.api.dto.response.FormResponse;
 import com.cronos.formflow_api.api.dto.response.FormVersionResponse;
+import com.cronos.formflow_api.api.dto.response.PublicFormResponse;
 import com.cronos.formflow_api.api.dto.response.PublishResponse;
 import com.cronos.formflow_api.domain.user.User;
 import com.cronos.formflow_api.shared.exception.ResourceNotFoundException;
@@ -148,5 +149,27 @@ public class FormService {
                 questionRepository.save(question);
             }
         }
+    }
+    
+    /**
+     * Retorna os dados públicos de um formulário publicado.
+     * Usado pelo endpoint público (sem autenticação).
+     *
+     * @param formId UUID do formulário
+     * @return dados públicos com schema da última versão
+     * @throws ResourceNotFoundException se não existir ou não estiver publicado
+     */
+    public PublicFormResponse getPublicForm(UUID formId) {
+        Form form = formRepository.findById(formId)
+                .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
+
+        if (form.getStatus() != FormStatus.PUBLISHED) {
+            throw new ResourceNotFoundException("Formulário não está disponível");
+        }
+
+        FormVersion latestVersion = formVersionRepository.findLatestByFormId(formId)
+                .orElseThrow(() -> new ResourceNotFoundException("Nenhuma versão publicada encontrada"));
+
+        return PublicFormResponse.from(form, latestVersion);
     }
 }
