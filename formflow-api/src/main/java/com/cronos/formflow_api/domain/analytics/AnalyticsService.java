@@ -54,12 +54,12 @@ public class AnalyticsService {
 
     // Stopwords para filtro de top words (pt-BR)
     private static final Set<String> STOPWORDS = Set.of(
-        "a", "o", "e", "de", "do", "da", "dos", "das", "em", "no", "na", "nos", "nas",
+        "a", "o", "e", "de", "do", "da", "dos", "das", "em", "no", "na", "nas",
         "um", "uma", "uns", "umas", "por", "para", "com", "sem", "que", "se", "ou",
         "mas", "não", "sim", "é", "são", "foi", "ser", "ter", "como", "mais", "muito",
         "já", "ao", "aos", "à", "às", "seu", "sua", "seus", "suas", "ele", "ela",
         "eles", "elas", "eu", "nós", "me", "te", "lhe", "nos", "vos", "isso", "isto",
-        "the", "a", "an", "is", "are", "was", "were", "be", "been", "being", "and",
+        "the", "an", "is", "are", "was", "were", "be", "been", "being", "and",
         "or", "but", "in", "on", "at", "to", "for", "of", "with", "by", "from", "it"
     );
 
@@ -366,6 +366,7 @@ public class AnalyticsService {
                 .build();
     }
 
+    // =================================================================
     // Empty analytics (para formulários sem respostas)
     private AnalyticsResponse buildEmptyAnalytics(Form form, List<Question> questions) {
         List<QuestionAnalytics> emptyQuestions = questions.stream()
