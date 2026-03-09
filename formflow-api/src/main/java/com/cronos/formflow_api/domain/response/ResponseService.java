@@ -27,6 +27,7 @@ import com.cronos.formflow_api.domain.form.QuestionRepository;
 import com.cronos.formflow_api.domain.form.validation.ConditionEvaluator;
 import com.cronos.formflow_api.domain.notfication.EmailNotification;
 import com.cronos.formflow_api.domain.notfication.EmailNotificationRepository;
+import com.cronos.formflow_api.domain.response.validation.PayloadValidator;
 import com.cronos.formflow_api.domain.user.User;
 import com.cronos.formflow_api.shared.exception.BusinessException;
 import com.cronos.formflow_api.shared.exception.ResourceNotFoundException;
@@ -48,7 +49,23 @@ public class ResponseService {
     private final UploadedFileRepository uploadedFileRepository;
     private final EmailNotificationRepository emailNotificationRepository;
     private final ConditionEvaluator conditionEvaluator;
+    private final PayloadValidator payloadValidator;
 
+    /**
+     * Submete uma resposta ao formulário.
+     *
+     * Fluxo completo:
+     * 1. Verifica se form existe e está PUBLISHED
+     * 2. Verifica se formVersion pertence ao form
+     * 3. Avalia condições → determina questões VISÍVEIS
+     * 4. Valida payload completo via PayloadValidator:
+     *    - Required (apenas questões visíveis)
+     *    - Tipo (number, email, phone, url, date, choices, files, matrix, rating, scale)
+     *    - Validações customizadas (minLength, maxLength, min, max, pattern, minSelections, etc.)
+     * 5. Persiste Response + ResponseAnswers (apenas questões visíveis)
+     * 6. Confirma arquivos referenciados (PENDING → CONFIRMED)
+     * 7. Agenda notificação por e-mail
+     */
     @Transactional
     public ResponseDetailResponse submit(UUID formId, SubmitResponseRequest request) {
         Form form = formRepository.findById(formId)
@@ -67,10 +84,11 @@ public class ResponseService {
 
         JsonNode schema = formVersion.getSchema();
         JsonNode payload = request.getPayload();
-        
+
+        // Avalia quais questões estão visíveis com base nas condições + payload
         Set<String> visibleQuestionIds = conditionEvaluator.evaluateVisibleQuestions(schema, payload);
 
-        validateRequiredFields(schema, payload, visibleQuestionIds);
+        payloadValidator.validate(schema, payload, visibleQuestionIds);
 
         Response response = Response.builder()
                 .form(form)
@@ -81,6 +99,7 @@ public class ResponseService {
 
         responseRepository.save(response);
 
+        // Persiste respostas individuais (apenas questões visíveis)
         saveAnswers(response, form, payload, formVersion, visibleQuestionIds);
 
         // Confirma arquivos referenciados
@@ -133,76 +152,6 @@ public class ResponseService {
         return csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 
-    /**
-     * Valida que todas as questões required + visíveis possuem resposta no payload.
-     *
-     * REGRA-CHAVE: questões ocultas por condição NÃO são validadas.
-     * Se a questão é required mas está oculta, ela é ignorada na validação.
-     *
-     * @param schema             schema do formulário (sections → questions)
-     * @param payload            payload com as respostas
-     * @param visibleQuestionIds IDs das questões visíveis (retorno do ConditionEvaluator)
-     * @throws BusinessException com código VALIDATION_ERROR e lista de campos faltantes
-     */
-    private void validateRequiredFields(JsonNode schema, JsonNode payload, Set<String> visibleQuestionIds) {
-        List<String> missingFields = new ArrayList<>();
-
-        JsonNode sections = schema.path("sections");
-        if (!sections.isArray()) return;
-
-        for (JsonNode section : sections) {
-            JsonNode questions = section.path("questions");
-            if (!questions.isArray()) continue;
-
-            for (JsonNode q : questions) {
-                String qId = q.path("id").asText("");
-                boolean required = q.path("required").asBoolean(false);
-                String type = q.path("type").asText("");
-                String label = q.path("label").asText("Campo sem label");
-
-                // Pula questões não-obrigatórias
-                if (!required) continue;
-
-                // Pula questões ocultas por condição
-                if (!visibleQuestionIds.contains(qId)) continue;
-
-                // Pula statement (é apenas texto informativo, sem resposta)
-                if ("statement".equals(type)) continue;
-
-                // Verifica se tem resposta no payload
-                JsonNode answerNode = payload.path(qId);
-                if (answerNode.isMissingNode() || answerNode.isNull()) {
-                    missingFields.add(label);
-                    continue;
-                }
-
-                // Verifica se o value não está vazio
-                JsonNode value = answerNode.path("value");
-                if (isValueEmpty(value)) {
-                    missingFields.add(label);
-                }
-            }
-        }
-
-        if (!missingFields.isEmpty()) {
-            String message = "Campos obrigatórios não preenchidos: " + String.join(", ", missingFields);
-            throw new BusinessException("VALIDATION_ERROR", message);
-        }
-    }
-
-    /**
-     * Verifica se um valor de resposta está efetivamente vazio.
-     */
-    private boolean isValueEmpty(JsonNode value) {
-        if (value.isMissingNode() || value.isNull()) return true;
-        if (value.isTextual()) return value.asText("").isBlank();
-        if (value.isArray()) return value.isEmpty();
-        return false;
-    }
-
-    /**
-     * Extrai e persiste as respostas individuais.
-     */
     private void saveAnswers(
             Response response,
             Form form,
@@ -220,6 +169,7 @@ public class ResponseService {
                 Question question = questionMap.get(questionId);
                 if (question == null) return;
 
+                // Ignora respostas de questões ocultas
                 if (!visibleQuestionIds.contains(entry.getKey())) {
                     log.debug("Ignorando resposta de questão oculta: {}", entry.getKey());
                     return;

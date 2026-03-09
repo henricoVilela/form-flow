@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
+import com.cronos.formflow_api.domain.response.validation.PayloadValidator.PayloadValidationException;
 import com.cronos.formflow_api.shared.exception.BusinessException;
 import com.cronos.formflow_api.shared.exception.ResourceNotFoundException;
 
@@ -24,6 +25,29 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex, WebRequest request) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.of(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage(), request));
+    }
+
+    @ExceptionHandler(PayloadValidationException.class)
+    public ResponseEntity<ErrorResponse> handlePayloadValidation(PayloadValidationException ex, WebRequest request) {
+        List<ErrorDetail> details = ex.getFieldErrors().stream()
+                .map(fe -> ErrorDetail.builder()
+                        .questionId(fe.getQuestionId())
+                        .field(fe.getField())
+                        .code(fe.getCode())
+                        .message(fe.getMessage())
+                        .build())
+                .toList();
+
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.UNPROCESSABLE_CONTENT.value())
+                .error(ex.getCode())
+                .message(ex.getMessage())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .details(details)
+                .build();
+
+        return ResponseEntity.unprocessableContent().body(error);
     }
 
     @ExceptionHandler(BusinessException.class)
@@ -100,6 +124,7 @@ public class GlobalExceptionHandler {
     @Data
     @Builder
     public static class ErrorDetail {
+        private String questionId;
         private String field;
         private String code;
         private String message;
