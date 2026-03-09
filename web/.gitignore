@@ -1,0 +1,49 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Angular build
+dist/
+tmp/
+out-tsc/
+.angular/
+.cache/
+
+# Logs
+logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Coverage
+coverage/
+
+# Test results
+test-results/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+
+# Angular specific
+.angular/cache
+
+# Compiled output
+*.tsbuildinfo
