@@ -1,0 +1,109 @@
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthStore } from '@core/auth/auth.store';
+
+interface NavItem {
+  label: string;
+  icon: string;
+  route: string;
+}
+
+@Component({
+  selector: 'app-sidebar',
+  standalone: true,
+  imports: [CommonModule, RouterLink, RouterLinkActive],
+  template: `
+    <!-- Logo -->
+    <div class="px-6 h-16 flex items-center border-b border-surface-100">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+          <i class="pi pi-bolt text-white text-sm"></i>
+        </div>
+        <span class="font-display font-bold text-lg tracking-tight text-surface-900">
+          FormFlow
+        </span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <span class="block px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-surface-400">
+        Principal
+      </span>
+
+      @for (item of mainNav; track item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="bg-primary-50 text-primary-700 font-semibold"
+          [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-surface-600
+                 hover:bg-surface-50 hover:text-surface-900 transition-all duration-200 group"
+        >
+          <i [class]="item.icon + ' text-base opacity-70 group-hover:opacity-100 transition-opacity'"></i>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+
+      <div class="pt-4 pb-2">
+        <span class="block px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-surface-400">
+          Conta
+        </span>
+      </div>
+
+      @for (item of accountNav; track item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="bg-primary-50 text-primary-700 font-semibold"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-surface-600
+                 hover:bg-surface-50 hover:text-surface-900 transition-all duration-200 group"
+        >
+          <i [class]="item.icon + ' text-base opacity-70 group-hover:opacity-100 transition-opacity'"></i>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <!-- User footer -->
+    <div class="px-3 py-4 border-t border-surface-100">
+      <div class="flex items-center gap-3 px-3 py-2 rounded-lg">
+        <div class="w-9 h-9 rounded-full bg-primary-100 text-primary-700
+                    flex items-center justify-center text-sm font-semibold shrink-0">
+          {{ store.userInitials() }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-surface-900 truncate">{{ store.userName() }}</p>
+          <p class="text-xs text-surface-400 truncate">{{ store.userEmail() }}</p>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [`
+    :host {
+      display: flex;
+      flex-direction: column;
+      width: var(--ff-sidebar-width);
+      height: 100vh;
+      background: var(--ff-surface);
+      border-right: 1px solid var(--ff-border);
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 40;
+    }
+  `],
+})
+export class SidebarComponent {
+  readonly store = inject(AuthStore);
+
+  readonly mainNav: NavItem[] = [
+    { label: 'Dashboard',    icon: 'pi pi-home',       route: '/dashboard' },
+    { label: 'Formulários',  icon: 'pi pi-file-edit',  route: '/forms' },
+    // { label: 'Respostas',    icon: 'pi pi-inbox',      route: '/responses' },
+    // { label: 'Analytics',    icon: 'pi pi-chart-bar',  route: '/analytics' },
+  ];
+
+  readonly accountNav: NavItem[] = [
+    // { label: 'Configurações', icon: 'pi pi-cog',     route: '/settings' },
+  ];
+}
