@@ -1,12 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError, finalize } from 'rxjs';
 import { MessageService } from 'primeng/api';
 
 import { environment } from '@env';
 import { AuthStore } from './auth.store';
 import { AuthResponse, LoginRequest, RegisterRequest, UserProfile } from './auth.models';
+import { Router } from '@angular/router';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
