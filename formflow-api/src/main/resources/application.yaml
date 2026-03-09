@@ -96,3 +96,9 @@ upload:
     - vbs
     - com
     - pif
+    
+cleanup:
+  cron: ${CLEANUP_CRON:0 0 * * * *}                  # A cada hora (segundo minuto hora dia mês dia-semana)
+  orphan-threshold-hours: ${CLEANUP_THRESHOLD:24}     # Arquivos PENDING há mais de 24h = órfão
+  batch-size: ${CLEANUP_BATCH:100}                    # Máximo de arquivos por execução
+  enabled: ${CLEANUP_ENABLED:true}

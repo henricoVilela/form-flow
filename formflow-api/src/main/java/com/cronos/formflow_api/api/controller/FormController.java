@@ -97,4 +97,26 @@ public class FormController {
             @PathVariable Integer version) {
         return ResponseEntity.ok(formService.getVersion(user, id, version));
     }
+
+    /**
+     * Duplica um formulário existente.
+     *
+     * Cria uma cópia completa como DRAFT com título " (Cópia)".
+     * O schema da última versão é clonado com novos UUIDs para
+     * sections, questions e options (evita conflito ao publicar).
+     * Referências em conditions são atualizadas automaticamente.
+     *
+     * Não copia: respostas, arquivos, notificações, versões anteriores.
+     *
+     * @param user usuário autenticado (deve ser dono do formulário original)
+     * @param id   UUID do formulário a duplicar
+     * @return FormResponse do novo formulário clonado
+     */
+    @PostMapping("/{id}/duplicate")
+    public ResponseEntity<FormResponse> duplicate(
+            @AuthenticationPrincipal User user,
+            @PathVariable UUID id) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(formService.duplicate(user, id));
+    }
 }

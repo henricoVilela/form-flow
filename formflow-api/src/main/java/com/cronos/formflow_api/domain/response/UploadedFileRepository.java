@@ -14,26 +14,52 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UploadedFileRepository extends JpaRepository<UploadedFile, UUID> {
+
     Optional<UploadedFile> findByIdAndStatus(UUID id, UploadStatus status);
+
     List<UploadedFile> findByResponseId(UUID responseId);
-    
+
     /**
      * Conta arquivos de um formulário que estão nos status indicados.
-     * Usado pelo UploadValidator para verificar se o limite foi atingido.
+     * Usado pelo UploadValidator para verificar limite de arquivos.
      */
     long countByFormIdAndStatusIn(UUID formId, Collection<UploadStatus> statuses);
 
     /**
-     * Busca arquivos PENDING há mais de X horas (para limpeza de órfãos).
-     * Uso: scheduled job de cleanup.
+     * Busca arquivos PENDING criados antes do threshold (órfãos).
+     * Limitado por batch para não sobrecarregar.
+     *
+     * Um arquivo é considerado órfão se:
+     * - Status = PENDING (nunca confirmado)
+     * - uploadedAt < threshold (há mais de X horas)
      */
-    @Query("SELECT f FROM UploadedFile f WHERE f.status = 'PENDING' AND f.uploadedAt < :threshold")
-    List<UploadedFile> findOrphanedPending(@Param("threshold") LocalDateTime threshold);
+    @Query("""
+        SELECT f FROM UploadedFile f
+        WHERE f.status = com.cronos.formflow_api.domain.response.UploadStatus.PENDING
+          AND f.uploadedAt < :threshold
+        ORDER BY f.uploadedAt ASC
+        LIMIT :limit
+    """)
+    List<UploadedFile> findOrphanedPending(
+            @Param("threshold") LocalDateTime threshold,
+            @Param("limit") int limit
+    );
 
     /**
-     * Marca arquivos como DELETED em lote (para cleanup).
+     * Marca arquivos como DELETED em lote.
+     * Usado pelo OrphanFileCleanupJob após remover do MinIO.
      */
     @Modifying
-    @Query("UPDATE UploadedFile f SET f.status = 'DELETED' WHERE f.id IN :ids")
+    @Query("UPDATE UploadedFile f SET f.status = com.cronos.formflow_api.domain.response.UploadStatus.DELETED WHERE f.id IN :ids")
     int markAsDeleted(@Param("ids") Collection<UUID> ids);
+
+    /**
+     * Conta total de arquivos órfãos pendentes (para monitoramento/dashboard).
+     */
+    @Query("""
+        SELECT COUNT(f) FROM UploadedFile f
+        WHERE f.status = com.cronos.formflow_api.domain.response.UploadStatus.PENDING
+          AND f.uploadedAt < :threshold
+    """)
+    long countOrphanedPending(@Param("threshold") LocalDateTime threshold);
 }

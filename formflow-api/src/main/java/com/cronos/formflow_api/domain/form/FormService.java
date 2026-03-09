@@ -20,11 +20,14 @@ import com.cronos.formflow_api.domain.form.validation.SchemaConditionValidator;
 import com.cronos.formflow_api.domain.user.User;
 import com.cronos.formflow_api.shared.exception.ResourceNotFoundException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FormService {
 
     private final FormRepository formRepository;
@@ -71,7 +74,7 @@ public class FormService {
     public PublishResponse publish(User user, UUID id, JsonNode schema) {
         Form form = findFormOwnedBy(user, id);
 
-        // Verifica questionIds existentes, operadores compatíveis e ciclos
+        // Valida estrutura de condições antes de publicar
         schemaConditionValidator.validate(schema);
 
         int nextVersion = formVersionRepository.findMaxVersionByFormId(id).orElse(0) + 1;
@@ -120,15 +123,6 @@ public class FormService {
         return FormVersionResponse.from(fv);
     }
 
-    /**
-     * Retorna os dados públicos de um formulário publicado.
-     * Usado pelo PublicFormController (sem autenticação).
-     *
-     * Regras:
-     * - Formulário deve existir → 404
-     * - Status deve ser PUBLISHED → 404 (não revela existência de rascunhos)
-     * - Deve ter pelo menos uma versão publicada → 404
-     */
     public PublicFormResponse getPublicForm(UUID formId) {
         Form form = formRepository.findById(formId)
                 .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
@@ -141,6 +135,71 @@ public class FormService {
                 .orElseThrow(() -> new ResourceNotFoundException("Nenhuma versão publicada encontrada"));
 
         return PublicFormResponse.from(form, latestVersion);
+    }
+
+    /**
+     * Duplica um formulário existente, criando uma cópia completa.
+     *
+     * O que é copiado:
+     * - Título (com sufixo " (Cópia)")
+     * - Descrição
+     * - Layout (multi_step / single_page)
+     * - Schema da última versão publicada (com novos UUIDs para sections e questions)
+     *
+     * O que NÃO é copiado:
+     * - Respostas
+     * - Arquivos uploadados
+     * - Notificações
+     * - Status (o clone sempre começa como DRAFT)
+     * - publishedAt (null)
+     * - Versões anteriores (só a última)
+     *
+     * O schema é deep-cloned com novos UUIDs para evitar conflito de IDs
+     * na tabela questions quando o clone for publicado.
+     *
+     * @param user  usuário autenticado (dono do formulário original)
+     * @param id    UUID do formulário a duplicar
+     * @return FormResponse do novo formulário (DRAFT, sem versão publicada)
+     */
+    @Transactional
+    public FormResponse duplicate(User user, UUID id) {
+        Form original = findFormOwnedBy(user, id);
+
+        // Cria o clone como DRAFT
+        Form clone = Form.builder()
+                .user(user)
+                .title(original.getTitle() + " (Cópia)")
+                .description(original.getDescription())
+                .layout(original.getLayout())
+                .status(FormStatus.DRAFT)
+                .build();
+
+        formRepository.save(clone);
+
+        // Copia schema da última versão (se existir)
+        FormVersion latestVersion = formVersionRepository.findLatestByFormId(id).orElse(null);
+        FormVersion clonedVersion = null;
+
+        if (latestVersion != null && latestVersion.getSchema() != null) {
+            // Deep clone do schema com novos UUIDs
+            JsonNode clonedSchema = regenerateSchemaIds(latestVersion.getSchema());
+
+            clonedVersion = FormVersion.builder()
+                    .form(clone)
+                    .version(1)
+                    .schema(clonedSchema)
+                    .build();
+
+            formVersionRepository.save(clonedVersion);
+
+            log.info("Formulário duplicado: original={}, clone={}, versão clonada com novos IDs",
+                    id, clone.getId());
+        } else {
+            log.info("Formulário duplicado: original={}, clone={}, sem schema (form vazio)",
+                    id, clone.getId());
+        }
+
+        return FormResponse.from(clone, clonedVersion);
     }
 
     private Form findFormOwnedBy(User user, UUID id) {
@@ -173,6 +232,129 @@ public class FormService {
                         .build();
 
                 questionRepository.save(question);
+            }
+        }
+    }
+
+    /**
+     * Deep-clone do schema JSON com regeneração de todos os UUIDs.
+     *
+     * Gera novos UUIDs para:
+     * - Cada section.id
+     * - Cada question.id
+     * - Cada option.id
+     *
+     * Também atualiza referências em conditions:
+     * Se uma condição aponta para questionId "old-uuid",
+     * é atualizada para apontar para o novo UUID correspondente.
+     *
+     * Isso garante que ao publicar o clone, os IDs na tabela questions
+     * não conflitem com os do formulário original.
+     */
+    private JsonNode regenerateSchemaIds(JsonNode originalSchema) {
+        // Deep copy
+        ObjectNode schema = originalSchema.deepCopy();
+
+        // Mapa de old UUID → new UUID (para atualizar referências em conditions)
+        java.util.Map<String, String> idMapping = new java.util.HashMap<>();
+
+        JsonNode sections = schema.path("sections");
+        if (!sections.isArray()) return schema;
+
+        // Primeira passada: gerar novos IDs e popular o mapa
+        for (JsonNode sectionNode : sections) {
+            ObjectNode section = (ObjectNode) sectionNode;
+
+            // Novo ID para section
+            String oldSectionId = section.path("id").asText("");
+            String newSectionId = UUID.randomUUID().toString();
+            section.put("id", newSectionId);
+            if (!oldSectionId.isBlank()) {
+                idMapping.put(oldSectionId, newSectionId);
+            }
+
+            JsonNode questions = section.path("questions");
+            if (!questions.isArray()) continue;
+
+            for (JsonNode questionNode : questions) {
+                ObjectNode question = (ObjectNode) questionNode;
+
+                // Novo ID para question
+                String oldQuestionId = question.path("id").asText("");
+                String newQuestionId = UUID.randomUUID().toString();
+                question.put("id", newQuestionId);
+                if (!oldQuestionId.isBlank()) {
+                    idMapping.put(oldQuestionId, newQuestionId);
+                }
+
+                // Novos IDs para options
+                JsonNode options = question.path("options");
+                if (options.isArray()) {
+                    for (JsonNode optNode : options) {
+                        ObjectNode opt = (ObjectNode) optNode;
+                        String oldOptId = opt.path("id").asText("");
+                        String newOptId = UUID.randomUUID().toString();
+                        opt.put("id", newOptId);
+                        if (!oldOptId.isBlank()) {
+                            idMapping.put(oldOptId, newOptId);
+                        }
+                    }
+                }
+
+                // Novos IDs para matrix rows/columns
+                JsonNode matrixConfig = question.path("matrixConfig");
+                if (!matrixConfig.isMissingNode()) {
+                    regenerateArrayIds(matrixConfig.path("rows"), idMapping);
+                    regenerateArrayIds(matrixConfig.path("columns"), idMapping);
+                }
+            }
+        }
+
+        // Segunda passada: atualizar referências de questionId em conditions
+        for (JsonNode sectionNode : sections) {
+            JsonNode questions = sectionNode.path("questions");
+            if (!questions.isArray()) continue;
+
+            for (JsonNode questionNode : questions) {
+                JsonNode conditions = questionNode.path("conditions");
+                if (conditions.isMissingNode() || conditions.isNull()) continue;
+
+                updateConditionReferences(conditions, idMapping);
+            }
+        }
+
+        return schema;
+    }
+
+    /**
+     * Regenera IDs de um array de objetos com campo "id".
+     */
+    private void regenerateArrayIds(JsonNode array, java.util.Map<String, String> idMapping) {
+        if (!array.isArray()) return;
+        for (JsonNode node : array) {
+            ObjectNode obj = (ObjectNode) node;
+            String oldId = obj.path("id").asText("");
+            String newId = UUID.randomUUID().toString();
+            obj.put("id", newId);
+            if (!oldId.isBlank()) {
+                idMapping.put(oldId, newId);
+            }
+        }
+    }
+
+    /**
+     * Atualiza referências de questionId dentro de conditions usando o mapa de IDs.
+     */
+    private void updateConditionReferences(JsonNode conditions, java.util.Map<String, String> idMapping) {
+        JsonNode rules = conditions.path("rules");
+        if (!rules.isArray()) return;
+
+        for (JsonNode ruleNode : rules) {
+            ObjectNode rule = (ObjectNode) ruleNode;
+            String oldRef = rule.path("questionId").asText("");
+            String newRef = idMapping.get(oldRef);
+            if (newRef != null) {
+                rule.put("questionId", newRef);
             }
         }
     }
