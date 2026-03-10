@@ -8,10 +8,9 @@ import { AuthStore } from '@core/auth/auth.store';
 import { FormApiService, FormResponse } from '@core/api/form-api.service';
 
 @Component({
-  selector: 'app-dashboard',
-  standalone: true,
-  imports: [CommonModule, RouterLink, ButtonModule, SkeletonModule],
-  template: `
+    selector: 'app-dashboard',
+    imports: [CommonModule, RouterLink, ButtonModule, SkeletonModule],
+    template: `
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
       <div>
@@ -110,7 +109,7 @@ import { FormApiService, FormResponse } from '@core/api/form-api.service';
         </div>
       }
     </div>
-  `,
+  `
 })
 export class DashboardComponent implements OnInit {
   readonly store = inject(AuthStore);

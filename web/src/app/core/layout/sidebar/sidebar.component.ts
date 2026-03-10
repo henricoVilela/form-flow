@@ -10,10 +10,9 @@ interface NavItem {
 }
 
 @Component({
-  selector: 'app-sidebar',
-  standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
-  template: `
+    selector: 'app-sidebar',
+    imports: [CommonModule, RouterLink, RouterLinkActive],
+    template: `
     <!-- Logo -->
     <div class="px-6 h-16 flex items-center border-b border-surface-100">
       <div class="flex items-center gap-2.5">
@@ -78,7 +77,7 @@ interface NavItem {
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     :host {
       display: flex;
       flex-direction: column;
@@ -91,7 +90,7 @@ interface NavItem {
       top: 0;
       z-index: 40;
     }
-  `],
+  `]
 })
 export class SidebarComponent {
   readonly store = inject(AuthStore);

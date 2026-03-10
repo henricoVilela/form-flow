@@ -4,13 +4,12 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [RouterOutlet, ToastModule, ConfirmDialogModule],
-  template: `
+    selector: 'app-root',
+    imports: [RouterOutlet, ToastModule, ConfirmDialogModule],
+    template: `
     <p-toast position="top-right" [life]="4000" />
     <p-confirmDialog />
     <router-outlet />
-  `,
+  `
 })
 export class AppComponent {}

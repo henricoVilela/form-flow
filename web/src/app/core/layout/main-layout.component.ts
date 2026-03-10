@@ -4,10 +4,9 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 import { TopbarComponent } from './topbar/topbar.component';
 
 @Component({
-  selector: 'app-main-layout',
-  standalone: true,
-  imports: [RouterOutlet, SidebarComponent, TopbarComponent],
-  template: `
+    selector: 'app-main-layout',
+    imports: [RouterOutlet, SidebarComponent, TopbarComponent],
+    template: `
     <div class="layout">
       <app-sidebar />
 
@@ -20,7 +19,7 @@ import { TopbarComponent } from './topbar/topbar.component';
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     .layout {
       display: flex;
       min-height: 100vh;
@@ -51,6 +50,6 @@ import { TopbarComponent } from './topbar/topbar.component';
         margin-left: 0;
       }
     }
-  `],
+  `]
 })
 export class MainLayoutComponent {}

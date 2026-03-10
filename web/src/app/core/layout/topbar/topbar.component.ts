@@ -7,10 +7,9 @@ import { AuthStore } from '@core/auth/auth.store';
 import { AuthService } from '@core/auth/auth.service';
 
 @Component({
-  selector: 'app-topbar',
-  standalone: true,
-  imports: [CommonModule, MenuModule, ButtonModule],
-  template: `
+    selector: 'app-topbar',
+    imports: [CommonModule, MenuModule, ButtonModule],
+    template: `
     <header class="topbar">
       <!-- Left: breadcrumb area (pode ser expandido) -->
       <div class="flex items-center gap-3">
@@ -49,7 +48,7 @@ import { AuthService } from '@core/auth/auth.service';
       </div>
     </header>
   `,
-  styles: [`
+    styles: [`
     .topbar {
       display: flex;
       align-items: center;
@@ -62,7 +61,7 @@ import { AuthService } from '@core/auth/auth.service';
       top: 0;
       z-index: 30;
     }
-  `],
+  `]
 })
 export class TopbarComponent {
   readonly store = inject(AuthStore);

@@ -10,13 +10,12 @@ import { AuthService } from '@core/auth/auth.service';
 import { AuthStore } from '@core/auth/auth.store';
 
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [
-    CommonModule, ReactiveFormsModule, RouterLink,
-    InputTextModule, PasswordModule, ButtonModule,
-  ],
-  template: `
+    selector: 'app-login',
+    imports: [
+        CommonModule, ReactiveFormsModule, RouterLink,
+        InputTextModule, PasswordModule, ButtonModule,
+    ],
+    template: `
     <div class="auth-page">
       <!-- Left: decorative panel -->
       <div class="auth-panel-left">
@@ -123,7 +122,7 @@ import { AuthStore } from '@core/auth/auth.store';
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     .auth-page {
       display: flex;
       min-height: 100vh;
@@ -169,7 +168,7 @@ import { AuthStore } from '@core/auth/auth.store';
       from { opacity: 0; transform: translateY(16px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-  `],
+  `]
 })
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
