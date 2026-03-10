@@ -1,5 +1,5 @@
 ALTER TABLE forms
-    ADD COLUMN visibility VARCHAR(20) NOT NULL DEFAULT 'public',
+    ADD COLUMN visibility VARCHAR(20) NOT NULL DEFAULT 'PUBLIC',
     ADD COLUMN slug VARCHAR(100),
     ADD COLUMN password_hash VARCHAR(255),
     ADD COLUMN max_responses INTEGER,
@@ -8,7 +8,7 @@ ALTER TABLE forms
     ADD COLUMN thank_you_message TEXT;
 
 ALTER TABLE forms
-    ADD CONSTRAINT chk_forms_visibility CHECK (visibility IN ('public', 'private', 'password_protected'));
+    ADD CONSTRAINT chk_forms_visibility CHECK (visibility IN ('PUBLIC', 'PRIVATE', 'PASSWORD_PROTECTED'));
 
 CREATE UNIQUE INDEX idx_forms_slug ON forms(slug) WHERE slug IS NOT NULL;
 CREATE INDEX idx_forms_visibility ON forms(visibility);

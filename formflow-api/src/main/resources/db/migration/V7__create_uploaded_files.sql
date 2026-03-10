@@ -6,11 +6,11 @@ CREATE TABLE uploaded_files (
     mime_type       VARCHAR(100) NOT NULL,
     size_bytes      BIGINT NOT NULL,
     storage_key     VARCHAR(500) NOT NULL UNIQUE,
-    status          VARCHAR(20) NOT NULL DEFAULT 'pending',
+    status          VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     uploaded_at     TIMESTAMP NOT NULL DEFAULT now(),
     confirmed_at    TIMESTAMP,
 
-    CONSTRAINT chk_uploaded_files_status CHECK (status IN ('pending', 'confirmed', 'deleted'))
+    CONSTRAINT chk_uploaded_files_status CHECK (status IN ('PENDING', 'CONFIRMED', 'DELETED'))
 );
 
 CREATE INDEX idx_uploaded_files_form_id     ON uploaded_files(form_id);
