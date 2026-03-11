@@ -2,10 +2,9 @@ package com.cronos.formflow_api.api.dto.request;
 
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import tools.jackson.databind.JsonNode;
 
 @Data
 public class SubmitResponseRequest {

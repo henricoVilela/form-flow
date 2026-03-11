@@ -4,10 +4,10 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.cronos.formflow_api.domain.form.FormVersion;
-import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.Builder;
 import lombok.Data;
+import tools.jackson.databind.JsonNode;
 
 @Data
 @Builder

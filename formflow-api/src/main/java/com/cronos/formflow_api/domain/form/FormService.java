@@ -19,11 +19,11 @@ import com.cronos.formflow_api.api.dto.response.PublishResponse;
 import com.cronos.formflow_api.domain.form.validation.SchemaConditionValidator;
 import com.cronos.formflow_api.domain.user.User;
 import com.cronos.formflow_api.shared.exception.ResourceNotFoundException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 @Service
 @RequiredArgsConstructor
@@ -67,6 +67,14 @@ public class FormService {
         form.setTitle(request.getTitle());
         if (request.getDescription() != null) form.setDescription(request.getDescription());
         if (request.getLayout() != null) form.setLayout(request.getLayout());
+        
+        if (request.getSchema() != null && !form.getVersions().isEmpty()) {
+        	var lastVersion = form.getVersions().getLast();
+        	lastVersion.setSchema(request.getSchema());
+        	
+        	formVersionRepository.save(lastVersion);
+        }
+        
         return FormResponse.from(formRepository.save(form), null);
     }
 
@@ -212,13 +220,13 @@ public class FormService {
         if (!sections.isArray()) return;
 
         for (JsonNode section : sections) {
-            String sectionId = section.path("id").asText();
+            String sectionId = section.path("id").asString();
             JsonNode questions = section.path("questions");
             if (!questions.isArray()) continue;
 
             int order = 0;
             for (JsonNode q : questions) {
-                String questionId = q.path("id").asText();
+                String questionId = q.path("id").asString();
                 if (questionId.isBlank()) continue;
 
                 Question question = Question.builder()
@@ -226,8 +234,8 @@ public class FormService {
                         .formVersion(version)
                         .form(form)
                         .sectionId(sectionId)
-                        .type(q.path("type").asText())
-                        .label(q.path("label").asText())
+                        .type(q.path("type").asString())
+                        .label(q.path("label").asString())
                         .orderIndex(order++)
                         .build();
 
@@ -253,7 +261,7 @@ public class FormService {
      */
     private JsonNode regenerateSchemaIds(JsonNode originalSchema) {
         // Deep copy
-        ObjectNode schema = originalSchema.deepCopy();
+        JsonNode schema = originalSchema.deepCopy();
 
         // Mapa de old UUID → new UUID (para atualizar referências em conditions)
         java.util.Map<String, String> idMapping = new java.util.HashMap<>();
@@ -266,7 +274,7 @@ public class FormService {
             ObjectNode section = (ObjectNode) sectionNode;
 
             // Novo ID para section
-            String oldSectionId = section.path("id").asText("");
+            String oldSectionId = section.path("id").asString("");
             String newSectionId = UUID.randomUUID().toString();
             section.put("id", newSectionId);
             if (!oldSectionId.isBlank()) {
@@ -280,7 +288,7 @@ public class FormService {
                 ObjectNode question = (ObjectNode) questionNode;
 
                 // Novo ID para question
-                String oldQuestionId = question.path("id").asText("");
+                String oldQuestionId = question.path("id").asString("");
                 String newQuestionId = UUID.randomUUID().toString();
                 question.put("id", newQuestionId);
                 if (!oldQuestionId.isBlank()) {
@@ -292,7 +300,7 @@ public class FormService {
                 if (options.isArray()) {
                     for (JsonNode optNode : options) {
                         ObjectNode opt = (ObjectNode) optNode;
-                        String oldOptId = opt.path("id").asText("");
+                        String oldOptId = opt.path("id").asString("");
                         String newOptId = UUID.randomUUID().toString();
                         opt.put("id", newOptId);
                         if (!oldOptId.isBlank()) {
@@ -333,7 +341,7 @@ public class FormService {
         if (!array.isArray()) return;
         for (JsonNode node : array) {
             ObjectNode obj = (ObjectNode) node;
-            String oldId = obj.path("id").asText("");
+            String oldId = obj.path("id").asString("");
             String newId = UUID.randomUUID().toString();
             obj.put("id", newId);
             if (!oldId.isBlank()) {
@@ -351,7 +359,7 @@ public class FormService {
 
         for (JsonNode ruleNode : rules) {
             ObjectNode rule = (ObjectNode) ruleNode;
-            String oldRef = rule.path("questionId").asText("");
+            String oldRef = rule.path("questionId").asString("");
             String newRef = idMapping.get(oldRef);
             if (newRef != null) {
                 rule.put("questionId", newRef);

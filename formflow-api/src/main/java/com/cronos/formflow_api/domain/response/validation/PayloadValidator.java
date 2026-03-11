@@ -13,11 +13,11 @@ import java.util.regex.PatternSyntaxException;
 import org.springframework.stereotype.Component;
 
 import com.cronos.formflow_api.shared.exception.BusinessException;
-import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Valida o payload de resposta contra o schema do formulário.
@@ -69,9 +69,9 @@ public class PayloadValidator {
             if (!questions.isArray()) continue;
 
             for (JsonNode questionDef : questions) {
-                String qId = questionDef.path("id").asText("");
-                String type = questionDef.path("type").asText("");
-                String label = questionDef.path("label").asText("Campo");
+                String qId = questionDef.path("id").asString("");
+                String type = questionDef.path("type").asString("");
+                String label = questionDef.path("label").asString("Campo");
                 boolean required = questionDef.path("required").asBoolean(false);
 
                 // Ignora questões ocultas ou statement
@@ -138,39 +138,39 @@ public class PayloadValidator {
     }
 
     private void validateText(JsonNode value, String qId, String label, List<FieldError> errors) {
-        if (!value.isTextual()) {
+        if (!value.isString()) {
             errors.add(fieldError(qId, label, "INVALID_TYPE", "Valor deve ser texto"));
         }
     }
 
     private void validateEmail(JsonNode value, String qId, String label, List<FieldError> errors) {
-        if (!value.isTextual()) {
+        if (!value.isString()) {
             errors.add(fieldError(qId, label, "INVALID_TYPE", "Valor deve ser texto"));
             return;
         }
-        String text = value.asText("").trim();
+        String text = value.asString("").trim();
         if (!EMAIL_PATTERN.matcher(text).matches()) {
             errors.add(fieldError(qId, label, "INVALID_EMAIL", "Formato de e-mail inválido"));
         }
     }
 
     private void validatePhone(JsonNode value, String qId, String label, List<FieldError> errors) {
-        if (!value.isTextual()) {
+        if (!value.isString()) {
             errors.add(fieldError(qId, label, "INVALID_TYPE", "Valor deve ser texto"));
             return;
         }
-        String text = value.asText("").trim();
+        String text = value.asString("").trim();
         if (!PHONE_PATTERN.matcher(text).matches()) {
             errors.add(fieldError(qId, label, "INVALID_PHONE", "Formato de telefone inválido"));
         }
     }
 
     private void validateUrl(JsonNode value, String qId, String label, List<FieldError> errors) {
-        if (!value.isTextual()) {
+        if (!value.isString()) {
             errors.add(fieldError(qId, label, "INVALID_TYPE", "Valor deve ser texto"));
             return;
         }
-        String text = value.asText("").trim();
+        String text = value.asString("").trim();
         if (!URL_PATTERN.matcher(text).matches()) {
             errors.add(fieldError(qId, label, "INVALID_URL", "Formato de URL inválido. Use http:// ou https://"));
         }
@@ -179,9 +179,9 @@ public class PayloadValidator {
     private void validateNumber(JsonNode value, String qId, String label, List<FieldError> errors) {
         if (value.isNumber()) return; // OK
 
-        if (value.isTextual()) {
+        if (value.isString()) {
             try {
-                new BigDecimal(value.asText());
+                new BigDecimal(value.asString());
                 return; // texto numérico, OK
             } catch (NumberFormatException ignored) {}
         }
@@ -190,12 +190,12 @@ public class PayloadValidator {
     }
 
     private void validateDate(JsonNode value, String qId, String label, List<FieldError> errors) {
-        if (!value.isTextual()) {
+        if (!value.isString()) {
             errors.add(fieldError(qId, label, "INVALID_TYPE", "Data deve ser texto no formato yyyy-MM-dd"));
             return;
         }
         try {
-            LocalDate.parse(value.asText());
+            LocalDate.parse(value.asString());
         } catch (DateTimeParseException e) {
             errors.add(fieldError(qId, label, "INVALID_DATE", "Formato de data inválido. Use yyyy-MM-dd"));
         }
@@ -205,15 +205,15 @@ public class PayloadValidator {
             JsonNode value, JsonNode questionDef,
             String qId, String label, List<FieldError> errors
     ) {
-        if (!value.isTextual()) {
+        if (!value.isString()) {
             errors.add(fieldError(qId, label, "INVALID_TYPE", "Valor deve ser texto (ID da opção)"));
             return;
         }
 
         Set<String> validOptions = extractOptionValues(questionDef);
-        if (!validOptions.isEmpty() && !validOptions.contains(value.asText())) {
+        if (!validOptions.isEmpty() && !validOptions.contains(value.asString())) {
             errors.add(fieldError(qId, label, "INVALID_OPTION",
-                    "Opção selecionada não é válida: " + value.asText()));
+                    "Opção selecionada não é válida: " + value.asString()));
         }
     }
 
@@ -230,7 +230,7 @@ public class PayloadValidator {
         if (validOptions.isEmpty()) return;
 
         for (JsonNode item : value) {
-            String optionValue = item.asText("");
+            String optionValue = item.asString("");
             if (!validOptions.contains(optionValue)) {
                 errors.add(fieldError(qId, label, "INVALID_OPTION",
                         "Opção selecionada não é válida: " + optionValue));
@@ -245,7 +245,7 @@ public class PayloadValidator {
         }
 
         for (JsonNode item : value) {
-            String fileId = item.asText("");
+            String fileId = item.asString("");
             if (!UUID_PATTERN.matcher(fileId).matches()) {
                 errors.add(fieldError(qId, label, "INVALID_FILE_ID",
                         "ID de arquivo inválido: " + fileId));
@@ -270,17 +270,17 @@ public class PayloadValidator {
 
         JsonNode rows = matrixConfig.path("rows");
         if (rows.isArray()) {
-            rows.forEach(r -> validRowIds.add(r.path("id").asText("")));
+            rows.forEach(r -> validRowIds.add(r.path("id").asString("")));
         }
         JsonNode columns = matrixConfig.path("columns");
         if (columns.isArray()) {
-            columns.forEach(c -> validColIds.add(c.path("id").asText("")));
+            columns.forEach(c -> validColIds.add(c.path("id").asString("")));
         }
 
         // Valida cada entrada
         value.properties().forEach(entry -> {
             String rowId = entry.getKey();
-            String colId = entry.getValue().asText("");
+            String colId = entry.getValue().asString("");
 
             if (!validRowIds.isEmpty() && !validRowIds.contains(rowId)) {
                 errors.add(fieldError(qId, label, "INVALID_MATRIX_ROW",
@@ -308,13 +308,13 @@ public class PayloadValidator {
             JsonNode value, JsonNode questionDef,
             String qId, String label, List<FieldError> errors
     ) {
-        if (!value.isNumber() && !value.isTextual()) {
+        if (!value.isNumber() && !value.isString()) {
             errors.add(fieldError(qId, label, "INVALID_TYPE", "Avaliação deve ser um número"));
             return;
         }
 
         try {
-            int rating = value.isNumber() ? value.asInt() : Integer.parseInt(value.asText());
+            int rating = value.isNumber() ? value.asInt() : Integer.parseInt(value.asString());
             int max = questionDef.path("ratingConfig").path("max").asInt(5);
 
             if (rating < 1 || rating > max) {
@@ -330,13 +330,13 @@ public class PayloadValidator {
             JsonNode value, JsonNode questionDef,
             String qId, String label, List<FieldError> errors
     ) {
-        if (!value.isNumber() && !value.isTextual()) {
+        if (!value.isNumber() && !value.isString()) {
             errors.add(fieldError(qId, label, "INVALID_TYPE", "Escala deve ser um número"));
             return;
         }
 
         try {
-            int scaleValue = value.isNumber() ? value.asInt() : Integer.parseInt(value.asText());
+            int scaleValue = value.isNumber() ? value.asInt() : Integer.parseInt(value.asString());
             JsonNode scaleConfig = questionDef.path("scaleConfig");
             int min = scaleConfig.path("min").asInt(1);
             int max = scaleConfig.path("max").asInt(10);
@@ -357,8 +357,8 @@ public class PayloadValidator {
             String type, JsonNode value, JsonNode validations,
             String qId, String label, List<FieldError> errors
     ) {
-        if (value.isTextual()) {
-            String text = value.asText("");
+        if (value.isString()) {
+            String text = value.asString("");
 
             if (validations.has("minLength")) {
                 int minLength = validations.path("minLength").asInt(0);
@@ -378,12 +378,12 @@ public class PayloadValidator {
 
             // ── pattern (regex customizado) ──
             if (validations.has("pattern")) {
-                String pattern = validations.path("pattern").asText("");
+                String pattern = validations.path("pattern").asString("");
                 if (!pattern.isBlank()) {
                     try {
                         if (!Pattern.matches(pattern, text)) {
                             String patternMessage = validations.path("patternMessage")
-                                    .asText("Valor não corresponde ao formato esperado");
+                                    .asString("Valor não corresponde ao formato esperado");
                             errors.add(fieldError(qId, label, "PATTERN_MISMATCH", patternMessage));
                         }
                     } catch (PatternSyntaxException e) {
@@ -397,7 +397,7 @@ public class PayloadValidator {
             BigDecimal numValue = extractNumber(value);
             if (numValue != null) {
                 if (validations.has("min")) {
-                    BigDecimal min = new BigDecimal(validations.path("min").asText("0"));
+                    BigDecimal min = new BigDecimal(validations.path("min").asString("0"));
                     if (numValue.compareTo(min) < 0) {
                         errors.add(fieldError(qId, label, "BELOW_MIN",
                                 String.format("Valor mínimo é %s", min.toPlainString())));
@@ -405,7 +405,7 @@ public class PayloadValidator {
                 }
 
                 if (validations.has("max")) {
-                    BigDecimal max = new BigDecimal(validations.path("max").asText("999999999"));
+                    BigDecimal max = new BigDecimal(validations.path("max").asString("999999999"));
                     if (numValue.compareTo(max) > 0) {
                         errors.add(fieldError(qId, label, "ABOVE_MAX",
                                 String.format("Valor máximo é %s", max.toPlainString())));
@@ -414,12 +414,12 @@ public class PayloadValidator {
             }
         }
 
-        if ("date".equals(type) && value.isTextual()) {
+        if ("date".equals(type) && value.isString()) {
             try {
-                LocalDate dateValue = LocalDate.parse(value.asText());
+                LocalDate dateValue = LocalDate.parse(value.asString());
 
                 if (validations.has("min")) {
-                    LocalDate minDate = LocalDate.parse(validations.path("min").asText());
+                    LocalDate minDate = LocalDate.parse(validations.path("min").asString());
                     if (dateValue.isBefore(minDate)) {
                         errors.add(fieldError(qId, label, "DATE_BEFORE_MIN",
                                 "Data não pode ser anterior a " + minDate));
@@ -427,7 +427,7 @@ public class PayloadValidator {
                 }
 
                 if (validations.has("max")) {
-                    LocalDate maxDate = LocalDate.parse(validations.path("max").asText());
+                    LocalDate maxDate = LocalDate.parse(validations.path("max").asString());
                     if (dateValue.isAfter(maxDate)) {
                         errors.add(fieldError(qId, label, "DATE_AFTER_MAX",
                                 "Data não pode ser posterior a " + maxDate));
@@ -481,7 +481,7 @@ public class PayloadValidator {
         JsonNode options = questionDef.path("options");
         if (options.isArray()) {
             for (JsonNode opt : options) {
-                String v = opt.path("value").asText("");
+                String v = opt.path("value").asString("");
                 if (!v.isBlank()) values.add(v);
             }
         }
@@ -491,14 +491,14 @@ public class PayloadValidator {
     private BigDecimal extractNumber(JsonNode value) {
         try {
             if (value.isNumber()) return value.decimalValue();
-            if (value.isTextual()) return new BigDecimal(value.asText());
+            if (value.isString()) return new BigDecimal(value.asString());
         } catch (NumberFormatException ignored) {}
         return null;
     }
 
     private boolean isValueEmpty(JsonNode value) {
         if (value == null || value.isMissingNode() || value.isNull()) return true;
-        if (value.isTextual()) return value.asText("").isBlank();
+        if (value.isString()) return value.asString("").isBlank();
         if (value.isArray()) return value.isEmpty();
         return false;
     }

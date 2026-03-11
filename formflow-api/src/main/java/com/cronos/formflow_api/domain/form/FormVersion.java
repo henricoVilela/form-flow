@@ -7,9 +7,6 @@ import java.util.UUID;
 
 import org.hibernate.annotations.Type;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,6 +24,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import com.cronos.formflow_api.config.JsonNodeType;
+import tools.jackson.databind.JsonNode;
 
 @Entity
 @Table(name = "form_versions")
@@ -48,7 +47,7 @@ public class FormVersion {
     @Column(nullable = false)
     private Integer version;
 
-    @Type(JsonBinaryType.class)
+    @Type(JsonNodeType.class)
     @Column(columnDefinition = "jsonb", nullable = false)
     private JsonNode schema;
 

@@ -10,7 +10,8 @@ import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
+
 
 @Component
 public class ConditionEvaluator {
@@ -35,7 +36,7 @@ public class ConditionEvaluator {
             if (!questions.isArray()) continue;
 
             for (JsonNode q : questions) {
-                String qId = q.path("id").asText("");
+                String qId = q.path("id").asString("");
                 if (qId.isBlank()) continue;
 
                 allQuestionIds.add(qId);
@@ -97,7 +98,7 @@ public class ConditionEvaluator {
             JsonNode payload,
             Map<String, Boolean> visibilityCache
     ) {
-        String operator = conditionGroup.path("operator").asText("AND");
+        String operator = conditionGroup.path("operator").asString("AND");
         JsonNode rules = conditionGroup.path("rules");
 
         if (!rules.isArray() || rules.isEmpty()) return true;
@@ -131,8 +132,8 @@ public class ConditionEvaluator {
             JsonNode payload,
             Map<String, Boolean> visibilityCache
     ) {
-        String refQuestionId = rule.path("questionId").asText("");
-        String operator = rule.path("operator").asText("");
+        String refQuestionId = rule.path("questionId").asString("");
+        String operator = rule.path("operator").asString("");
         JsonNode expectedValue = rule.path("value");
 
         if (refQuestionId.isBlank() || operator.isBlank()) return false;
@@ -180,27 +181,27 @@ public class ConditionEvaluator {
         // Para arrays (multi_choice), verifica igualdade de conteúdo
         if (actual.isArray() && expected.isArray()) {
             Set<String> actualSet = new HashSet<>();
-            actual.forEach(v -> actualSet.add(v.asText()));
+            actual.forEach(v -> actualSet.add(v.asString()));
             Set<String> expectedSet = new HashSet<>();
-            expected.forEach(v -> expectedSet.add(v.asText()));
+            expected.forEach(v -> expectedSet.add(v.asString()));
             return actualSet.equals(expectedSet);
         }
 
-        return actual.asText("").equals(expected.asText(""));
+        return actual.asString("").equals(expected.asString(""));
     }
 
     private boolean containsCheck(JsonNode actual, JsonNode expected) {
         if (actual.isMissingNode() || actual.isNull()) return false;
 
-        String actualText = actual.asText("").toLowerCase();
-        String expectedText = expected.asText("").toLowerCase();
+        String actualText = actual.asString("").toLowerCase();
+        String expectedText = expected.asString("").toLowerCase();
         return actualText.contains(expectedText);
     }
 
     private int compareNumbers(JsonNode actual, JsonNode expected) {
         try {
-            BigDecimal actualNum = new BigDecimal(actual.asText("0"));
-            BigDecimal expectedNum = new BigDecimal(expected.asText("0"));
+            BigDecimal actualNum = new BigDecimal(actual.asString("0"));
+            BigDecimal expectedNum = new BigDecimal(expected.asString("0"));
             return actualNum.compareTo(expectedNum);
         } catch (NumberFormatException e) {
             return 0; // se não é número, considera igual
@@ -209,7 +210,7 @@ public class ConditionEvaluator {
 
     private boolean isEmptyCheck(JsonNode actual) {
         if (actual.isMissingNode() || actual.isNull()) return true;
-        if (actual.isTextual()) return actual.asText("").isBlank();
+        if (actual.isString()) return actual.asString("").isBlank();
         if (actual.isArray()) return actual.isEmpty();
         return false;
     }
@@ -217,21 +218,21 @@ public class ConditionEvaluator {
     private boolean inCheck(JsonNode actual, JsonNode expectedArray) {
         if (actual.isMissingNode() || actual.isNull() || !expectedArray.isArray()) return false;
 
-        String actualText = actual.asText("");
+        String actualText = actual.asString("");
 
         // Se actual é array (multi_choice), verifica interseção
         if (actual.isArray()) {
             Set<String> expectedSet = new HashSet<>();
-            expectedArray.forEach(v -> expectedSet.add(v.asText()));
+            expectedArray.forEach(v -> expectedSet.add(v.asString()));
             for (JsonNode v : actual) {
-                if (expectedSet.contains(v.asText())) return true;
+                if (expectedSet.contains(v.asString())) return true;
             }
             return false;
         }
 
         // Se actual é valor único, verifica se está na lista
         for (JsonNode v : expectedArray) {
-            if (v.asText("").equals(actualText)) return true;
+            if (v.asString("").equals(actualText)) return true;
         }
         return false;
     }

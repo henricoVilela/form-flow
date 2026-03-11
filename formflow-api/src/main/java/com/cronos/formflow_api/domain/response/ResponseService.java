@@ -31,10 +31,10 @@ import com.cronos.formflow_api.domain.response.validation.PayloadValidator;
 import com.cronos.formflow_api.domain.user.User;
 import com.cronos.formflow_api.shared.exception.BusinessException;
 import com.cronos.formflow_api.shared.exception.ResourceNotFoundException;
-import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.JsonNode;
 
 @Service
 @RequiredArgsConstructor
@@ -194,21 +194,21 @@ public class ResponseService {
 
         switch (type) {
             case "short_text", "long_text", "email", "phone", "url" ->
-                    builder.valueText(value.asText(null));
+                    builder.valueText(value.asString(null));
             case "number" ->
-                    builder.valueNumber(value.isNull() ? null : new BigDecimal(value.asText()));
+                    builder.valueNumber(value.isNull() ? null : new BigDecimal(value.asString()));
             case "date" ->
-                    builder.valueDate(value.isNull() ? null : LocalDate.parse(value.asText()));
+                    builder.valueDate(value.isNull() ? null : LocalDate.parse(value.asString()));
             case "single_choice", "dropdown" ->
-                    builder.valueOptions(new String[]{value.asText()});
+                    builder.valueOptions(new String[]{value.asString()});
             case "multi_choice" -> {
                 List<String> opts = new ArrayList<>();
-                value.forEach(v -> opts.add(v.asText()));
+                value.forEach(v -> opts.add(v.asString()));
                 builder.valueOptions(opts.toArray(new String[0]));
             }
             case "file_upload" -> {
                 List<String> files = new ArrayList<>();
-                value.forEach(v -> files.add(v.asText()));
+                value.forEach(v -> files.add(v.asString()));
                 builder.valueFiles(files.toArray(new String[0]));
             }
         }
@@ -219,10 +219,10 @@ public class ResponseService {
     private void confirmFiles(Response response, JsonNode payload) {
         payload.properties().forEach(entry -> {
             JsonNode answerNode = entry.getValue();
-            if ("file_upload".equals(answerNode.path("type").asText())) {
+            if ("file_upload".equals(answerNode.path("type").asString())) {
                 answerNode.path("value").forEach(fileIdNode -> {
                     try {
-                        UUID fileId = UUID.fromString(fileIdNode.asText());
+                        UUID fileId = UUID.fromString(fileIdNode.asString());
                         uploadedFileRepository.findByIdAndStatus(fileId, UploadStatus.PENDING)
                             .ifPresent(file -> {
                                 file.setStatus(UploadStatus.CONFIRMED);
@@ -255,9 +255,9 @@ public class ResponseService {
         JsonNode value = answer.path("value");
         if (value.isArray()) {
             List<String> parts = new ArrayList<>();
-            value.forEach(v -> parts.add(v.asText()));
+            value.forEach(v -> parts.add(v.asString()));
             return String.join(", ", parts);
         }
-        return value.asText("");
+        return value.asString("");
     }
 }

@@ -79,8 +79,9 @@ public class FormController {
             @AuthenticationPrincipal User user,
             @PathVariable UUID id,
             @Valid @RequestBody PublishFormRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
+       return ResponseEntity.status(HttpStatus.CREATED)
                 .body(formService.publish(user, id, request.getSchema()));
+    	//return ResponseEntity.ok(null);
     }
 
     @GetMapping("/{id}/versions")

@@ -9,9 +9,7 @@ import org.hibernate.annotations.Type;
 
 import com.cronos.formflow_api.domain.form.Form;
 import com.cronos.formflow_api.domain.form.FormVersion;
-import com.fasterxml.jackson.databind.JsonNode;
 
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -29,6 +27,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import com.cronos.formflow_api.config.JsonNodeType;
+import tools.jackson.databind.JsonNode;
 
 @Entity
 @Table(name = "responses")
@@ -51,11 +51,11 @@ public class Response {
     @JoinColumn(name = "form_version_id", nullable = false)
     private FormVersion formVersion;
 
-    @Type(JsonBinaryType.class)
+    @Type(JsonNodeType.class)
     @Column(columnDefinition = "jsonb", nullable = false)
     private JsonNode payload;
 
-    @Type(JsonBinaryType.class)
+    @Type(JsonNodeType.class)
     @Column(columnDefinition = "jsonb")
     private JsonNode metadata;
 

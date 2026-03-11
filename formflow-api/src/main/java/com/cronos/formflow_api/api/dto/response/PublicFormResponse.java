@@ -5,10 +5,10 @@ import java.util.UUID;
 import com.cronos.formflow_api.domain.form.Form;
 import com.cronos.formflow_api.domain.form.FormLayout;
 import com.cronos.formflow_api.domain.form.FormVersion;
-import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.Builder;
 import lombok.Data;
+import tools.jackson.databind.JsonNode;
 
 /**
  * DTO com os dados mínimos necessários para renderizar um formulário publicado.

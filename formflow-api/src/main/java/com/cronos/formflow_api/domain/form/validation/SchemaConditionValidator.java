@@ -8,7 +8,8 @@ import java.util.Set;
 import org.springframework.stereotype.Component;
 
 import com.cronos.formflow_api.shared.exception.BusinessException;
-import com.fasterxml.jackson.databind.JsonNode;
+
+import tools.jackson.databind.JsonNode;
 
 @Component
 public class SchemaConditionValidator {
@@ -70,8 +71,8 @@ public class SchemaConditionValidator {
             if (!questions.isArray()) continue;
 
             for (JsonNode q : questions) {
-                String qId = q.path("id").asText("");
-                String qType = q.path("type").asText("");
+                String qId = q.path("id").asString("");
+                String qType = q.path("type").asString("");
                 if (!qId.isBlank()) {
                     allQuestionIds.add(qId);
                     questionTypeMap.put(qId, qType);
@@ -87,7 +88,7 @@ public class SchemaConditionValidator {
             if (!questions.isArray()) continue;
 
             for (JsonNode q : questions) {
-                String qId = q.path("id").asText("?");
+                String qId = q.path("id").asString("?");
                 JsonNode conditions = q.path("conditions");
 
                 if (conditions.isMissingNode() || conditions.isNull()) continue;
@@ -120,7 +121,7 @@ public class SchemaConditionValidator {
             List<String> errors
     ) {
         // Valida operator do grupo
-        String groupOperator = conditionGroup.path("operator").asText("");
+        String groupOperator = conditionGroup.path("operator").asString("");
         if (!groupOperator.equals("AND") && !groupOperator.equals("OR")) {
             errors.add(String.format(
                     "Questão '%s': operator do grupo deve ser 'AND' ou 'OR', encontrado: '%s'",
@@ -153,8 +154,8 @@ public class SchemaConditionValidator {
             java.util.Map<String, String> questionTypeMap,
             List<String> errors
     ) {
-        String refQuestionId = rule.path("questionId").asText("");
-        String operator = rule.path("operator").asText("");
+        String refQuestionId = rule.path("questionId").asString("");
+        String operator = rule.path("operator").asString("");
         JsonNode value = rule.path("value");
 
         // questionId obrigatório e deve existir no schema
@@ -252,7 +253,7 @@ public class SchemaConditionValidator {
             if (!questions.isArray()) continue;
 
             for (JsonNode q : questions) {
-                String qId = q.path("id").asText("");
+                String qId = q.path("id").asString("");
                 JsonNode conditions = q.path("conditions");
                 if (conditions.isMissingNode() || conditions.isNull()) continue;
 
@@ -260,7 +261,7 @@ public class SchemaConditionValidator {
                 JsonNode rules = conditions.path("rules");
                 if (rules.isArray()) {
                     for (JsonNode rule : rules) {
-                        String refId = rule.path("questionId").asText("");
+                        String refId = rule.path("questionId").asString("");
                         if (!refId.isBlank()) deps.add(refId);
                     }
                 }
