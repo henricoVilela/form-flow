@@ -131,11 +131,11 @@ export class DashboardComponent implements OnInit {
 
   private loadForms(): void {
     this.formApi.list(0, 6).subscribe({
-      next: (page) => {
-        this.recentForms.set(page.content);
+      next: (data) => {
+        this.recentForms.set(data.content);
 
-        const total = page.totalElements;
-        const published = page.content.filter(f => f.status === 'PUBLISHED').length;
+        const total = data.page.totalElements;
+        const published = data.content.filter(f => f.status === 'PUBLISHED').length;
 
         this.stats.update(s => [
           { ...s[0], value: String(total) },

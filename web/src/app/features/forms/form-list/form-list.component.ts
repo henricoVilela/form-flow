@@ -323,11 +323,11 @@ export class FormListComponent implements OnInit {
     this.loading.set(true);
 
     this.formApi.list(this.currentPage(), this.pageSize).subscribe({
-      next: (page) => {
-        this.forms.set(page.content);
-        this.totalElements.set(page.totalElements);
-        this.totalPages.set(page.totalPages);
-        this.updateFilterCounts(page.content);
+      next: (data) => {
+        this.forms.set(data.content);
+        this.totalElements.set(data.page.totalElements);
+        this.totalPages.set(data.page.totalPages);
+        this.updateFilterCounts(data.content);
         this.loading.set(false);
       },
       error: () => {
