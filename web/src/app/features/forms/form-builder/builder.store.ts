@@ -286,7 +286,7 @@ export class BuilderStore {
                 ...q,
                 options: q.options.map(o =>
                   o.id === optionId
-                    ? { ...o, label, value: label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') }
+                    ? { ...o, label, value: label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') }
                     : o
                 ),
               }

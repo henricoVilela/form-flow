@@ -57,11 +57,11 @@ import { BuilderQuestion } from '../builder.models';
           </div>
         </div>
       } @else {
-        <div class="preview-container">
+        <div>
           <!-- Progress bar -->
           @if (store.settings().showProgressBar && visibleSections().length > 1) {
-            <div class="progress-bar">
-              <div class="progress-fill" [style.width.%]="progressPercent()"></div>
+            <div class="h-1 bg-slate-200 rounded-sm mx-6 mt-4">
+              <div class="h-full bg-[var(--ff-primary)] rounded-sm transition-[width] duration-300" [style.width.%]="progressPercent()"></div>
             </div>
             <div class="text-xs text-surface-400 text-center mt-1 mb-4">
               Seção {{ currentStep() + 1 }} de {{ visibleSections().length }}
@@ -71,8 +71,8 @@ import { BuilderQuestion } from '../builder.models';
           <!-- Current section -->
           @let section = visibleSections()[currentStep()]; 
           
-            <div class="preview-section">
-              <div class="preview-section-header">
+            <div class="px-6">
+              <div class="py-3 px-4 bg-slate-50 rounded-lg mb-5">
                 <h3 class="text-lg font-display font-semibold text-surface-900">
                   {{ section.title || 'Seção ' + (currentStep() + 1) }}
                 </h3>
@@ -84,8 +84,8 @@ import { BuilderQuestion } from '../builder.models';
               @for (q of section.questions; track q.id) {
                 <!-- Avaliação de condição: mostra/oculta -->
                 @if (isQuestionVisible(q)) {
-                  <div class="preview-question" [class.preview-question--error]="hasError(q.id)">
-                    <label class="preview-label">
+                  <div class="mb-6">
+                    <label class="block text-sm font-medium text-[var(--ff-text)] mb-2">
                       @if (store.settings().showQuestionNumbers) {
                         <span class="text-surface-400">{{ getGlobalIndex(q.id) }}.</span>
                       }
@@ -159,7 +159,7 @@ import { BuilderQuestion } from '../builder.models';
                                   placeholder="Selecione uma opção" styleClass="w-full" />
                       }
                       @case ('file_upload') {
-                        <div class="preview-upload">
+                        <div class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-[var(--ff-border)] rounded-lg">
                           <i class="pi pi-upload text-lg text-surface-300 mb-1"></i>
                           <span class="text-xs text-surface-400">Upload simulado (não envia arquivos no preview)</span>
                         </div>
@@ -168,13 +168,15 @@ import { BuilderQuestion } from '../builder.models';
                         <p-rating [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" [stars]="q.ratingConfig?.max ?? 5" />
                       }
                       @case ('scale') {
-                        <div class="preview-scale-interactive">
+                        <div class="flex items-center gap-3">
                           <span class="text-xs text-surface-500 shrink-0">{{ q.scaleConfig?.minLabel }}</span>
                           <div class="flex gap-1.5 flex-1 justify-center flex-wrap">
                             @for (n of getScaleRange(q.scaleConfig?.min ?? 1, q.scaleConfig?.max ?? 10); track n) {
                               <button
-                                class="scale-btn"
-                                [class.scale-btn--active]="answers()[q.id] === n"
+                                class="w-9 h-9 flex items-center justify-center border-[1.5px] rounded-lg text-[13px] font-medium cursor-pointer transition-all duration-150"
+                                [ngClass]="answers()[q.id] === n
+                                  ? 'bg-[var(--ff-primary)] text-white border-[var(--ff-primary)]'
+                                  : 'bg-white text-[var(--ff-text-secondary)] border-[var(--ff-border)] hover:border-blue-300 hover:text-[var(--ff-primary)] hover:bg-blue-50'"
                                 (click)="setAnswer(q.id, n)"
                               >{{ n }}</button>
                             }
@@ -183,7 +185,7 @@ import { BuilderQuestion } from '../builder.models';
                         </div>
                       }
                       @case ('statement') {
-                        <div class="preview-statement">
+                        <div class="flex items-start py-3 px-4 bg-blue-50 rounded-lg">
                           <i class="pi pi-info-circle text-primary-400 mr-2"></i>
                           <span class="text-sm text-surface-600">{{ q.label }}</span>
                         </div>
@@ -201,7 +203,7 @@ import { BuilderQuestion } from '../builder.models';
           
 
           <!-- Navigation buttons -->
-          <div class="preview-nav">
+          <div class="flex items-center justify-between px-6 pt-4 pb-6 border-t border-[var(--ff-border)] mt-4">
             @if (currentStep() > 0) {
               <button pButton label="Anterior" icon="pi pi-arrow-left" severity="secondary"
                       [outlined]="true" (click)="prevStep()"></button>
@@ -220,63 +222,7 @@ import { BuilderQuestion } from '../builder.models';
       }
     </p-dialog>
   `,
-  styles: [`
-    .preview-container { padding: 0; }
 
-    .progress-bar {
-      height: 4px; background: #e2e8f0; border-radius: 2px; margin: 16px 24px 0;
-    }
-    .progress-fill {
-      height: 100%; background: var(--ff-primary); border-radius: 2px;
-      transition: width 300ms ease;
-    }
-
-    .preview-section { padding: 0 24px; }
-    .preview-section-header {
-      padding: 12px 16px; background: #f8fafc;
-      border-radius: 8px; margin-bottom: 20px;
-    }
-
-    .preview-question { margin-bottom: 24px; }
-    .preview-question--error { }
-
-    .preview-label {
-      display: block; font-size: 14px; font-weight: 500;
-      color: var(--ff-text); margin-bottom: 8px;
-    }
-
-    .preview-upload {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 24px;
-      border: 2px dashed var(--ff-border); border-radius: 8px;
-    }
-
-    .preview-scale-interactive {
-      display: flex; align-items: center; gap: 12px;
-    }
-    .scale-btn {
-      width: 36px; height: 36px; display: flex; align-items: center;
-      justify-content: center; border: 1.5px solid var(--ff-border);
-      border-radius: 8px; font-size: 13px; font-weight: 500;
-      color: var(--ff-text-secondary); background: white;
-      cursor: pointer; transition: all 150ms;
-    }
-    .scale-btn:hover { border-color: #93c5fd; color: var(--ff-primary); background: #eff6ff; }
-    .scale-btn--active {
-      background: var(--ff-primary) !important; color: white !important;
-      border-color: var(--ff-primary) !important;
-    }
-
-    .preview-statement {
-      display: flex; align-items: flex-start; padding: 12px 16px;
-      background: #eff6ff; border-radius: 8px;
-    }
-
-    .preview-nav {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 24px 24px; border-top: 1px solid var(--ff-border); margin-top: 16px;
-    }
-  `],
 })
 export class BuilderPreviewDialogComponent {
   readonly store = inject(BuilderStore);
@@ -347,9 +293,11 @@ export class BuilderPreviewDialogComponent {
 
   private evaluateRule(rule: { questionId: string; operator: string; value: any }): boolean {
     if (!rule.questionId) return true;
-
+    
     const actual = this.answers()[rule.questionId];
     const expected = rule.value;
+
+    console.log("actual vs expected", actual, expected, rule.operator);
 
     switch (rule.operator) {
       case 'equals':
