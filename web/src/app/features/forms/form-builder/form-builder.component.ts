@@ -56,7 +56,6 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
                 <span>· v{{ form()!.currentVersion }}</span>
               }
 
-              <!-- ✅ Auto-save indicator -->
               @if (store.saving()) {
                 <span class="text-blue-500 flex items-center gap-1">
                   <i class="pi pi-spin pi-spinner text-[10px]"></i> Salvando...
@@ -75,7 +74,6 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
         </div>
 
         <div class="flex items-center gap-2">
-          <!-- ✅ Botão salvar manual -->
           <button
             pButton icon="pi pi-save" severity="secondary" [text]="true" size="small"
             pTooltip="Salvar rascunho (Ctrl+S)" tooltipPosition="bottom"
