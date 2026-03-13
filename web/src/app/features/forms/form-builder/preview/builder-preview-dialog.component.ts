@@ -297,8 +297,6 @@ export class BuilderPreviewDialogComponent {
     const actual = this.answers()[rule.questionId];
     const expected = rule.value;
 
-    console.log("actual vs expected", actual, expected, rule.operator);
-
     switch (rule.operator) {
       case 'equals':
         return String(actual ?? '') === String(expected ?? '');
