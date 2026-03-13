@@ -37,6 +37,7 @@ export interface BuilderQuestion {
   matrixConfig: BuilderMatrixConfig | null;
   ratingConfig: BuilderRatingConfig | null;
   scaleConfig: BuilderScaleConfig | null;
+  numberConfig: BuilderNumberConfig | null;
 }
 
 export interface BuilderOption {
@@ -85,6 +86,10 @@ export interface BuilderScaleConfig {
   max: number;
   minLabel: string;
   maxLabel: string;
+}
+
+export interface BuilderNumberConfig {
+  documentType: 'none' | 'cpf' | 'cnpj';
 }
 
 // ── Schema (for publish) ──
@@ -139,6 +144,7 @@ export function createQuestion(type: QuestionType): BuilderQuestion {
     matrixConfig: null,
     ratingConfig: null,
     scaleConfig: null,
+    numberConfig: null,
   };
 
   // Defaults por tipo
@@ -153,6 +159,9 @@ export function createQuestion(type: QuestionType): BuilderQuestion {
   }
   if (type === 'scale') {
     base.scaleConfig = { min: 1, max: 10, minLabel: 'Discordo', maxLabel: 'Concordo' };
+  }
+  if (type === 'number') {
+    base.numberConfig = { documentType: 'none' };
   }
 
   return base;

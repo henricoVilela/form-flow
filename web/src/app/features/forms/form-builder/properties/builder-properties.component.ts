@@ -203,26 +203,43 @@ import { BuilderQuestion, QUESTION_TYPES } from '../builder.models';
           <!-- ── VALIDATIONS (number) ── -->
           @if (q.type === 'number') {
             <div class="field">
-              <label class="field-label">Limites numéricos</label>
-              <div class="field-grid">
-                <div>
-                  <label class="field-label-sm">Mínimo</label>
-                  <p-inputNumber
-                    [ngModel]="q.validations.min ?? null"
-                    (ngModelChange)="updateValidation('min', $event)"
-                    [showButtons]="true" size="small" styleClass="w-full"
-                  />
-                </div>
-                <div>
-                  <label class="field-label-sm">Máximo</label>
-                  <p-inputNumber
-                    [ngModel]="q.validations.max ?? null"
-                    (ngModelChange)="updateValidation('max', $event)"
-                    [showButtons]="true" size="small" styleClass="w-full"
-                  />
+              <label class="field-label">Tipo de Entrada</label>
+              <p-select
+                [ngModel]="q.numberConfig?.documentType ?? 'none'"
+                (ngModelChange)="updateNumberDocType($event)"
+                [options]="[
+                  { label: 'Número', value: 'none' },
+                  { label: 'CPF', value: 'cpf' },
+                  { label: 'CNPJ', value: 'cnpj' }
+                ]"
+                optionLabel="label" optionValue="value"
+                styleClass="w-full"
+              />
+            </div>
+
+            @if ((q.numberConfig?.documentType ?? 'none') === 'none') {
+              <div class="field">
+                <label class="field-label">Limites numéricos</label>
+                <div class="field-grid">
+                  <div>
+                    <label class="field-label-sm">Mínimo</label>
+                    <p-inputNumber
+                      [ngModel]="q.validations.min ?? null"
+                      (ngModelChange)="updateValidation('min', $event)"
+                      [showButtons]="true" size="small" styleClass="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label class="field-label-sm">Máximo</label>
+                    <p-inputNumber
+                      [ngModel]="q.validations.max ?? null"
+                      (ngModelChange)="updateValidation('max', $event)"
+                      [showButtons]="true" size="small" styleClass="w-full"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            }
           }
 
           <!-- ── RATING config ── -->
@@ -513,6 +530,10 @@ export class BuilderPropertiesComponent {
     } else {
       this.update({ conditions: { ...q.conditions, rules } });
     }
+  }
+
+  updateNumberDocType(documentType: 'none' | 'cpf' | 'cnpj'): void {
+    this.update({ numberConfig: { documentType } });
   }
 
   updateRatingMax(max: number): void {

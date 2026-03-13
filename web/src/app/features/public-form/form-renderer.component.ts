@@ -39,6 +39,7 @@ interface Question {
   conditions: { operator: 'AND' | 'OR'; rules: ConditionRule[] } | null;
   ratingConfig: { max: number; icon: string } | null;
   scaleConfig: { min: number; max: number; minLabel: string; maxLabel: string } | null;
+  numberConfig: { documentType: 'none' | 'cpf' | 'cnpj' } | null;
 }
 
 interface ConditionRule {
@@ -163,8 +164,16 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
                              [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
                     }
                     @case ('number') {
-                      <p-inputNumber [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)"
-                                     [placeholder]="q.placeholder || ''" styleClass="w-full" />
+                      @if (q.numberConfig?.documentType === 'cpf') {
+                        <p-inputmask mask="999.999.999-99" [placeholder]="q.placeholder || '000.000.000-00'" styleClass="w-full"
+                               [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
+                      } @else if (q.numberConfig?.documentType === 'cnpj') {
+                        <p-inputmask mask="99.999.999/9999-99" [placeholder]="q.placeholder || '00.000.000/0000-00'" styleClass="w-full"
+                               [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
+                      } @else {
+                        <p-inputNumber [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)"
+                                       [placeholder]="q.placeholder || ''" styleClass="w-full" />
+                      }
                     }
                     @case ('date') {
                       <p-datepicker [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)"
@@ -453,9 +462,11 @@ export class FormRendererComponent implements OnInit {
     if (q.type === 'phone' && !/^[+]?[0-9\s\-().]{7,20}$/.test(str)) return 'Telefone inválido';
     if (q.type === 'url' && !/^https?:\/\/.+/.test(str)) return 'URL inválida';
     if (q.type === 'number') {
-      if (isNaN(Number(val))) return 'Valor numérico inválido';
-      if (v.min !== undefined && Number(val) < v.min) return `Mínimo: ${v.min}`;
-      if (v.max !== undefined && Number(val) > v.max) return `Máximo: ${v.max}`;
+      if ((q.numberConfig?.documentType ?? 'none') === 'none') {
+        if (isNaN(Number(val))) return 'Valor numérico inválido';
+        if (v.min !== undefined && Number(val) < v.min) return `Mínimo: ${v.min}`;
+        if (v.max !== undefined && Number(val) > v.max) return `Máximo: ${v.max}`;
+      }
     }
     if (q.type === 'multi_choice' && Array.isArray(val)) {
       if (v.minSelections && val.length < v.minSelections) return `Selecione no mínimo ${v.minSelections}`;

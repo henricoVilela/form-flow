@@ -73,6 +73,7 @@ export class BuilderStore {
         matrixConfig: q.matrixConfig ?? null,
         ratingConfig: q.ratingConfig ?? null,
         scaleConfig: q.scaleConfig ?? null,
+        numberConfig: q.numberConfig ?? null,
       })),
     }));
 

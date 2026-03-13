@@ -123,9 +123,17 @@ import { BuilderQuestion } from '../builder.models';
                                [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
                       }
                       @case ('number') {
-                        <p-inputNumber [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)"
-                                       [placeholder]="q.placeholder || '0'" styleClass="w-full"
-                                       [min]="q.validations.min ?? undefined" [max]="q.validations.max ?? undefined" />
+                        @if (q.numberConfig?.documentType === 'cpf') {
+                          <p-inputmask mask="999.999.999-99" [placeholder]="q.placeholder || '000.000.000-00'" styleClass="w-full"
+                                 [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
+                        } @else if (q.numberConfig?.documentType === 'cnpj') {
+                          <p-inputmask mask="99.999.999/9999-99" [placeholder]="q.placeholder || '00.000.000/0000-00'" styleClass="w-full"
+                                 [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
+                        } @else {
+                          <p-inputNumber [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)"
+                                         [placeholder]="q.placeholder || '0'" styleClass="w-full"
+                                         [min]="q.validations.min ?? undefined" [max]="q.validations.max ?? undefined" />
+                        }
                       }
                       @case ('date') {
                         <p-datepicker [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)"
@@ -378,6 +386,7 @@ export class BuilderPreviewDialogComponent {
 
     // Number validations
     if (q.type === 'number') {
+      if ((q.numberConfig?.documentType ?? 'none') !== 'none') return null;
       const num = Number(value);
       if (isNaN(num)) return 'Valor deve ser numérico';
       if (v.min !== undefined && num < v.min) return `Valor mínimo: ${v.min}`;
