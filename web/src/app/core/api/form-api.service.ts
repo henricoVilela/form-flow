@@ -3,8 +3,6 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env';
 
-// ── Response interfaces ──
-
 export interface FormResponse {
   id: string;
   title: string;
@@ -43,7 +41,32 @@ export interface PublishResponse {
   publishedAt: string;
 }
 
-// ── Request interfaces ──
+export interface PublicFormResponse {
+  formId: string;
+  formVersionId: string;
+  title: string;
+  description: string | null;
+  layout: 'MULTI_STEP' | 'SINGLE_PAGE';
+  version: number;
+  schema: any;
+  welcomeMessage: string | null;
+  thankYouMessage: string | null;
+}
+
+export interface SubmitResponseRequest {
+  formVersionId: string;
+  payload: Record<string, any>;
+  metadata?: Record<string, any>;
+}
+
+export interface SubmitResponseResponse {
+  id: string;
+  formId: string;
+  formVersionId: string;
+  payload: any;
+  metadata: any;
+  submittedAt: string;
+}
 
 export interface CreateFormRequest {
   title: string;
@@ -58,22 +81,10 @@ export interface UpdateFormRequest {
   schema?: any;
 }
 
-/**
- * Service para comunicação com os endpoints de formulários.
- *
- * Endpoints cobertos:
- * - CRUD de formulários
- * - Publicação (com schema JSON)
- * - Versionamento
- * - Duplicação
- * - Formulário público (sem auth)
- */
 @Injectable({ providedIn: 'root' })
 export class FormApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/forms`;
-
-  // ── CRUD ──
 
   create(request: CreateFormRequest): Observable<FormResponse> {
     return this.http.post<FormResponse>(this.baseUrl, request);
@@ -99,13 +110,9 @@ export class FormApiService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
-  // ── Publish ──
-
   publish(id: string, schema: any): Observable<PublishResponse> {
     return this.http.post<PublishResponse>(`${this.baseUrl}/${id}/publish`, { schema });
   }
-
-  // ── Versions ──
 
   listVersions(id: string): Observable<FormVersionResponse[]> {
     return this.http.get<FormVersionResponse[]>(`${this.baseUrl}/${id}/versions`);
@@ -115,15 +122,15 @@ export class FormApiService {
     return this.http.get<FormVersionResponse>(`${this.baseUrl}/${id}/versions/${version}`);
   }
 
-  // ── Duplicate ──
-
   duplicate(id: string): Observable<FormResponse> {
     return this.http.post<FormResponse>(`${this.baseUrl}/${id}/duplicate`, {});
   }
 
-  // ── Public (sem auth) ──
+  getPublicForm(formId: string): Observable<PublicFormResponse> {
+    return this.http.get<PublicFormResponse>(`${environment.apiUrl}/public/forms/${formId}`);
+  }
 
-  getPublicForm(formId: string): Observable<any> {
-    return this.http.get(`${environment.apiUrl}/public/forms/${formId}`);
+  submitResponse(formId: string, request: SubmitResponseRequest): Observable<SubmitResponseResponse> {
+    return this.http.post<SubmitResponseResponse>(`${this.baseUrl}/${formId}/responses`, request);
   }
 }

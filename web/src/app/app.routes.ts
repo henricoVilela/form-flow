@@ -14,6 +14,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/register/register.component').then(m => m.RegisterComponent),
   },
   {
+    path: 'f/:formId',
+    loadComponent: () => import('./features/public-form/form-renderer.component').then(m => m.FormRendererComponent),
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadComponent: () => import('./core/layout/main-layout.component').then(m => m.MainLayoutComponent),
@@ -33,7 +37,5 @@ export const routes: Routes = [
       },
     ],
   },
-
   { path: '**', redirectTo: '' },
-  
 ];
