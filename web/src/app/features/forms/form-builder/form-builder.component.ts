@@ -207,8 +207,14 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
               this.store.loadSchema(version.schema);
               this.loading.set(false);
             },
-            error: () => { this.store.loadSchema(null); this.loading.set(false); },
+            error: () => { 
+              this.store.loadSchema(null);
+              this.loading.set(false);
+            },
           });
+        } else if (form.draftSchema) {
+          this.store.loadSchema(form.draftSchema);
+          this.loading.set(false);
         } else {
           this.store.loadSchema(null);
           this.loading.set(false);

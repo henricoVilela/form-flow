@@ -10,6 +10,7 @@ export interface FormResponse {
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   layout: 'MULTI_STEP' | 'SINGLE_PAGE';
   currentVersion: number | null;
+  draftSchema: any;
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;

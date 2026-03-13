@@ -6,6 +6,7 @@ CREATE TABLE forms (
     status          VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
     layout          VARCHAR(20) NOT NULL DEFAULT 'MULTI_STEP',
     published_at    TIMESTAMP,
+    draft_schema    JSONB,
     created_at      TIMESTAMP NOT NULL DEFAULT now(),
     updated_at      TIMESTAMP NOT NULL DEFAULT now(),
 
@@ -16,3 +17,4 @@ CREATE TABLE forms (
 CREATE INDEX idx_forms_user_id    ON forms(user_id);
 CREATE INDEX idx_forms_status     ON forms(status);
 CREATE INDEX idx_forms_created_at ON forms(created_at);
+CREATE INDEX idx_forms_draft_schema  ON forms USING GIN(draft_schema);

@@ -62,6 +62,9 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
             return throwError(() => refreshError);
           }),
         );
+      } else if (error.status === 403 && !isRefreshing) {
+        isRefreshing = false;
+        authService.logout();
       }
 
       return throwError(() => error);

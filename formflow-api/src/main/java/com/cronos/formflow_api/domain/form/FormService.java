@@ -42,6 +42,7 @@ public class FormService {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .layout(request.getLayout() != null ? request.getLayout() : FormLayout.MULTI_STEP)
+                .draftSchema(null)
                 .build();
         return FormResponse.from(formRepository.save(form), null);
     }
@@ -69,10 +70,15 @@ public class FormService {
         if (request.getLayout() != null) form.setLayout(request.getLayout());
         
         if (request.getSchema() != null && !form.getVersions().isEmpty()) {
+        	
+        	form.setDraftSchema(null);
+        	
         	var lastVersion = form.getVersions().getLast();
         	lastVersion.setSchema(request.getSchema());
         	
         	formVersionRepository.save(lastVersion);
+        } else if (form.getVersions().isEmpty()) {
+        	form.setDraftSchema(request.getSchema());
         }
         
         return FormResponse.from(formRepository.save(form), null);

@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.Type;
+
+import com.cronos.formflow_api.config.JsonNodeType;
 import com.cronos.formflow_api.domain.user.User;
 
 import jakarta.persistence.CascadeType;
@@ -28,6 +31,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import tools.jackson.databind.JsonNode;
 
 @Entity
 @Table(name = "forms")
@@ -67,6 +71,10 @@ public class Form {
     
     @Column
     private String thankYouMessage;
+
+    @Type(JsonNodeType.class)
+    @Column(columnDefinition = "jsonb")
+    private JsonNode draftSchema;
 
     @Column(name = "published_at")
     private LocalDateTime publishedAt;

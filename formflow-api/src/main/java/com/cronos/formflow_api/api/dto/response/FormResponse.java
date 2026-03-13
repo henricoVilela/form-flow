@@ -10,6 +10,7 @@ import com.cronos.formflow_api.domain.form.FormVersion;
 
 import lombok.Builder;
 import lombok.Data;
+import tools.jackson.databind.JsonNode;
 
 @Data
 @Builder
@@ -23,6 +24,7 @@ public class FormResponse {
     private LocalDateTime publishedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private JsonNode draftSchema;
 
     public static FormResponse from(Form form, FormVersion version) {
         return FormResponse.builder()
@@ -32,6 +34,7 @@ public class FormResponse {
                 .status(form.getStatus())
                 .layout(form.getLayout())
                 .currentVersion(version != null ? version.getVersion() : null)
+                .draftSchema(form.getDraftSchema())
                 .publishedAt(form.getPublishedAt())
                 .createdAt(form.getCreatedAt())
                 .updatedAt(form.getUpdatedAt())
