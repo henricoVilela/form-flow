@@ -10,6 +10,7 @@ import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RatingModule } from 'primeng/rating';
+import { InputMaskModule } from 'primeng/inputmask';
 import { MessageModule } from 'primeng/message';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -54,7 +55,7 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
     CommonModule, FormsModule,
     ButtonModule, InputTextModule, TextareaModule, RadioButtonModule,
     CheckboxModule, SelectModule, InputNumberModule, DatePickerModule,
-    RatingModule, MessageModule, ProgressBarModule, SkeletonModule, ToastModule,
+    RatingModule, InputMaskModule, MessageModule, ProgressBarModule, SkeletonModule, ToastModule,
   ],
   providers: [MessageService],
   template: `
@@ -154,7 +155,7 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
                              [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
                     }
                     @case ('phone') {
-                      <input pInputText type="tel" class="w-full" [placeholder]="q.placeholder || '(00) 00000-0000'"
+                      <p-inputmask mask="(99) 99999-9999" [placeholder]="q.placeholder || '(00) 00000-0000'" styleClass="w-full"
                              [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
                     }
                     @case ('url') {
@@ -293,10 +294,10 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
       <div class="flex items-center gap-1.5 mt-6 opacity-70">
         <span class="text-xs text-surface-400">Criado com</span>
         <div class="flex items-center gap-1.5">
-          <div class="w-4 h-4 bg-primary-600 rounded flex items-center justify-center">
-            <i class="pi pi-bolt text-white" style="font-size: 8px"></i>
+          <div class="w-6 h-6 bg-primary-600 rounded flex items-center justify-center">
+            <i class="pi pi-bolt text-white"></i>
           </div>
-          <span class="text-xs font-semibold text-surface-500">FormFlow</span>
+          <span class="text-sm font-semibold text-surface-500">FormFlow</span>
         </div>
       </div>
     </div>

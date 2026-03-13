@@ -11,7 +11,7 @@ CREATE TABLE questions (
     CONSTRAINT chk_questions_type CHECK (type IN (
         'short_text', 'long_text', 'email', 'phone', 'url',
         'number', 'single_choice', 'multi_choice', 'dropdown',
-        'date', 'file_upload', 'statement'
+        'date', 'file_upload', 'statement', 'scale'
     ))
 );
 

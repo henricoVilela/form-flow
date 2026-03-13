@@ -11,6 +11,7 @@ import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RatingModule } from 'primeng/rating';
+import { InputMaskModule } from 'primeng/inputmask';
 import { SliderModule } from 'primeng/slider';
 import { MessageModule } from 'primeng/message';
 import { StepperModule } from 'primeng/stepper';
@@ -24,7 +25,7 @@ import { BuilderQuestion } from '../builder.models';
     CommonModule, FormsModule, DialogModule, ButtonModule,
     InputTextModule, TextareaModule, RadioButtonModule, CheckboxModule,
     SelectModule, InputNumberModule, DatePickerModule,
-    RatingModule, SliderModule, MessageModule, StepperModule,
+    RatingModule, SliderModule, InputMaskModule, MessageModule, StepperModule,
   ],
   template: `
     <p-dialog
@@ -114,7 +115,7 @@ import { BuilderQuestion } from '../builder.models';
                                [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
                       }
                       @case ('phone') {
-                        <input pInputText type="tel" class="w-full" [placeholder]="q.placeholder || '(00) 00000-0000'"
+                        <p-inputmask mask="(99) 99999-9999" [placeholder]="q.placeholder || '(00) 00000-0000'" styleClass="w-full"
                                [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
                       }
                       @case ('url') {
