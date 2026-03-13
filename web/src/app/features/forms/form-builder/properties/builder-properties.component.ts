@@ -11,7 +11,7 @@ import { AccordionModule } from 'primeng/accordion';
 import { SelectModule } from 'primeng/select';
 
 import { BuilderStore } from '../builder.store';
-import { BuilderQuestion, BuilderOption, QUESTION_TYPES } from '../builder.models';
+import { BuilderQuestion, QUESTION_TYPES } from '../builder.models';
 
 @Component({
   selector: 'app-builder-properties',

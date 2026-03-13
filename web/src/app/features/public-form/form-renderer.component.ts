@@ -172,18 +172,10 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
                     @case ('single_choice') {
                       <div class="flex flex-col gap-3">
                         @for (opt of q.options; track opt.id) {
-                          <div class="flex items-center gap-3 px-4 py-3 border-[1.5px] rounded-[10px] cursor-pointer transition-all duration-150 text-sm hover:bg-surface-50"
-                               [ngClass]="answers()[q.id] === opt.value
-                                 ? 'border-primary-600 bg-primary-50 text-surface-900'
-                                 : 'border-surface-200 text-surface-500 hover:border-primary-300'"
-                               (click)="setAnswer(q.id, opt.value)">
-                            <span class="w-5 h-5 border-2 rounded-full shrink-0 transition-all duration-150 flex items-center justify-center"
-                                  [ngClass]="answers()[q.id] === opt.value ? 'border-primary-600' : 'border-surface-200'">
-                              @if (answers()[q.id] === opt.value) {
-                                <span class="w-2.5 h-2.5 bg-primary-600 rounded-full"></span>
-                              }
-                            </span>
-                            <span>{{ opt.label }}</span>
+                          <div class="flex items-center gap-2">
+                            <p-radiobutton [name]="q.id" [value]="opt.value"
+                                           [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
+                            <label class="text-sm text-surface-700 cursor-pointer">{{ opt.label }}</label>
                           </div>
                         }
                       </div>
@@ -191,16 +183,11 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
                     @case ('multi_choice') {
                       <div class="flex flex-col gap-3">
                         @for (opt of q.options; track opt.id) {
-                          <div class="flex items-center gap-3 px-4 py-3 border-[1.5px] rounded-[10px] cursor-pointer transition-all duration-150 text-sm hover:bg-surface-50"
-                               [ngClass]="isSelected(q.id, opt.value)
-                                 ? 'border-primary-600 bg-primary-50 text-surface-900'
-                                 : 'border-surface-200 text-surface-500 hover:border-primary-300'"
-                               (click)="toggleMulti(q.id, opt.value)">
-                            <span class="w-5 h-5 border-2 rounded-[5px] shrink-0 transition-all duration-150 flex items-center justify-center"
-                                  [ngClass]="isSelected(q.id, opt.value) ? 'border-primary-600 bg-primary-600 text-white' : 'border-surface-200'">
-                              @if (isSelected(q.id, opt.value)) { <i class="pi pi-check text-[10px]"></i> }
-                            </span>
-                            <span>{{ opt.label }}</span>
+                          <div class="flex items-center gap-2">
+                            <p-checkbox [value]="opt.value"
+                                        [ngModel]="answers()[q.id] || []"
+                                        (ngModelChange)="setAnswer(q.id, $event)" />
+                            <label class="text-sm text-surface-700 cursor-pointer">{{ opt.label }}</label>
                           </div>
                         }
                       </div>
