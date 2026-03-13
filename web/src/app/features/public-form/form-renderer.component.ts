@@ -60,10 +60,11 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
   template: `
     <p-toast position="top-center" />
 
-    <div class="renderer-page">
+    <div class="min-h-screen flex flex-col items-center px-4 pt-10 pb-[60px] bg-gradient-to-b from-surface-100 to-surface-200 max-[480px]:px-2 max-[480px]:pt-4 max-[480px]:pb-10">
+
       <!-- ── LOADING ── -->
       @if (state() === 'loading') {
-        <div class="renderer-card">
+        <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up max-[480px]:p-5 max-[480px]:rounded-xl">
           <p-skeleton height="32px" width="60%" styleClass="mb-4" />
           <p-skeleton height="18px" width="40%" styleClass="mb-8" />
           <p-skeleton height="48px" styleClass="mb-4" />
@@ -74,8 +75,8 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
 
       <!-- ── ERROR ── -->
       @if (state() === 'error') {
-        <div class="renderer-card text-center py-16">
-          <div class="error-icon">
+        <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up text-center py-16 max-[480px]:p-5 max-[480px]:rounded-xl">
+          <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-red-50 flex items-center justify-center">
             <i class="pi pi-exclamation-triangle text-2xl text-red-400"></i>
           </div>
           <h2 class="text-xl font-display font-bold text-surface-900 mb-2">Formulário não encontrado</h2>
@@ -85,8 +86,8 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
 
       <!-- ── WELCOME ── -->
       @if (state() === 'welcome' && formData()) {
-        <div class="renderer-card text-center">
-          <div class="welcome-icon">
+        <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up text-center max-[480px]:p-5 max-[480px]:rounded-xl">
+          <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-primary-50 flex items-center justify-center">
             <i class="pi pi-file-edit text-2xl text-primary-500"></i>
           </div>
           <h1 class="text-2xl font-display font-bold text-surface-900 mb-2">{{ formData()!.title }}</h1>
@@ -102,8 +103,8 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
 
       <!-- ── FORM ── -->
       @if (state() === 'form' && formData() && currentSection()) {
-        <div class="renderer-card">
-          <div class="renderer-header">
+        <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up max-[480px]:p-5 max-[480px]:rounded-xl">
+          <div class="mb-2">
             <h1 class="text-xl font-display font-bold text-surface-900">{{ formData()!.title }}</h1>
             @if (sections().length > 1) {
               <p class="text-xs text-surface-400 mt-1">Seção {{ currentStep() + 1 }} de {{ sections().length }}</p>
@@ -111,14 +112,14 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
           </div>
 
           @if (sections().length > 1) {
-            <div class="renderer-progress">
-              <div class="renderer-progress-fill" [style.width.%]="progressPercent()"></div>
+            <div class="h-1 bg-surface-200 rounded-sm mb-6">
+              <div class="h-full bg-primary-600 rounded-sm transition-[width] duration-[350ms]" [style.width.%]="progressPercent()"></div>
             </div>
           }
 
-          <div class="renderer-section">
+          <div>
             @if (currentSection()!.title && sections().length > 1) {
-              <div class="section-label">
+              <div class="bg-surface-50 rounded-xl px-[18px] py-[14px] mb-6">
                 <h2 class="text-base font-semibold text-surface-800">{{ currentSection()!.title }}</h2>
                 @if (currentSection()!.description) {
                   <p class="text-sm text-surface-500 mt-0.5">{{ currentSection()!.description }}</p>
@@ -128,9 +129,9 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
 
             @for (q of currentSection()!.questions; track q.id) {
               @if (isVisible(q)) {
-                <div class="renderer-field">
+                <div class="mb-6">
                   @if (q.type !== 'statement') {
-                    <label class="renderer-label">
+                    <label class="block text-[15px] font-medium text-surface-900 mb-2 leading-snug">
                       {{ q.label || 'Pergunta sem título' }}
                       @if (q.required) { <span class="text-red-500">*</span> }
                     </label>
@@ -171,9 +172,17 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
                     @case ('single_choice') {
                       <div class="flex flex-col gap-3">
                         @for (opt of q.options; track opt.id) {
-                          <div class="renderer-option" [class.renderer-option--selected]="answers()[q.id] === opt.value"
+                          <div class="flex items-center gap-3 px-4 py-3 border-[1.5px] rounded-[10px] cursor-pointer transition-all duration-150 text-sm hover:bg-surface-50"
+                               [ngClass]="answers()[q.id] === opt.value
+                                 ? 'border-primary-600 bg-primary-50 text-surface-900'
+                                 : 'border-surface-200 text-surface-500 hover:border-primary-300'"
                                (click)="setAnswer(q.id, opt.value)">
-                            <span class="renderer-radio" [class.renderer-radio--active]="answers()[q.id] === opt.value"></span>
+                            <span class="w-5 h-5 border-2 rounded-full shrink-0 transition-all duration-150 flex items-center justify-center"
+                                  [ngClass]="answers()[q.id] === opt.value ? 'border-primary-600' : 'border-surface-200'">
+                              @if (answers()[q.id] === opt.value) {
+                                <span class="w-2.5 h-2.5 bg-primary-600 rounded-full"></span>
+                              }
+                            </span>
                             <span>{{ opt.label }}</span>
                           </div>
                         }
@@ -182,9 +191,13 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
                     @case ('multi_choice') {
                       <div class="flex flex-col gap-3">
                         @for (opt of q.options; track opt.id) {
-                          <div class="renderer-option" [class.renderer-option--selected]="isSelected(q.id, opt.value)"
+                          <div class="flex items-center gap-3 px-4 py-3 border-[1.5px] rounded-[10px] cursor-pointer transition-all duration-150 text-sm hover:bg-surface-50"
+                               [ngClass]="isSelected(q.id, opt.value)
+                                 ? 'border-primary-600 bg-primary-50 text-surface-900'
+                                 : 'border-surface-200 text-surface-500 hover:border-primary-300'"
                                (click)="toggleMulti(q.id, opt.value)">
-                            <span class="renderer-checkbox" [class.renderer-checkbox--active]="isSelected(q.id, opt.value)">
+                            <span class="w-5 h-5 border-2 rounded-[5px] shrink-0 transition-all duration-150 flex items-center justify-center"
+                                  [ngClass]="isSelected(q.id, opt.value) ? 'border-primary-600 bg-primary-600 text-white' : 'border-surface-200'">
                               @if (isSelected(q.id, opt.value)) { <i class="pi pi-check text-[10px]"></i> }
                             </span>
                             <span>{{ opt.label }}</span>
@@ -198,9 +211,9 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
                                 placeholder="Selecione uma opção" styleClass="w-full" />
                     }
                     @case ('file_upload') {
-                      <div class="renderer-upload"
+                      <div class="flex flex-col items-center justify-center p-8 border-2 border-dashed border-surface-200 rounded-xl cursor-pointer transition-all duration-200 hover:border-primary-300 hover:bg-surface-50"
                         (click)="fileInput.click()"
-                        (dragover)="$event.preventDefault()" 
+                        (dragover)="$event.preventDefault()"
                         (drop)="onFileDrop($event, q.id)">
                         <input #fileInput type="file" hidden [multiple]="true" (change)="onFileSelect($event, q.id)" />
                         <i class="pi pi-cloud-upload text-2xl text-surface-300 mb-2"></i>
@@ -212,10 +225,10 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
                       @if (hasFilesNames(q.id)) {
                         <div class="mt-2 space-y-1">
                           @for (fname of fileNames()[q.id]; track fname; let fi = $index) {
-                            <div class="file-item">
+                            <div class="flex items-center gap-2 text-[13px] text-surface-500 bg-surface-50 rounded-lg px-3 py-2">
                               <i class="pi pi-file text-xs text-surface-400"></i>
                               <span class="flex-1 truncate">{{ fname }}</span>
-                              <button class="file-remove" (click)="removeFile(q.id, fi)">
+                              <button class="bg-transparent border-0 p-0 text-surface-400 cursor-pointer transition-colors duration-150 hover:text-red-500 leading-none" (click)="removeFile(q.id, fi)">
                                 <i class="pi pi-times text-xs"></i>
                               </button>
                             </div>
@@ -227,11 +240,14 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
                       <p-rating [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" [stars]="q.ratingConfig?.max ?? 5"/>
                     }
                     @case ('scale') {
-                      <div class="renderer-scale">
+                      <div class="flex items-center gap-3">
                         <span class="text-xs text-surface-500 shrink-0">{{ q.scaleConfig?.minLabel }}</span>
                         <div class="flex gap-1.5 flex-1 justify-center flex-wrap">
                           @for (n of scaleRange(q.scaleConfig?.min ?? 1, q.scaleConfig?.max ?? 10); track n) {
-                            <button class="scale-btn" [class.scale-btn--active]="answers()[q.id] === n"
+                            <button class="w-10 h-10 flex items-center justify-center border-[1.5px] rounded-[10px] text-sm font-medium cursor-pointer transition-all duration-150 hover:border-primary-300 hover:text-primary-600 hover:bg-primary-50"
+                                    [ngClass]="answers()[q.id] === n
+                                      ? 'bg-primary-600 text-white border-primary-600 scale-[1.08]'
+                                      : 'bg-white border-surface-200 text-surface-500'"
                                     (click)="setAnswer(q.id, n)">{{ n }}</button>
                           }
                         </div>
@@ -239,7 +255,7 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
                       </div>
                     }
                     @case ('statement') {
-                      <div class="renderer-statement">
+                      <div class="flex gap-2.5 px-[18px] py-[14px] bg-primary-50 rounded-[10px]">
                         <i class="pi pi-info-circle text-primary-400 shrink-0 mt-0.5"></i>
                         <span class="text-sm text-surface-600">{{ q.label }}</span>
                       </div>
@@ -255,7 +271,7 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
           </div>
 
           <!-- Nav -->
-          <div class="renderer-nav">
+          <div class="flex items-center justify-between pt-6 border-t border-surface-200 mt-2">
             @if (currentStep() > 0) {
               <button pButton label="Anterior" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (click)="prevStep()"></button>
             } @else {
@@ -272,8 +288,8 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
 
       <!-- ── SUCCESS ── -->
       @if (state() === 'success') {
-        <div class="renderer-card text-center">
-          <div class="success-icon">
+        <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up text-center max-[480px]:p-5 max-[480px]:rounded-xl">
+          <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-emerald-50 flex items-center justify-center">
             <i class="pi pi-check-circle text-3xl text-emerald-500"></i>
           </div>
           <h2 class="text-2xl font-display font-bold text-surface-900 mb-2">Resposta enviada!</h2>
@@ -287,7 +303,7 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
       }
 
       <!-- Branding -->
-      <div class="renderer-footer">
+      <div class="flex items-center gap-1.5 mt-6 opacity-70">
         <span class="text-xs text-surface-400">Criado com</span>
         <div class="flex items-center gap-1.5">
           <div class="w-4 h-4 bg-primary-600 rounded flex items-center justify-center">
@@ -298,101 +314,7 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
       </div>
     </div>
   `,
-  styles: [`
-    .renderer-page {
-      min-height: 100vh; display: flex; flex-direction: column;
-      align-items: center; padding: 40px 16px 60px;
-      background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
-    }
-    .renderer-card {
-      width: 100%; max-width: 640px; background: white;
-      border-radius: 16px; padding: 32px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
-      animation: cardIn 0.35s ease-out;
-    }
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .error-icon, .welcome-icon, .success-icon {
-      width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 16px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .error-icon { background: #fef2f2; }
-    .welcome-icon { background: #eff6ff; }
-    .success-icon { background: #ecfdf5; }
-
-    .renderer-header { margin-bottom: 8px; }
-    .renderer-progress { height: 4px; background: #e2e8f0; border-radius: 2px; margin-bottom: 24px; }
-    .renderer-progress-fill { height: 100%; background: var(--ff-primary); border-radius: 2px; transition: width 350ms ease; }
-
-    .section-label { background: #f8fafc; border-radius: 10px; padding: 14px 18px; margin-bottom: 24px; }
-    .renderer-field { margin-bottom: 24px; }
-    .renderer-label { display: block; font-size: 15px; font-weight: 500; color: var(--ff-text); margin-bottom: 8px; line-height: 1.4; }
-
-    .renderer-option {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 16px; border: 1.5px solid var(--ff-border);
-      border-radius: 10px; cursor: pointer; transition: all 150ms;
-      font-size: 14px; color: var(--ff-text-secondary);
-    }
-    .renderer-option:hover { border-color: #93c5fd; background: #f8fafc; }
-    .renderer-option--selected { border-color: var(--ff-primary) !important; background: #eff6ff !important; color: var(--ff-text) !important; }
-
-    .renderer-radio {
-      width: 20px; height: 20px; border: 2px solid var(--ff-border);
-      border-radius: 50%; shrink: 0; transition: all 150ms;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .renderer-radio--active { border-color: var(--ff-primary); border-width: 6px; }
-
-    .renderer-checkbox {
-      width: 20px; height: 20px; border: 2px solid var(--ff-border);
-      border-radius: 5px; shrink: 0; transition: all 150ms;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .renderer-checkbox--active { border-color: var(--ff-primary); background: var(--ff-primary); color: white; }
-
-    .renderer-upload {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 32px;
-      border: 2px dashed var(--ff-border); border-radius: 12px;
-      cursor: pointer; transition: all 200ms;
-    }
-    .renderer-upload:hover { border-color: #93c5fd; background: #f8fafc; }
-
-    .file-item {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 13px; color: var(--ff-text-secondary);
-      background: #f8fafc; border-radius: 8px; padding: 8px 12px;
-    }
-    .file-remove { background: none; border: none; color: var(--ff-text-muted); cursor: pointer; transition: color 150ms; }
-    .file-remove:hover { color: #ef4444; }
-
-    .renderer-scale { display: flex; align-items: center; gap: 12px; }
-    .scale-btn {
-      width: 40px; height: 40px; display: flex; align-items: center;
-      justify-content: center; border: 1.5px solid var(--ff-border);
-      border-radius: 10px; font-size: 14px; font-weight: 500;
-      color: var(--ff-text-secondary); background: white;
-      cursor: pointer; transition: all 150ms;
-    }
-    .scale-btn:hover { border-color: #93c5fd; color: var(--ff-primary); background: #eff6ff; }
-    .scale-btn--active { background: var(--ff-primary) !important; color: white !important; border-color: var(--ff-primary) !important; transform: scale(1.08); }
-
-    .renderer-statement { display: flex; gap: 10px; padding: 14px 18px; background: #eff6ff; border-radius: 10px; }
-
-    .renderer-nav {
-      display: flex; align-items: center; justify-content: space-between;
-      padding-top: 24px; border-top: 1px solid var(--ff-border); margin-top: 8px;
-    }
-    .renderer-footer { display: flex; align-items: center; gap: 6px; margin-top: 24px; opacity: 0.7; }
-
-    @media (max-width: 480px) {
-      .renderer-page { padding: 16px 8px 40px; }
-      .renderer-card { padding: 24px 20px; border-radius: 12px; }
-    }
-  `],
+  styles: [],
 })
 export class FormRendererComponent implements OnInit {
   private readonly formApi = inject(FormApiService);
