@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpEventType, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, switchMap, tap } from 'rxjs';
+import { Observable, filter, switchMap } from 'rxjs';
 import { environment } from '@env';
 
 export interface PresignRequest {
@@ -68,6 +68,8 @@ export class UploadApiService {
     }).pipe(
       switchMap(presign =>
         this.uploadDirect(presign.presignedUrl, file).pipe(
+          // Aguarda somente o evento de resposta final (não os eventos de progresso)
+          filter(event => event.type === HttpEventType.Response),
           // Após upload concluído, confirma
           switchMap(() => this.confirm(presign.fileId)),
           // Retorna o fileId
