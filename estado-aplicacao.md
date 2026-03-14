@@ -92,7 +92,7 @@
 |---|---------|-----------|-------------|
 | ~~F1~~ | ~~**Tela de Respostas**~~ | ~~Tabela paginada com respostas do formulário. Filtros por data. Detalhe individual expandido ou página separada.~~ | ✅ **Concluído** |
 | ~~F2~~ | ~~**Export CSV**~~ | ~~Botão na tela de respostas que chama `GET /forms/{id}/responses/export/csv` e dispara download do arquivo.~~ | ✅ **Concluído** |
-| F3 | **Analytics Dashboard** | Gráficos com PrimeNG Charts (Chart.js). Timeline (line), distribuição de choices (bar/pie), numeric stats (KPIs), top words (bar horizontal). Consume `GET /forms/{id}/analytics`. | Alta |
+| ~~F3~~ | ~~**Analytics Dashboard**~~ | ~~Gráficos com PrimeNG Charts (Chart.js). Timeline (line), distribuição de choices (bar/pie), numeric stats (KPIs), top words (bar horizontal). Consume `GET /forms/{id}/analytics`.~~ | ✅ **Concluído** |
 
 ### Prioridade Média
 

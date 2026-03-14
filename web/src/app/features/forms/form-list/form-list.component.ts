@@ -392,6 +392,11 @@ export class FormListComponent implements OnInit {
           command: () => this.router.navigate(['/forms', form.id, 'responses']),
         },
         {
+          label: 'Analytics',
+          icon: 'pi pi-chart-bar',
+          command: () => this.router.navigate(['/forms', form.id, 'analytics']),
+        },
+        {
           label: 'Copiar link público',
           icon: 'pi pi-link',
           command: () => this.copyPublicLink(form),

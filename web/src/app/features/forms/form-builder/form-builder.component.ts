@@ -94,6 +94,12 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
               pTooltip="Ver respostas recebidas" tooltipPosition="bottom"
               (click)="goToResponses()"
             ></button>
+            <button
+              pButton label="Analytics" icon="pi pi-chart-bar"
+              severity="secondary" [outlined]="true" size="small"
+              pTooltip="Ver analytics" tooltipPosition="bottom"
+              (click)="goToAnalytics()"
+            ></button>
           }
           <button
             pButton label="Publicar" icon="pi pi-send" size="small"
@@ -315,6 +321,10 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
 
   goToResponses(): void {
     this.router.navigate(['/forms', this.id(), 'responses']);
+  }
+
+  goToAnalytics(): void {
+    this.router.navigate(['/forms', this.id(), 'analytics']);
   }
 
   formatTimeSince(date: Date): string {

@@ -44,15 +44,23 @@ import {
         </div>
       </div>
 
-      <button
-        pButton
-        label="Exportar CSV"
-        icon="pi pi-download"
-        severity="secondary"
-        [loading]="exporting()"
-        [disabled]="totalElements() === 0 || loadingForm()"
-        (click)="exportCsv()"
-      ></button>
+      <div class="flex items-center gap-2">
+        <button
+          pButton label="Analytics" icon="pi pi-chart-bar"
+          severity="secondary" [outlined]="true"
+          [disabled]="loadingForm()"
+          (click)="goToAnalytics()"
+        ></button>
+        <button
+          pButton
+          label="Exportar CSV"
+          icon="pi pi-download"
+          severity="secondary"
+          [loading]="exporting()"
+          [disabled]="totalElements() === 0 || loadingForm()"
+          (click)="exportCsv()"
+        ></button>
+      </div>
     </div>
 
     <!-- Filters bar -->
@@ -455,6 +463,10 @@ export class FormResponsesComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/forms']);
+  }
+
+  goToAnalytics(): void {
+    this.router.navigate(['/forms', this.formId(), 'analytics']);
   }
 
   goToPage(page: number): void {

@@ -85,6 +85,73 @@ export interface ResponseDetailResponse {
   submittedAt: string;
 }
 
+export interface AnalyticsSummary {
+  totalResponses: number;
+  responsesLast7Days: number;
+  responsesLast30Days: number;
+  firstResponseAt: string | null;
+  lastResponseAt: string | null;
+  averageCompletionTimeSeconds: number | null;
+}
+
+export interface ChoiceDistribution {
+  distribution: Record<string, number>;
+  totalSelections: number;
+}
+
+export interface NumericStats {
+  average: number;
+  min: number;
+  max: number;
+  median: number;
+  sum: number;
+  standardDeviation: number;
+  count: number;
+}
+
+export interface TextStats {
+  averageLength: number;
+  minLength: number;
+  maxLength: number;
+  totalAnswered: number;
+  topWords: { word: string; count: number }[];
+}
+
+export interface DateStats {
+  earliest: string;
+  latest: string;
+  count: number;
+}
+
+export interface FileStats {
+  totalFiles: number;
+  averageFilesPerResponse: number;
+}
+
+export interface QuestionAnalytics {
+  questionId: string;
+  label: string;
+  type: string;
+  sectionId: string;
+  orderIndex: number;
+  totalAnswered: number;
+  totalSkipped: number;
+  answerRate: number;
+  choiceDistribution?: ChoiceDistribution;
+  numericStats?: NumericStats;
+  textStats?: TextStats;
+  dateStats?: DateStats;
+  fileStats?: FileStats;
+}
+
+export interface AnalyticsResponse {
+  formId: string;
+  formTitle: string;
+  summary: AnalyticsSummary;
+  timeline: { date: string; count: number }[];
+  questions: QuestionAnalytics[];
+}
+
 export interface CreateFormRequest {
   title: string;
   description?: string;
@@ -165,5 +232,10 @@ export class FormApiService {
 
   exportResponsesCsv(formId: string): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/${formId}/responses/export/csv`, { responseType: 'blob' });
+  }
+
+  getAnalytics(formId: string, days = 30): Observable<AnalyticsResponse> {
+    const params = new HttpParams().set('days', days.toString());
+    return this.http.get<AnalyticsResponse>(`${this.baseUrl}/${formId}/analytics`, { params });
   }
 }

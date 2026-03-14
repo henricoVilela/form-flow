@@ -39,6 +39,10 @@ export const routes: Routes = [
         path: 'forms/:id/responses',
         loadComponent: () => import('./features/forms/responses/form-responses.component').then(m => m.FormResponsesComponent),
       },
+      {
+        path: 'forms/:id/analytics',
+        loadComponent: () => import('./features/forms/analytics/form-analytics.component').then(m => m.FormAnalyticsComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
