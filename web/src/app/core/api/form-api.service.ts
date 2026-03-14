@@ -69,6 +69,22 @@ export interface SubmitResponseResponse {
   submittedAt: string;
 }
 
+export interface ResponseSummaryResponse {
+  id: string;
+  formVersionId: string;
+  submittedAt: string;
+  metadata: Record<string, any> | null;
+}
+
+export interface ResponseDetailResponse {
+  id: string;
+  formId: string;
+  formVersionId: string;
+  payload: Record<string, any>;
+  metadata: Record<string, any> | null;
+  submittedAt: string;
+}
+
 export interface CreateFormRequest {
   title: string;
   description?: string;
@@ -133,5 +149,21 @@ export class FormApiService {
 
   submitResponse(formId: string, request: SubmitResponseRequest): Observable<SubmitResponseResponse> {
     return this.http.post<SubmitResponseResponse>(`${this.baseUrl}/${formId}/responses`, request);
+  }
+
+  listResponses(formId: string, page = 0, size = 20): Observable<PageResponse<ResponseSummaryResponse>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', 'submittedAt,desc');
+    return this.http.get<PageResponse<ResponseSummaryResponse>>(`${this.baseUrl}/${formId}/responses`, { params });
+  }
+
+  getResponse(formId: string, responseId: string): Observable<ResponseDetailResponse> {
+    return this.http.get<ResponseDetailResponse>(`${this.baseUrl}/${formId}/responses/${responseId}`);
+  }
+
+  exportResponsesCsv(formId: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/${formId}/responses/export/csv`, { responseType: 'blob' });
   }
 }

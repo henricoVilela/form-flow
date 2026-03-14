@@ -510,6 +510,11 @@ export class FormRendererComponent implements OnInit {
         if (q.type === 'date' && val instanceof Date) {
           formatted = val.toISOString().split('T')[0];
         }
+
+        if (q.type === 'number' && ['cpf', 'cnpj'].includes(q.numberConfig?.documentType ?? '')) {
+          formatted = String(val).replace(/\D/g, '');
+        }
+
         payload[q.id] = { type: q.type, value: formatted };
       }
     }

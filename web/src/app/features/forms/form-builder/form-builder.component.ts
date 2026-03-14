@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal, input, ViewChild, OnDestroy, effect, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TooltipModule } from 'primeng/tooltip';
@@ -87,6 +87,14 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
             severity="secondary" [outlined]="true" size="small"
             (click)="previewDialog.open()"
           ></button>
+          @if (form()!.status === 'PUBLISHED') {
+            <button
+              pButton label="Respostas" icon="pi pi-inbox"
+              severity="secondary" [outlined]="true" size="small"
+              pTooltip="Ver respostas recebidas" tooltipPosition="bottom"
+              (click)="goToResponses()"
+            ></button>
+          }
           <button
             pButton label="Publicar" icon="pi pi-send" size="small"
             [loading]="publishing()"
@@ -147,6 +155,7 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
 export class FormBuilderComponent implements OnInit, OnDestroy {
   private readonly formApi = inject(FormApiService);
   private readonly toast = inject(MessageService);
+  private readonly router = inject(Router);
   readonly store = inject(BuilderStore);
 
   @ViewChild('previewDialog') previewDialog!: BuilderPreviewDialogComponent;
@@ -302,6 +311,10 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
         this.toast.add({ severity: 'error', summary: 'Erro', detail: err.error?.message ?? 'Erro ao publicar' });
       },
     });
+  }
+
+  goToResponses(): void {
+    this.router.navigate(['/forms', this.id(), 'responses']);
   }
 
   formatTimeSince(date: Date): string {

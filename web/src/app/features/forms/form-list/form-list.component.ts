@@ -195,6 +195,20 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
               </span>
             </div>
 
+            <!-- Quick access: Ver Respostas (só para publicados) -->
+            @if (form.status === 'PUBLISHED') {
+              <button
+                class="mt-3 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg
+                       text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100
+                       transition-colors duration-150"
+                (click)="navigateToResponses($event, form)"
+                pTooltip="Ver respostas recebidas" tooltipPosition="bottom"
+              >
+                <i class="pi pi-inbox text-[11px]"></i>
+                Ver respostas
+              </button>
+            }
+
             <!-- Published indicator bar -->
             @if (form.status === 'PUBLISHED') {
               <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-b-xl"></div>
@@ -351,6 +365,11 @@ export class FormListComponent implements OnInit {
     this.router.navigate(['/forms', form.id, 'edit']);
   }
 
+  navigateToResponses(event: Event, form: FormResponse): void {
+    event.stopPropagation();
+    this.router.navigate(['/forms', form.id, 'responses']);
+  }
+
   openMenu(event: Event, form: FormResponse): void {
     event.stopPropagation();
     this.selectedForm = form;
@@ -366,11 +385,18 @@ export class FormListComponent implements OnInit {
         icon: 'pi pi-copy',
         command: () => this.duplicateForm(form),
       },
-      ...(form.status === 'PUBLISHED' ? [{
-        label: 'Copiar link público',
-        icon: 'pi pi-link',
-        command: () => this.copyPublicLink(form),
-      }] : []),
+      ...(form.status === 'PUBLISHED' ? [
+        {
+          label: 'Ver respostas',
+          icon: 'pi pi-inbox',
+          command: () => this.router.navigate(['/forms', form.id, 'responses']),
+        },
+        {
+          label: 'Copiar link público',
+          icon: 'pi pi-link',
+          command: () => this.copyPublicLink(form),
+        },
+      ] : []),
       { separator: true },
       {
         label: 'Arquivar',
