@@ -53,6 +53,13 @@ public class AnalyticsResponse {
         private UUID questionId;
         private String label;
         private String type;
+
+        /**
+         * Para questões do tipo "number": pode ser "cpf", "cnpj" ou null.
+         * Quando presente, stats numéricas não fazem sentido e não são calculadas.
+         */
+        private String documentType;
+
         private String sectionId;
         private int orderIndex;
 

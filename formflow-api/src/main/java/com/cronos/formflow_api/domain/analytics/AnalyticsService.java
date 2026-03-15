@@ -166,10 +166,15 @@ public class AnalyticsService {
             long totalSkipped = totalResponses - totalAnswered;
             double answerRate = totalResponses > 0 ? (double) totalAnswered / totalResponses : 0.0;
 
+            String type = question.getType();
+            String documentType = question.getDocumentType();
+            boolean isDocument = "cpf".equals(documentType) || "cnpj".equals(documentType);
+
             QuestionAnalytics.QuestionAnalyticsBuilder builder = QuestionAnalytics.builder()
                     .questionId(question.getId())
                     .label(question.getLabel())
-                    .type(question.getType())
+                    .type(type)
+                    .documentType(isDocument ? documentType : null)
                     .sectionId(question.getSectionId())
                     .orderIndex(question.getOrderIndex())
                     .totalAnswered(totalAnswered)
@@ -177,11 +182,12 @@ public class AnalyticsService {
                     .answerRate(Math.round(answerRate * 1000.0) / 1000.0);
 
             // Stats específicas por tipo
-            String type = question.getType();
+            // Questões number com documentType cpf/cnpj não têm stats numéricas significativas
             switch (type) {
                 case "single_choice", "dropdown" -> builder.choiceDistribution(buildChoiceStats(answers, false));
                 case "multi_choice" -> builder.choiceDistribution(buildChoiceStats(answers, true));
-                case "number", "rating", "scale" -> builder.numericStats(buildNumericStats(answers));
+                case "number" -> { if (!isDocument) builder.numericStats(buildNumericStats(answers)); }
+                case "rating", "scale" -> builder.numericStats(buildNumericStats(answers));
                 case "short_text", "long_text", "email", "phone", "url" -> builder.textStats(buildTextStats(answers));
                 case "date" -> builder.dateStats(buildDateStats(answers));
                 case "file_upload" -> builder.fileStats(buildFileStats(answers));

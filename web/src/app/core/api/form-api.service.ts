@@ -132,6 +132,8 @@ export interface QuestionAnalytics {
   questionId: string;
   label: string;
   type: string;
+  /** Presente apenas para type=number com documentType cpf ou cnpj */
+  documentType?: 'cpf' | 'cnpj' | null;
   sectionId: string;
   orderIndex: number;
   totalAnswered: number;

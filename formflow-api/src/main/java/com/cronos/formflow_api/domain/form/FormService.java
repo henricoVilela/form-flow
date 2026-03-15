@@ -234,6 +234,10 @@ public class FormService {
             for (JsonNode q : questions) {
                 String questionId = q.path("id").asString();
                 if (questionId.isBlank()) continue;
+                
+                String documentType = q.path("numberConfig")
+                        .path("documentType")
+                        .asString(null);
 
                 Question question = Question.builder()
                         .id(UUID.fromString(questionId))
@@ -242,6 +246,7 @@ public class FormService {
                         .sectionId(sectionId)
                         .type(q.path("type").asString())
                         .label(q.path("label").asString())
+                        .documentType(documentType)
                         .orderIndex(order++)
                         .build();
 

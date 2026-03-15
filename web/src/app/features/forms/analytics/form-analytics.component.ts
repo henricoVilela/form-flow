@@ -157,11 +157,11 @@ const CHART_COLORS = [
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-start gap-2 flex-1 min-w-0">
                 <span class="w-7 h-7 rounded-md bg-surface-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <i class="pi {{ getTypeIcon(q.type) }} text-xs text-surface-500"></i>
+                  <i class="pi {{ getTypeIcon(q) }} text-xs text-surface-500"></i>
                 </span>
                 <div class="min-w-0">
                   <p class="text-sm font-medium text-surface-900 line-clamp-2">{{ q.label }}</p>
-                  <p class="text-xs text-surface-400 mt-0.5">{{ getTypeLabel(q.type) }}</p>
+                  <p class="text-xs text-surface-400 mt-0.5">{{ getTypeLabel(q) }}</p>
                 </div>
               </div>
               <div class="text-right shrink-0">
@@ -189,6 +189,22 @@ const CHART_COLORS = [
               <div class="text-center py-4 text-xs text-surface-400">
                 <i class="pi pi-inbox block text-xl text-surface-200 mb-1"></i>
                 Sem respostas para esta questão
+              </div>
+            }
+
+            <!-- CPF / CNPJ: documento coletado, sem stats numéricas -->
+            @else if (q.documentType === 'cpf' || q.documentType === 'cnpj') {
+              <div class="flex items-center gap-4 bg-surface-50 rounded-lg p-4">
+                <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+                  <i class="pi pi-id-card text-indigo-600"></i>
+                </div>
+                <div>
+                  <p class="text-2xl font-bold text-surface-900">{{ q.totalAnswered }}</p>
+                  <p class="text-xs text-surface-500">
+                    {{ q.documentType === 'cpf' ? 'CPFs' : 'CNPJs' }} coletados
+                    · {{ (q.answerRate * 100).toFixed(0) }}% de fornecimento
+                  </p>
+                </div>
               </div>
             }
 
@@ -511,7 +527,9 @@ export class FormAnalyticsComponent implements OnInit {
     return `${day}/${month}/${year}`;
   }
 
-  getTypeLabel(type: string): string {
+  getTypeLabel(q: QuestionAnalytics): string {
+    if (q.documentType === 'cpf') return 'CPF';
+    if (q.documentType === 'cnpj') return 'CNPJ';
     const labels: Record<string, string> = {
       short_text: 'Texto curto', long_text: 'Texto longo',
       email: 'E-mail', phone: 'Telefone', url: 'URL',
@@ -520,10 +538,11 @@ export class FormAnalyticsComponent implements OnInit {
       date: 'Data', file_upload: 'Upload de arquivo',
       rating: 'Avaliação', scale: 'Escala', matrix: 'Matriz',
     };
-    return labels[type] ?? type;
+    return labels[q.type] ?? q.type;
   }
 
-  getTypeIcon(type: string): string {
+  getTypeIcon(q: QuestionAnalytics): string {
+    if (q.documentType === 'cpf' || q.documentType === 'cnpj') return 'pi-id-card';
     const icons: Record<string, string> = {
       short_text: 'pi-align-left', long_text: 'pi-align-justify',
       email: 'pi-envelope', phone: 'pi-phone', url: 'pi-link',
@@ -532,7 +551,7 @@ export class FormAnalyticsComponent implements OnInit {
       date: 'pi-calendar', file_upload: 'pi-paperclip',
       rating: 'pi-star', scale: 'pi-sliders-h', matrix: 'pi-table',
     };
-    return icons[type] ?? 'pi-question';
+    return icons[q.type] ?? 'pi-question';
   }
 
   hasTopWords(q: QuestionAnalytics): boolean {

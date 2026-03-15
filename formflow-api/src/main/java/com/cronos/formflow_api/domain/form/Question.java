@@ -42,6 +42,9 @@ public class Question {
 
     @Column(nullable = false)
     private String type;
+    
+    @Column
+    private String documentType;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String label;
