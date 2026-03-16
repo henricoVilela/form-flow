@@ -63,7 +63,6 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
           }),
         );
       } else if (error.status === 403 && !isRefreshing) {
-        isRefreshing = false;
         authService.logout();
       }
 

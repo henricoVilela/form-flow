@@ -26,7 +26,7 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
   providers: [BuilderStore],
   template: `
     @if (loading()) {
-      <div class="builder-loading">
+      <div class="p-6">
         <p-skeleton height="64px" styleClass="mb-4" />
         <div class="flex gap-4">
           <p-skeleton width="220px" height="500px" />
@@ -36,7 +36,7 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
       </div>
     } @else if (form()) {
       <!-- ── Top bar ── -->
-      <div class="builder-topbar">
+      <div class="builder-topbar flex items-center justify-between py-2.5 px-3 md:py-3 md:px-5 bg-white border-b border-[var(--ff-border)] z-20 shrink-0">
         <div class="flex items-center gap-3">
           <a routerLink="/forms"
              class="w-9 h-9 flex items-center justify-center rounded-lg
@@ -112,44 +112,56 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
       </div>
 
       <!-- ── Three-panel layout ── -->
-      <div class="builder-layout">
-        <aside class="builder-panel builder-panel--left" [class.panel-active]="activePanel() === 'toolbox'">
+      <div class="flex flex-1 overflow-hidden">
+        <aside
+          class="builder-panel--left overflow-y-auto bg-white border-r border-[var(--ff-border)] shrink-0 hidden md:flex md:flex-col w-[190px] xl:w-[220px]"
+          [class.panel-active]="activePanel() === 'toolbox'"
+        >
           <app-builder-toolbox />
         </aside>
 
-        <main class="builder-panel builder-panel--center" [class.panel-active]="activePanel() === 'canvas'">
+        <main
+          class="builder-panel--center overflow-y-auto flex-1 bg-[var(--ff-bg)] py-6 px-4"
+          [class.panel-active]="activePanel() === 'canvas'"
+        >
           <app-builder-canvas />
         </main>
 
-        <aside class="builder-panel builder-panel--right" [class.panel-active]="activePanel() === 'properties'">
+        <aside
+          class="builder-panel--right overflow-y-auto bg-white border-l border-[var(--ff-border)] shrink-0 hidden lg:flex lg:flex-col w-[280px] xl:w-[320px]"
+          [class.panel-active]="activePanel() === 'properties'"
+        >
           <app-builder-properties />
         </aside>
       </div>
 
-      <!-- ── Mobile tab bar ── -->
-      <nav class="builder-mobile-tabs">
+      <!-- ── Mobile tab bar (hidden on md+) ── -->
+      <nav class="flex md:hidden border-t border-[var(--ff-border)] bg-white shrink-0">
         <button
-          class="builder-tab-btn"
-          [class.builder-tab-btn--active]="activePanel() === 'toolbox'"
+          class="flex-1 flex flex-col items-center justify-center gap-[3px] py-[10px] px-1 text-[11px] border-0 bg-transparent cursor-pointer transition-colors duration-150"
+          [class.text-primary-600]="activePanel() === 'toolbox'"
+          [class.text-surface-400]="activePanel() !== 'toolbox'"
           (click)="activePanel.set('toolbox')"
         >
-          <i class="pi pi-th-large"></i>
+          <i class="pi pi-th-large text-base"></i>
           <span>Componentes</span>
         </button>
         <button
-          class="builder-tab-btn"
-          [class.builder-tab-btn--active]="activePanel() === 'canvas'"
+          class="flex-1 flex flex-col items-center justify-center gap-[3px] py-[10px] px-1 text-[11px] border-0 bg-transparent cursor-pointer transition-colors duration-150"
+          [class.text-primary-600]="activePanel() === 'canvas'"
+          [class.text-surface-400]="activePanel() !== 'canvas'"
           (click)="activePanel.set('canvas')"
         >
-          <i class="pi pi-file-edit"></i>
+          <i class="pi pi-file-edit text-base"></i>
           <span>Canvas</span>
         </button>
         <button
-          class="builder-tab-btn"
-          [class.builder-tab-btn--active]="activePanel() === 'properties'"
+          class="flex-1 flex flex-col items-center justify-center gap-[3px] py-[10px] px-1 text-[11px] border-0 bg-transparent cursor-pointer transition-colors duration-150"
+          [class.text-primary-600]="activePanel() === 'properties'"
+          [class.text-surface-400]="activePanel() !== 'properties'"
           (click)="activePanel.set('properties')"
         >
-          <i class="pi pi-sliders-h"></i>
+          <i class="pi pi-sliders-h text-base"></i>
           <span>Propriedades</span>
         </button>
       </nav>
@@ -164,86 +176,19 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
       height: calc(100vh - var(--ff-topbar-height));
       margin: -28px -32px;
     }
-    .builder-loading { padding: 24px; }
-    .builder-topbar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 20px; background: white;
-      border-bottom: 1px solid var(--ff-border); z-index: 20; flex-shrink: 0;
-    }
-    .builder-layout { display: flex; flex: 1; overflow: hidden; }
-    .builder-panel { overflow-y: auto; }
-    .builder-panel--left {
-      width: 220px; background: white;
-      border-right: 1px solid var(--ff-border); flex-shrink: 0;
-    }
-    .builder-panel--center { flex: 1; background: var(--ff-bg); padding: 24px 16px; }
-    .builder-panel--right {
-      width: 320px; background: white;
-      border-left: 1px solid var(--ff-border); flex-shrink: 0;
-    }
-    @media (max-width: 1200px) {
-      .builder-panel--left { width: 190px; }
-      .builder-panel--right { width: 280px; }
-    }
-    @media (max-width: 900px) { .builder-panel--right { display: none; } }
-
-    /* ── Mobile tab bar ── */
-    .builder-mobile-tabs { display: none; }
 
     @media (max-width: 768px) {
       :host { margin: -20px -16px; }
 
-      .builder-topbar { padding: 10px 12px; gap: 8px; }
-
-      /* Hide label text on all builder topbar buttons */
+      /* PrimeNG internal selector — cannot be targeted with Tailwind */
       .builder-topbar .p-button-label { display: none; }
-
-      /* Hide secondary action buttons (Respostas, Analytics) on mobile */
       .builder-btn-secondary { display: none !important; }
 
-      .builder-panel--left,
-      .builder-panel--right { display: none; width: 100%; flex-shrink: 1; }
-
+      /* Mobile panel visibility: show only the active panel */
       .builder-panel--center { padding: 16px 10px; }
-
-      /* Show only the active panel on mobile */
       .builder-panel--left.panel-active,
-      .builder-panel--right.panel-active {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-      }
-
+      .builder-panel--right.panel-active { display: flex; flex-direction: column; flex: 1; }
       .builder-panel--center:not(.panel-active) { display: none; }
-
-      .builder-mobile-tabs {
-        display: flex;
-        border-top: 1px solid var(--ff-border);
-        background: white;
-        flex-shrink: 0;
-      }
-
-      .builder-tab-btn {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 3px;
-        padding: 10px 4px;
-        font-size: 11px;
-        color: var(--p-text-muted-color, #94a3b8);
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        transition: color 0.15s;
-      }
-
-      .builder-tab-btn i { font-size: 16px; }
-
-      .builder-tab-btn--active {
-        color: var(--p-primary-color, #6366f1);
-      }
     }
   `],
 })
@@ -312,7 +257,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
               this.store.loadSchema(version.schema);
               this.loading.set(false);
             },
-            error: () => { 
+            error: () => {
               this.store.loadSchema(null);
               this.loading.set(false);
             },
