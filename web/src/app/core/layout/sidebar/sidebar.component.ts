@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, HostBinding, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthStore } from '@core/auth/auth.store';
+import { LayoutService } from '../layout.service';
 
 interface NavItem {
   label: string;
@@ -38,6 +39,7 @@ interface NavItem {
           [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-surface-600
                  hover:bg-surface-50 hover:text-surface-900 transition-all duration-200 group"
+          (click)="layout.close()"
         >
           <i [class]="item.icon + ' text-base opacity-70 group-hover:opacity-100 transition-opacity'"></i>
           <span>{{ item.label }}</span>
@@ -56,6 +58,7 @@ interface NavItem {
           routerLinkActive="bg-primary-50 text-primary-700 font-semibold"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-surface-600
                  hover:bg-surface-50 hover:text-surface-900 transition-all duration-200 group"
+          (click)="layout.close()"
         >
           <i [class]="item.icon + ' text-base opacity-70 group-hover:opacity-100 transition-opacity'"></i>
           <span>{{ item.label }}</span>
@@ -89,11 +92,21 @@ interface NavItem {
       left: 0;
       top: 0;
       z-index: 40;
+      transition: transform 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+      :host { transform: translateX(-100%); }
+      :host.open { transform: translateX(0); }
     }
   `]
 })
 export class SidebarComponent {
   readonly store = inject(AuthStore);
+  readonly layout = inject(LayoutService);
+
+  @HostBinding('class.open')
+  get isOpen(): boolean { return this.layout.sidebarOpen(); }
 
   readonly mainNav: NavItem[] = [
     { label: 'Dashboard',    icon: 'pi pi-home',       route: '/dashboard' },

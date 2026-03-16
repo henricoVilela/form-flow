@@ -5,29 +5,27 @@ import { ButtonModule } from 'primeng/button';
 import { MenuItem } from 'primeng/api';
 import { AuthStore } from '@core/auth/auth.store';
 import { AuthService } from '@core/auth/auth.service';
+import { LayoutService } from '../layout.service';
 
 @Component({
     selector: 'app-topbar',
     imports: [CommonModule, MenuModule, ButtonModule],
     template: `
     <header class="topbar">
-      <!-- Left: breadcrumb area (pode ser expandido) -->
+      <!-- Left: hamburger (mobile) -->
       <div class="flex items-center gap-3">
-        <!-- Mobile menu toggle (futuro) -->
+        <button
+          class="md:hidden w-9 h-9 flex items-center justify-center rounded-lg
+                 hover:bg-surface-100 transition-colors text-surface-600"
+          (click)="layout.toggle()"
+          aria-label="Menu"
+        >
+          <i class="pi pi-bars text-base"></i>
+        </button>
       </div>
 
       <!-- Right: actions -->
       <div class="flex items-center gap-2">
-        <!-- Notifications (futuro) -->
-        <!--
-        <button pButton
-          icon="pi pi-bell"
-          class="p-button-text p-button-rounded p-button-plain"
-          [badge]="'3'"
-          badgeClass="p-badge-danger">
-        </button>
-        -->
-
         <!-- User menu -->
         <button
           (click)="userMenu.toggle($event)"
@@ -65,6 +63,7 @@ import { AuthService } from '@core/auth/auth.service';
 })
 export class TopbarComponent {
   readonly store = inject(AuthStore);
+  readonly layout = inject(LayoutService);
   private readonly authService = inject(AuthService);
 
   readonly menuItems: MenuItem[] = [

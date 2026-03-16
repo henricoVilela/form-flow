@@ -92,12 +92,14 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
               pButton label="Respostas" icon="pi pi-inbox"
               severity="secondary" [outlined]="true" size="small"
               pTooltip="Ver respostas recebidas" tooltipPosition="bottom"
+              class="builder-btn-secondary"
               (click)="goToResponses()"
             ></button>
             <button
               pButton label="Analytics" icon="pi pi-chart-bar"
               severity="secondary" [outlined]="true" size="small"
               pTooltip="Ver analytics" tooltipPosition="bottom"
+              class="builder-btn-secondary"
               (click)="goToAnalytics()"
             ></button>
           }
@@ -111,18 +113,46 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
 
       <!-- ── Three-panel layout ── -->
       <div class="builder-layout">
-        <aside class="builder-panel builder-panel--left">
+        <aside class="builder-panel builder-panel--left" [class.panel-active]="activePanel() === 'toolbox'">
           <app-builder-toolbox />
         </aside>
 
-        <main class="builder-panel builder-panel--center">
+        <main class="builder-panel builder-panel--center" [class.panel-active]="activePanel() === 'canvas'">
           <app-builder-canvas />
         </main>
 
-        <aside class="builder-panel builder-panel--right">
+        <aside class="builder-panel builder-panel--right" [class.panel-active]="activePanel() === 'properties'">
           <app-builder-properties />
         </aside>
       </div>
+
+      <!-- ── Mobile tab bar ── -->
+      <nav class="builder-mobile-tabs">
+        <button
+          class="builder-tab-btn"
+          [class.builder-tab-btn--active]="activePanel() === 'toolbox'"
+          (click)="activePanel.set('toolbox')"
+        >
+          <i class="pi pi-th-large"></i>
+          <span>Componentes</span>
+        </button>
+        <button
+          class="builder-tab-btn"
+          [class.builder-tab-btn--active]="activePanel() === 'canvas'"
+          (click)="activePanel.set('canvas')"
+        >
+          <i class="pi pi-file-edit"></i>
+          <span>Canvas</span>
+        </button>
+        <button
+          class="builder-tab-btn"
+          [class.builder-tab-btn--active]="activePanel() === 'properties'"
+          (click)="activePanel.set('properties')"
+        >
+          <i class="pi pi-sliders-h"></i>
+          <span>Propriedades</span>
+        </button>
+      </nav>
 
       <app-builder-preview-dialog #previewDialog />
       <p-confirmDialog />
@@ -156,6 +186,65 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
       .builder-panel--right { width: 280px; }
     }
     @media (max-width: 900px) { .builder-panel--right { display: none; } }
+
+    /* ── Mobile tab bar ── */
+    .builder-mobile-tabs { display: none; }
+
+    @media (max-width: 768px) {
+      :host { margin: -20px -16px; }
+
+      .builder-topbar { padding: 10px 12px; gap: 8px; }
+
+      /* Hide label text on all builder topbar buttons */
+      .builder-topbar .p-button-label { display: none; }
+
+      /* Hide secondary action buttons (Respostas, Analytics) on mobile */
+      .builder-btn-secondary { display: none !important; }
+
+      .builder-panel--left,
+      .builder-panel--right { display: none; width: 100%; flex-shrink: 1; }
+
+      .builder-panel--center { padding: 16px 10px; }
+
+      /* Show only the active panel on mobile */
+      .builder-panel--left.panel-active,
+      .builder-panel--right.panel-active {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+      }
+
+      .builder-panel--center:not(.panel-active) { display: none; }
+
+      .builder-mobile-tabs {
+        display: flex;
+        border-top: 1px solid var(--ff-border);
+        background: white;
+        flex-shrink: 0;
+      }
+
+      .builder-tab-btn {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        padding: 10px 4px;
+        font-size: 11px;
+        color: var(--p-text-muted-color, #94a3b8);
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        transition: color 0.15s;
+      }
+
+      .builder-tab-btn i { font-size: 16px; }
+
+      .builder-tab-btn--active {
+        color: var(--p-primary-color, #6366f1);
+      }
+    }
   `],
 })
 export class FormBuilderComponent implements OnInit, OnDestroy {
@@ -170,6 +259,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   readonly loading = signal(true);
   readonly form = signal<FormResponse | null>(null);
   readonly publishing = signal(false);
+  readonly activePanel = signal<'toolbox' | 'canvas' | 'properties'>('canvas');
 
   private readonly destroy$ = new Subject<void>();
   private readonly autoSave$ = new Subject<void>();
