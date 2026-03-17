@@ -45,4 +45,9 @@ public class PublicFormController {
     public ResponseEntity<PublicFormResponse> getPublicForm(@PathVariable UUID formId) {
         return ResponseEntity.ok(formService.getPublicForm(formId));
     }
+
+    @GetMapping("/slug/{slug}")
+    public ResponseEntity<PublicFormResponse> getPublicFormBySlug(@PathVariable String slug) {
+        return ResponseEntity.ok(formService.getPublicFormBySlug(slug));
+    }
 }

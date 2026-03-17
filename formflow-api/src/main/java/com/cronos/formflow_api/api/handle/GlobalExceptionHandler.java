@@ -94,7 +94,7 @@ public class GlobalExceptionHandler {
 
     private HttpStatus resolveStatus(String code) {
         return switch (code) {
-            case "EMAIL_ALREADY_EXISTS" -> HttpStatus.CONFLICT;
+            case "EMAIL_ALREADY_EXISTS", "SLUG_ALREADY_TAKEN" -> HttpStatus.CONFLICT;
             case "FORM_NOT_PUBLISHED", "VERSION_MISMATCH", "FILE_NOT_CONFIRMED" -> HttpStatus.CONFLICT;
             case "INVALID_TOKEN" -> HttpStatus.UNAUTHORIZED;
             default -> HttpStatus.UNPROCESSABLE_CONTENT;

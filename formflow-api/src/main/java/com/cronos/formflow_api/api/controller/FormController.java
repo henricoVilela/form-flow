@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.cronos.formflow_api.api.dto.request.CreateFormRequest;
 import com.cronos.formflow_api.api.dto.request.PublishFormRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateFormRequest;
+import com.cronos.formflow_api.api.dto.request.UpdateFormSettingsRequest;
 import com.cronos.formflow_api.api.dto.response.FormResponse;
 import com.cronos.formflow_api.api.dto.response.FormVersionResponse;
 import com.cronos.formflow_api.api.dto.response.PublishResponse;
@@ -113,6 +114,14 @@ public class FormController {
      * @param id   UUID do formulário a duplicar
      * @return FormResponse do novo formulário clonado
      */
+    @PutMapping("/{id}/settings")
+    public ResponseEntity<FormResponse> updateSettings(
+            @AuthenticationPrincipal User user,
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateFormSettingsRequest request) {
+        return ResponseEntity.ok(formService.updateSettings(user, id, request));
+    }
+
     @PostMapping("/{id}/duplicate")
     public ResponseEntity<FormResponse> duplicate(
             @AuthenticationPrincipal User user,

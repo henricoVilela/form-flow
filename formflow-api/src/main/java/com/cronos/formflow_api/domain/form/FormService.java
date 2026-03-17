@@ -10,14 +10,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import com.cronos.formflow_api.api.dto.request.CreateFormRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateFormRequest;
+import com.cronos.formflow_api.api.dto.request.UpdateFormSettingsRequest;
 import com.cronos.formflow_api.api.dto.response.FormResponse;
 import com.cronos.formflow_api.api.dto.response.FormVersionResponse;
 import com.cronos.formflow_api.api.dto.response.PublicFormResponse;
 import com.cronos.formflow_api.api.dto.response.PublishResponse;
 import com.cronos.formflow_api.domain.form.validation.SchemaConditionValidator;
 import com.cronos.formflow_api.domain.user.User;
+import com.cronos.formflow_api.shared.exception.BusinessException;
 import com.cronos.formflow_api.shared.exception.ResourceNotFoundException;
 
 import lombok.RequiredArgsConstructor;
@@ -34,6 +38,7 @@ public class FormService {
     private final FormVersionRepository formVersionRepository;
     private final QuestionRepository questionRepository;
     private final SchemaConditionValidator schemaConditionValidator;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public FormResponse create(User user, CreateFormRequest request) {
@@ -82,6 +87,35 @@ public class FormService {
         }
         
         return FormResponse.from(formRepository.save(form), null);
+    }
+
+    @Transactional
+    public FormResponse updateSettings(User user, UUID id, UpdateFormSettingsRequest request) {
+        Form form = findFormOwnedBy(user, id);
+
+        form.setVisibility(request.getVisibility());
+
+        String newSlug = request.getSlug() != null && !request.getSlug().isBlank()
+                ? request.getSlug().trim().toLowerCase() : null;
+        if (newSlug != null && formRepository.existsBySlugAndIdNot(newSlug, id)) {
+            throw new BusinessException("SLUG_ALREADY_TAKEN", "O slug '" + newSlug + "' já está em uso por outro formulário.");
+        }
+        form.setSlug(newSlug);
+        form.setMaxResponses(request.getMaxResponses() != null && request.getMaxResponses() > 0
+                ? request.getMaxResponses() : null);
+        form.setExpiresAt(request.getExpiresAt());
+        form.setWelcomeMessage(request.getWelcomeMessage() != null && !request.getWelcomeMessage().isBlank()
+                ? request.getWelcomeMessage() : null);
+        form.setThankYouMessage(request.getThankYouMessage() != null && !request.getThankYouMessage().isBlank()
+                ? request.getThankYouMessage() : null);
+
+        if (request.getPassword() != null) {
+            form.setPasswordHash(request.getPassword().isBlank()
+                    ? null : passwordEncoder.encode(request.getPassword()));
+        }
+
+        FormVersion latest = formVersionRepository.findLatestByFormId(id).orElse(null);
+        return FormResponse.from(formRepository.save(form), latest);
     }
 
     @Transactional
@@ -137,17 +171,24 @@ public class FormService {
         return FormVersionResponse.from(fv);
     }
 
+    public PublicFormResponse getPublicFormBySlug(String slug) {
+        Form form = formRepository.findBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
+        return buildPublicFormResponse(form);
+    }
+
     public PublicFormResponse getPublicForm(UUID formId) {
         Form form = formRepository.findById(formId)
                 .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
+        return buildPublicFormResponse(form);
+    }
 
+    private PublicFormResponse buildPublicFormResponse(Form form) {
         if (form.getStatus() != FormStatus.PUBLISHED) {
             throw new ResourceNotFoundException("Formulário não está disponível");
         }
-
-        FormVersion latestVersion = formVersionRepository.findLatestByFormId(formId)
+        FormVersion latestVersion = formVersionRepository.findLatestByFormId(form.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Nenhuma versão publicada encontrada"));
-
         return PublicFormResponse.from(form, latestVersion);
     }
 

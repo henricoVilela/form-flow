@@ -104,6 +104,13 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
             ></button>
           }
           <button
+            pButton icon="pi pi-cog"
+            severity="secondary" [outlined]="true" size="small"
+            pTooltip="Configurações" tooltipPosition="bottom"
+            class="builder-btn-secondary"
+            (click)="goToSettings()"
+          ></button>
+          <button
             pButton label="Publicar" icon="pi pi-send" size="small"
             [loading]="publishing()"
             (click)="onPublish()"
@@ -360,6 +367,10 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
 
   goToAnalytics(): void {
     this.router.navigate(['/forms', this.id(), 'analytics']);
+  }
+
+  goToSettings(): void {
+    this.router.navigate(['/forms', this.id(), 'settings']);
   }
 
   formatTimeSince(date: Date): string {

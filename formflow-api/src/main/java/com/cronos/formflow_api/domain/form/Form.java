@@ -68,9 +68,26 @@ public class Form {
     
     @Column
     private String welcomeMessage;
-    
+
     @Column
     private String thankYouMessage;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private FormVisibility visibility = FormVisibility.PUBLIC;
+
+    @Column(unique = true)
+    private String slug;
+
+    @Column(name = "password_hash")
+    private String passwordHash;
+
+    @Column(name = "max_responses")
+    private Integer maxResponses;
+
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
 
     @Type(JsonNodeType.class)
     @Column(columnDefinition = "jsonb")

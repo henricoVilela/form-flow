@@ -7,6 +7,7 @@ import com.cronos.formflow_api.domain.form.Form;
 import com.cronos.formflow_api.domain.form.FormLayout;
 import com.cronos.formflow_api.domain.form.FormStatus;
 import com.cronos.formflow_api.domain.form.FormVersion;
+import com.cronos.formflow_api.domain.form.FormVisibility;
 
 import lombok.Builder;
 import lombok.Data;
@@ -25,6 +26,12 @@ public class FormResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private JsonNode draftSchema;
+    private String welcomeMessage;
+    private String thankYouMessage;
+    private FormVisibility visibility;
+    private String slug;
+    private Integer maxResponses;
+    private LocalDateTime expiresAt;
 
     public static FormResponse from(Form form, FormVersion version) {
         return FormResponse.builder()
@@ -38,6 +45,12 @@ public class FormResponse {
                 .publishedAt(form.getPublishedAt())
                 .createdAt(form.getCreatedAt())
                 .updatedAt(form.getUpdatedAt())
+                .welcomeMessage(form.getWelcomeMessage())
+                .thankYouMessage(form.getThankYouMessage())
+                .visibility(form.getVisibility())
+                .slug(form.getSlug())
+                .maxResponses(form.getMaxResponses())
+                .expiresAt(form.getExpiresAt())
                 .build();
     }
 }

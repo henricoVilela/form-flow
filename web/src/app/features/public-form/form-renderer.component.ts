@@ -335,8 +335,15 @@ export class FormRendererComponent implements OnInit {
     return total <= 1 ? 100 : ((this.currentStep() + 1) / total) * 100;
   });
 
+  private readonly UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   ngOnInit(): void {
-    this.formApi.getPublicForm(this.formId()).subscribe({
+    const id = this.formId();
+    const request$ = this.UUID_REGEX.test(id)
+      ? this.formApi.getPublicForm(id)
+      : this.formApi.getPublicFormBySlug(id);
+
+    request$.subscribe({
       next: (data) => {
         this.formData.set(data);
         this.sections.set((data.schema?.sections ?? []).filter((s: any) => s.questions?.length > 0));

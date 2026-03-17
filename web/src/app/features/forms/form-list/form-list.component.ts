@@ -432,7 +432,8 @@ export class FormListComponent implements OnInit {
   }
 
   private copyPublicLink(form: FormResponse): void {
-    const url = `${window.location.origin}/f/${form.id}`;
+    const identifier = form.slug ?? form.id;
+    const url = `${window.location.origin}/f/${identifier}`;
     navigator.clipboard.writeText(url).then(() => {
       this.toast.add({ severity: 'success', summary: 'Link copiado!', detail: url });
     });

@@ -3,6 +3,8 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env';
 
+export type FormVisibility = 'PUBLIC' | 'PRIVATE' | 'PASSWORD_PROTECTED';
+
 export interface FormResponse {
   id: string;
   title: string;
@@ -14,6 +16,22 @@ export interface FormResponse {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  welcomeMessage: string | null;
+  thankYouMessage: string | null;
+  visibility: FormVisibility | null;
+  slug: string | null;
+  maxResponses: number | null;
+  expiresAt: string | null;
+}
+
+export interface FormSettingsRequest {
+  visibility: FormVisibility;
+  slug?: string;
+  password?: string;
+  maxResponses?: number;
+  expiresAt?: string;
+  welcomeMessage?: string;
+  thankYouMessage?: string;
 }
 
 export interface PageResponse<T> {
@@ -216,6 +234,10 @@ export class FormApiService {
     return this.http.get<PublicFormResponse>(`${environment.apiUrl}/public/forms/${formId}`);
   }
 
+  getPublicFormBySlug(slug: string): Observable<PublicFormResponse> {
+    return this.http.get<PublicFormResponse>(`${environment.apiUrl}/public/forms/slug/${slug}`);
+  }
+
   submitResponse(formId: string, request: SubmitResponseRequest): Observable<SubmitResponseResponse> {
     return this.http.post<SubmitResponseResponse>(`${this.baseUrl}/${formId}/responses`, request);
   }
@@ -234,6 +256,10 @@ export class FormApiService {
 
   exportResponsesCsv(formId: string): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/${formId}/responses/export/csv`, { responseType: 'blob' });
+  }
+
+  updateSettings(formId: string, request: FormSettingsRequest): Observable<FormResponse> {
+    return this.http.put<FormResponse>(`${this.baseUrl}/${formId}/settings`, request);
   }
 
   getAnalytics(formId: string, days = 30): Observable<AnalyticsResponse> {

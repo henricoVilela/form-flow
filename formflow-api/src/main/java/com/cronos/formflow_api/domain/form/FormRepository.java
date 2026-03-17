@@ -17,5 +17,9 @@ public interface FormRepository extends JpaRepository<Form, UUID> {
 
     @Query("SELECT f FROM Form f WHERE f.id = :id AND f.user.id = :userId")
     Optional<Form> findByIdAndUserId(@Param("id") UUID id, @Param("userId") UUID userId);
+
+    Optional<Form> findBySlug(String slug);
+
+    boolean existsBySlugAndIdNot(String slug, UUID id);
 }
 
