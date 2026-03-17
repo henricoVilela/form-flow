@@ -2,14 +2,16 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MenuModule } from 'primeng/menu';
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 import { MenuItem } from 'primeng/api';
 import { AuthStore } from '@core/auth/auth.store';
 import { AuthService } from '@core/auth/auth.service';
 import { LayoutService } from '../layout.service';
+import { ThemeService } from '../theme.service';
 
 @Component({
     selector: 'app-topbar',
-    imports: [CommonModule, MenuModule, ButtonModule],
+    imports: [CommonModule, MenuModule, ButtonModule, TooltipModule],
     template: `
     <header class="topbar">
       <!-- Left: hamburger (mobile) -->
@@ -26,6 +28,19 @@ import { LayoutService } from '../layout.service';
 
       <!-- Right: actions -->
       <div class="flex items-center gap-2">
+        <!-- Dark mode toggle -->
+        <button
+          (click)="theme.toggle()"
+          [pTooltip]="theme.isDark() ? 'Modo claro' : 'Modo escuro'"
+          tooltipPosition="bottom"
+          class="w-9 h-9 flex items-center justify-center rounded-lg
+                 hover:bg-surface-100 dark:hover:bg-surface-700
+                 transition-colors text-surface-600 dark:text-surface-300"
+          aria-label="Alternar tema"
+        >
+          <i [class]="theme.isDark() ? 'pi pi-sun text-base' : 'pi pi-moon text-base'"></i>
+        </button>
+
         <!-- User menu -->
         <button
           (click)="userMenu.toggle($event)"
@@ -64,6 +79,7 @@ import { LayoutService } from '../layout.service';
 export class TopbarComponent {
   readonly store = inject(AuthStore);
   readonly layout = inject(LayoutService);
+  readonly theme = inject(ThemeService);
   private readonly authService = inject(AuthService);
 
   readonly menuItems: MenuItem[] = [

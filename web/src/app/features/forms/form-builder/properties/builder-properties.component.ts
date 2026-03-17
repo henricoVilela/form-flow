@@ -424,6 +424,7 @@ import { BuilderQuestion, QUESTION_TYPES } from '../builder.models';
       background: #fefce8; border: 1px solid #fef08a; border-radius: 8px;
       padding: 12px; margin-top: 8px;
     }
+    :host-context(.dark) .condition-box { background: #422006; border-color: #92400e; }
     .condition-rule {
       display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;
     }
@@ -436,6 +437,7 @@ import { BuilderQuestion, QUESTION_TYPES } from '../builder.models';
     }
     .icon-btn-sm:hover { background: var(--ff-surface-hover); color: var(--ff-text-secondary); }
     .icon-btn-sm.icon-btn--danger:hover { background: #fef2f2; color: #ef4444; }
+    :host-context(.dark) .icon-btn-sm.icon-btn--danger:hover { background: #450a0a; color: #f87171; }
     .icon-btn-sm:disabled { opacity: 0.3; cursor: not-allowed; }
   `],
 })

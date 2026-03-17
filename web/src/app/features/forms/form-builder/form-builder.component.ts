@@ -36,7 +36,7 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
       </div>
     } @else if (form()) {
       <!-- ── Top bar ── -->
-      <div class="builder-topbar flex items-center justify-between py-2.5 px-3 md:py-3 md:px-5 bg-white border-b border-[var(--ff-border)] z-20 shrink-0">
+      <div class="builder-topbar flex items-center justify-between py-2.5 px-3 md:py-3 md:px-5 bg-white dark:bg-surface-800 border-b border-[var(--ff-border)] z-20 shrink-0">
         <div class="flex items-center gap-3">
           <a routerLink="/forms"
              class="w-9 h-9 flex items-center justify-center rounded-lg
@@ -45,7 +45,7 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
             <i class="pi pi-arrow-left"></i>
           </a>
           <div>
-            <h1 class="text-base font-display font-bold text-surface-900 leading-tight">
+            <h1 class="text-base font-display font-bold text-surface-900 dark:text-surface-50 leading-tight">
               {{ form()!.title }}
             </h1>
             <p class="text-xs text-surface-400 flex items-center gap-2">
@@ -114,7 +114,7 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
       <!-- ── Three-panel layout ── -->
       <div class="flex flex-1 overflow-hidden">
         <aside
-          class="builder-panel--left overflow-y-auto bg-white border-r border-[var(--ff-border)] shrink-0 hidden md:flex md:flex-col w-[190px] xl:w-[220px]"
+          class="builder-panel--left overflow-y-auto bg-white dark:bg-surface-800 border-r border-[var(--ff-border)] shrink-0 hidden md:flex md:flex-col w-[190px] xl:w-[220px]"
           [class.panel-active]="activePanel() === 'toolbox'"
         >
           <app-builder-toolbox />
@@ -128,7 +128,7 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
         </main>
 
         <aside
-          class="builder-panel--right overflow-y-auto bg-white border-l border-[var(--ff-border)] shrink-0 hidden lg:flex lg:flex-col w-[280px] xl:w-[320px]"
+          class="builder-panel--right overflow-y-auto bg-white dark:bg-surface-800 border-l border-[var(--ff-border)] shrink-0 hidden lg:flex lg:flex-col w-[280px] xl:w-[320px]"
           [class.panel-active]="activePanel() === 'properties'"
         >
           <app-builder-properties />
@@ -136,7 +136,7 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
       </div>
 
       <!-- ── Mobile tab bar (hidden on md+) ── -->
-      <nav class="flex md:hidden border-t border-[var(--ff-border)] bg-white shrink-0">
+      <nav class="flex md:hidden border-t border-[var(--ff-border)] bg-white dark:bg-surface-800 shrink-0">
         <button
           class="flex-1 flex flex-col items-center justify-center gap-[3px] py-[10px] px-1 text-[11px] border-0 bg-transparent cursor-pointer transition-colors duration-150"
           [class.text-primary-600]="activePanel() === 'toolbox'"

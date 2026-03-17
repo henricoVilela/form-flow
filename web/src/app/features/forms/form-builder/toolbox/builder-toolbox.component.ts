@@ -31,7 +31,7 @@ interface TypeGroup {
               [title]="'Clique para adicionar ' + qType.label"
             >
               <i [class]="qType.icon + ' text-sm text-primary-500'"></i>
-              <span class="text-sm text-surface-700">{{ qType.label }}</span>
+              <span class="text-sm text-surface-700 dark:text-surface-300">{{ qType.label }}</span>
             </button>
           }
         </div>
@@ -69,6 +69,11 @@ interface TypeGroup {
       transform: scale(0.98);
       background: #eff6ff;
       border-color: #bfdbfe;
+    }
+
+    :host-context(.dark) .toolbox-item:active {
+      background: #1e3a5f;
+      border-color: #3b82f6;
     }
   `],
 })

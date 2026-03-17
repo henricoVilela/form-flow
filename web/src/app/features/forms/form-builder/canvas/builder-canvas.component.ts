@@ -38,7 +38,7 @@ import { QUESTION_TYPES } from '../builder.models';
             <div class="flex items-center gap-1 shrink-0">
               <!-- Indicador de seção selecionada -->
               @if (store.selectedSectionId() === section.id) {
-                <span class="text-[10px] bg-primary-50 text-primary-600 px-2 py-0.5 rounded-full font-medium mr-1">
+                <span class="text-[10px] bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-300 px-2 py-0.5 rounded-full font-medium mr-1">
                   Ativa
                 </span>
               }
@@ -85,19 +85,19 @@ import { QUESTION_TYPES } from '../builder.models';
                       {{ getTypeLabel(question.type) }}
                     </span>
                     @if (question.required) {
-                      <span class="text-[10px] bg-red-50 text-red-500 px-1.5 py-0.5 rounded font-medium">
+                      <span class="text-[10px] bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 px-1.5 py-0.5 rounded font-medium">
                         Obrigatório
                       </span>
                     }
                     @if (question.conditions) {
-                      <span class="text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded font-medium"
+                      <span class="text-[10px] bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded font-medium"
                             pTooltip="Condicional" tooltipPosition="top">
                         <i class="pi pi-bolt text-[9px]"></i> Condição
                       </span>
                     }
                   </div>
 
-                  <p class="text-sm text-surface-800 font-medium">
+                  <p class="text-sm text-surface-800 dark:text-surface-100 font-medium">
                     {{ question.label || 'Pergunta sem título' }}
                   </p>
 
@@ -108,7 +108,7 @@ import { QUESTION_TYPES } from '../builder.models';
                   @if (hasOptions(question.type) && question.options.length > 0) {
                     <div class="flex flex-wrap gap-1.5 mt-2">
                       @for (opt of question.options.slice(0, 4); track opt.id) {
-                        <span class="text-[11px] px-2 py-0.5 bg-surface-50 text-surface-500 rounded-md border border-surface-200">
+                        <span class="text-[11px] px-2 py-0.5 bg-surface-50 dark:bg-surface-700 text-surface-500 dark:text-surface-400 rounded-md border border-surface-200 dark:border-surface-600">
                           {{ opt.label || 'Sem label' }}
                         </span>
                       }
@@ -174,6 +174,9 @@ import { QUESTION_TYPES } from '../builder.models';
     }
     .section-header:hover { background: #fafbfc; }
 
+    :host-context(.dark) .canvas-section { background: #1e293b; }
+    :host-context(.dark) .section-header:hover { background: #263348; }
+
     .section-title-input {
       display: block; width: 100%; border: none; outline: none;
       font-size: 16px; font-weight: 600;
@@ -200,6 +203,10 @@ import { QUESTION_TYPES } from '../builder.models';
     .question-card:hover { background: #f8fafc; border-color: var(--ff-border); }
     .question-card--selected { background: #eff6ff !important; border-color: #93c5fd !important; }
 
+    :host-context(.dark) .question-card { background: #1e293b; }
+    :host-context(.dark) .question-card:hover { background: #263348; }
+    :host-context(.dark) .question-card--selected { background: #1e3a5f !important; border-color: #3b82f6 !important; }
+
     .drag-handle { padding: 4px 2px; cursor: grab; opacity: 0.4; transition: opacity 150ms; }
     .drag-handle:hover { opacity: 1; }
     .question-card:hover .drag-handle { opacity: 0.7; }
@@ -213,17 +220,20 @@ import { QUESTION_TYPES } from '../builder.models';
       height: 52px; border: 2px dashed #93c5fd; border-radius: 10px;
       background: #eff6ff; margin: 4px 0;
     }
+    :host-context(.dark) .drag-placeholder { background: #1e3a5f; }
 
     :host ::ng-deep .cdk-drag-preview {
       box-shadow: 0 8px 24px rgba(0,0,0,0.12); border-radius: 10px;
       background: white; border: 1.5px solid #93c5fd;
     }
+    :host-context(.dark) ::ng-deep .cdk-drag-preview { background: #1e293b; }
 
     .empty-section {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; padding: 32px 16px; text-align: center; cursor: pointer;
     }
     .empty-section:hover { background: #f8fafc; border-radius: 0 0 10px 10px; }
+    :host-context(.dark) .empty-section:hover { background: #263348; }
 
     .add-section-btn {
       display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -232,6 +242,7 @@ import { QUESTION_TYPES } from '../builder.models';
       font-weight: 500; cursor: pointer; transition: all 200ms ease;
     }
     .add-section-btn:hover { border-color: #93c5fd; color: var(--ff-primary); background: #eff6ff; }
+    :host-context(.dark) .add-section-btn:hover { background: #1e3a5f; }
 
     .icon-btn {
       width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
@@ -241,6 +252,7 @@ import { QUESTION_TYPES } from '../builder.models';
     .icon-btn:hover { background: var(--ff-surface-hover); color: var(--ff-text-secondary); }
     .icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .icon-btn--danger:hover { background: #fef2f2; color: #ef4444; }
+    :host-context(.dark) .icon-btn--danger:hover { background: #450a0a; color: #f87171; }
 
     .icon-btn-sm {
       width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
@@ -249,6 +261,7 @@ import { QUESTION_TYPES } from '../builder.models';
     }
     .icon-btn-sm:hover { background: var(--ff-surface-hover); color: var(--ff-text-secondary); }
     .icon-btn-sm.icon-btn--danger:hover { background: #fef2f2; color: #ef4444; }
+    :host-context(.dark) .icon-btn-sm.icon-btn--danger:hover { background: #450a0a; color: #f87171; }
   `],
 })
 export class BuilderCanvasComponent {
