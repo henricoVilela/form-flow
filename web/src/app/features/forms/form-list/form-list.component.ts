@@ -59,14 +59,14 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
       </p-iconfield>
 
       <!-- Status filter pills -->
-      <div class="flex gap-1 p-1 bg-surface-100 rounded-lg">
+      <div class="flex gap-1 p-1 bg-surface-100 dark:bg-surface-700 rounded-lg">
         @for (filter of statusFilters; track filter.value) {
           <button
             (click)="onStatusFilter(filter.value)"
             [class]="'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 '
               + (activeFilter() === filter.value
-                ? 'bg-white text-surface-900 shadow-sm'
-                : 'text-surface-500 hover:text-surface-700')"
+                ? 'bg-white dark:bg-surface-600 text-surface-900 dark:text-surface-50 shadow-sm'
+                : 'text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200')"
           >
             {{ filter.label }}
             @if (filter.count !== null) {
@@ -88,7 +88,7 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
             </div>
             <p-skeleton height="14px" width="90%" styleClass="mb-2" />
             <p-skeleton height="14px" width="55%" styleClass="mb-4" />
-            <div class="flex gap-3 pt-3 border-t border-surface-100">
+            <div class="flex gap-3 pt-3 border-t border-surface-100 dark:border-surface-700">
               <p-skeleton height="12px" width="80px" />
               <p-skeleton height="12px" width="100px" />
             </div>
@@ -100,7 +100,7 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
     <!-- Empty state -->
     @else if (filteredForms().length === 0) {
       <div class="ff-card text-center py-16 mt-4">
-        <div class="w-20 h-20 mx-auto mb-5 bg-surface-50 rounded-2xl
+        <div class="w-20 h-20 mx-auto mb-5 bg-surface-50 dark:bg-surface-700 rounded-2xl
                     flex items-center justify-center">
           @if (searchQuery || activeFilter() !== 'ALL') {
             <i class="pi pi-search text-3xl text-surface-300"></i>
@@ -110,7 +110,7 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
         </div>
 
         @if (searchQuery || activeFilter() !== 'ALL') {
-          <h3 class="text-lg font-semibold text-surface-700 mb-1">Nenhum resultado</h3>
+          <h3 class="text-lg font-semibold text-surface-700 dark:text-surface-200 mb-1">Nenhum resultado</h3>
           <p class="text-sm text-surface-500 mb-5">
             Nenhum formulário encontrado com os filtros atuais.
           </p>
@@ -120,7 +120,7 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
             (click)="clearFilters()"
           ></button>
         } @else {
-          <h3 class="text-lg font-semibold text-surface-700 mb-1">Nenhum formulário ainda</h3>
+          <h3 class="text-lg font-semibold text-surface-700 dark:text-surface-200 mb-1">Nenhum formulário ainda</h3>
           <p class="text-sm text-surface-500 mb-5">
             Crie seu primeiro formulário e comece a coletar respostas.
           </p>
@@ -142,7 +142,7 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
           >
             <!-- Status badge + menu -->
             <div class="flex items-start justify-between mb-3">
-              <h3 class="text-base font-semibold text-surface-900 group-hover:text-primary-600
+              <h3 class="text-base font-semibold text-surface-900 dark:text-surface-50 group-hover:text-primary-600
                          transition-colors line-clamp-1 pr-8 flex-1">
                 {{ form.title }}
               </h3>
@@ -155,7 +155,7 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
                 <!-- Actions menu -->
                 <button
                   class="w-7 h-7 flex items-center justify-center rounded-md
-                         text-surface-400 hover:text-surface-600 hover:bg-surface-100
+                         text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:hover:bg-surface-700
                          opacity-0 group-hover:opacity-100 transition-all duration-200"
                   (click)="openMenu($event, form)"
                   pTooltip="Ações" tooltipPosition="top"
@@ -173,7 +173,7 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
             }
 
             <!-- Meta footer -->
-            <div class="flex items-center gap-4 text-xs text-surface-400 pt-3 border-t border-surface-100">
+            <div class="flex items-center gap-4 text-xs text-surface-400 pt-3 border-t border-surface-100 dark:border-surface-700">
               <!-- Layout -->
               <span class="flex items-center gap-1" pTooltip="Layout" tooltipPosition="bottom">
                 <i class="pi pi-{{ form.layout === 'MULTI_STEP' ? 'list' : 'file' }} text-[10px]"></i>
@@ -199,7 +199,8 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
             @if (form.status === 'PUBLISHED') {
               <button
                 class="mt-3 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg
-                       text-xs font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100
+                       text-xs font-medium text-emerald-600 dark:text-emerald-400
+                       bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50
                        transition-colors duration-150"
                 (click)="navigateToResponses($event, form)"
                 pTooltip="Ver respostas recebidas" tooltipPosition="bottom"

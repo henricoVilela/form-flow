@@ -101,16 +101,16 @@ import {
       <!-- Empty state -->
       @else if (filteredResponses().length === 0) {
         <div class="text-center py-16">
-          <div class="w-20 h-20 mx-auto mb-5 bg-surface-50 rounded-2xl flex items-center justify-center">
+          <div class="w-20 h-20 mx-auto mb-5 bg-surface-50 dark:bg-surface-700 rounded-2xl flex items-center justify-center">
             <i class="pi pi-inbox text-3xl text-surface-300"></i>
           </div>
           @if (dateRange && (dateRange[0] || dateRange[1])) {
-            <h3 class="text-lg font-semibold text-surface-700 mb-1">Nenhuma resposta no período</h3>
+            <h3 class="text-lg font-semibold text-surface-700 dark:text-surface-200 mb-1">Nenhuma resposta no período</h3>
             <p class="text-sm text-surface-500 mb-5">Tente um intervalo de datas diferente.</p>
             <button pButton [text]="true" severity="secondary" icon="pi pi-filter-slash"
               label="Limpar filtro" (click)="clearDateFilter()"></button>
           } @else {
-            <h3 class="text-lg font-semibold text-surface-700 mb-1">Nenhuma resposta ainda</h3>
+            <h3 class="text-lg font-semibold text-surface-700 dark:text-surface-200 mb-1">Nenhuma resposta ainda</h3>
             <p class="text-sm text-surface-500">Compartilhe o link do formulário para começar a receber respostas.</p>
           }
         </div>
@@ -133,12 +133,12 @@ import {
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-response let-rowIndex="rowIndex">
-            <tr class="border-t border-surface-100 hover:bg-surface-50 transition-colors cursor-pointer"
+            <tr class="border-t border-surface-100 dark:border-surface-700 hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors cursor-pointer"
                 (click)="openDetail(response, rowIndex)">
               <td class="px-5 py-3 text-sm text-surface-400">
                 {{ currentPage() * pageSize + rowIndex + 1 }}
               </td>
-              <td class="px-5 py-3 text-sm text-surface-900 font-medium">
+              <td class="px-5 py-3 text-sm text-surface-900 dark:text-surface-50 font-medium">
                 {{ formatDate(response.submittedAt) }}
               </td>
               <td class="px-5 py-3 text-xs text-surface-400 font-mono hidden sm:table-cell">
@@ -173,7 +173,7 @@ import {
 
         <!-- Pagination -->
         @if (totalPages() > 1) {
-          <div class="flex items-center justify-between px-5 py-3 border-t border-surface-100">
+          <div class="flex items-center justify-between px-5 py-3 border-t border-surface-100 dark:border-surface-700">
             <span class="text-xs text-surface-400">
               Página {{ currentPage() + 1 }} de {{ totalPages() }}
               · {{ totalElements() }} resposta{{ totalElements() !== 1 ? 's' : '' }}
@@ -229,10 +229,10 @@ import {
       } @else if (selectedResponse()) {
 
         <!-- Submitted at -->
-        <div class="px-5 py-4 border-b border-surface-100 bg-surface-50">
+        <div class="px-5 py-4 border-b border-surface-100 dark:border-surface-700 bg-surface-50 dark:bg-surface-700/50 rounded">
           <div class="flex items-center gap-2 text-sm text-surface-500">
             <i class="pi pi-clock text-xs"></i>
-            <span>Enviado em <strong class="text-surface-700">{{ formatDate(selectedResponse()!.submittedAt) }}</strong></span>
+            <span>Enviado em <strong class="text-surface-700 dark:text-surface-200">{{ formatDate(selectedResponse()!.submittedAt) }}</strong></span>
           </div>
           <div class="flex items-center gap-2 text-xs text-surface-400 mt-1">
             <i class="pi pi-hashtag text-[10px]"></i>
@@ -246,16 +246,16 @@ import {
             <p class="text-sm text-surface-400 text-center py-4">Sem dados de resposta.</p>
           }
           @for (entry of payloadEntries(); track entry.questionId) {
-            <div class="rounded-lg border border-surface-100 p-3 bg-white">
+            <div class="rounded-lg border border-surface-100 dark:border-surface-700 p-3 bg-white dark:bg-surface-800">
               <p class="text-xs font-medium text-surface-400 mb-1 uppercase tracking-wide">{{ entry.label }}</p>
-              <p class="text-sm text-surface-900 break-words whitespace-pre-wrap">{{ entry.displayValue }}</p>
+              <p class="text-sm text-surface-900 dark:text-surface-50 break-words whitespace-pre-wrap">{{ entry.displayValue }}</p>
             </div>
           }
         </div>
 
         <!-- Metadata (collapsible) -->
         @if (metadataEntries().length > 0) {
-          <div class="px-5 pb-5 border-t border-surface-100">
+          <div class="px-5 pb-5 border-t border-surface-100 dark:border-surface-700">
             <button
               pButton [text]="true" severity="secondary" size="small"
               [icon]="showMetadata() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
@@ -264,11 +264,11 @@ import {
               (click)="showMetadata.set(!showMetadata())"
             ></button>
             @if (showMetadata()) {
-              <div class="mt-2 rounded-lg bg-surface-50 p-3 space-y-2">
+              <div class="mt-2 rounded-lg bg-surface-50 dark:bg-surface-700 p-3 space-y-2">
                 @for (entry of metadataEntries(); track entry.key) {
                   <div class="flex gap-3 text-xs">
                     <span class="text-surface-400 shrink-0 min-w-28">{{ entry.key }}</span>
-                    <span class="text-surface-700 break-all font-mono">{{ entry.value }}</span>
+                    <span class="text-surface-700 dark:text-surface-200 break-all font-mono">{{ entry.value }}</span>
                   </div>
                 }
               </div>

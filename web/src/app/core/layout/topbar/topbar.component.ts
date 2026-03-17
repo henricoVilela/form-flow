@@ -45,13 +45,13 @@ import { ThemeService } from '../theme.service';
         <button
           (click)="userMenu.toggle($event)"
           class="flex items-center gap-2.5 px-3 py-2 rounded-lg
-                 hover:bg-surface-50 transition-colors duration-200 cursor-pointer"
+                 hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors duration-200 cursor-pointer"
         >
-          <div class="w-8 h-8 rounded-full bg-primary-100 text-primary-700
+          <div class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300
                       flex items-center justify-center text-xs font-semibold">
             {{ store.userInitials() }}
           </div>
-          <span class="text-sm font-medium text-surface-700 hidden sm:inline">
+          <span class="text-sm font-medium text-surface-700 dark:text-surface-200 hidden sm:inline">
             {{ store.userName() }}
           </span>
           <i class="pi pi-chevron-down text-[10px] text-surface-400"></i>
