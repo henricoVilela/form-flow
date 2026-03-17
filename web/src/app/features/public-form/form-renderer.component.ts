@@ -104,33 +104,33 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
       }
 
       <!-- ── FORM ── -->
-      @if (state() === 'form' && formData() && currentSection()) {
+      @if (state() === 'form' && formData()) {
         <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up max-[480px]:p-5 max-[480px]:rounded-xl">
           <div class="mb-2">
             <h1 class="text-xl font-display font-bold text-surface-900">{{ formData()!.title }}</h1>
-            @if (sections().length > 1) {
+            @if (!isSinglePage() && sections().length > 1) {
               <p class="text-xs text-surface-400 mt-1">Seção {{ currentStep() + 1 }} de {{ sections().length }}</p>
             }
           </div>
 
-          @if (sections().length > 1) {
+          @if (!isSinglePage() && sections().length > 1) {
             <div class="h-1 bg-surface-200 rounded-sm mb-6">
               <div class="h-full bg-primary-600 rounded-sm transition-[width] duration-[350ms]" [style.width.%]="progressPercent()"></div>
             </div>
           }
 
-          <div>
-            @if (currentSection()!.title && sections().length > 1) {
-              <div class="bg-surface-50 rounded-xl px-[18px] py-[14px] mb-6">
-                <h2 class="text-base font-semibold text-surface-800">{{ currentSection()!.title }}</h2>
-                @if (currentSection()!.description) {
-                  <p class="text-sm text-surface-500 mt-0.5">{{ currentSection()!.description }}</p>
-                }
-              </div>
-            }
-
-            @for (q of currentSection()!.questions; track q.id) {
-              @if (isVisible(q)) {
+          <!-- Sections (SINGLE_PAGE = all, MULTI_STEP = current) -->
+          @for (section of visibleSections(); track section.id) {
+              @if (sections().length > 1 && section.title) {
+                <div class="bg-surface-50 rounded-xl px-[18px] py-[14px] mb-6 mt-2">
+                  <h2 class="text-base font-semibold text-surface-800">{{ section.title }}</h2>
+                  @if (section.description) {
+                    <p class="text-sm text-surface-500 mt-0.5">{{ section.description }}</p>
+                  }
+                </div>
+              }
+              @for (q of section.questions; track q.id) {
+                @if (isVisible(q)) {
                 <div class="mb-6">
                   @if (q.type !== 'statement') {
                     <label class="block text-[15px] font-medium text-surface-900 mb-2 leading-snug">
@@ -265,19 +265,24 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
                 </div>
               }
             }
-          </div>
+          }
 
           <!-- Nav -->
           <div class="flex items-center justify-between pt-6 border-t border-surface-200 mt-2">
-            @if (currentStep() > 0) {
-              <button pButton label="Anterior" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (click)="prevStep()"></button>
-            } @else {
+            @if (isSinglePage()) {
               <span></span>
-            }
-            @if (currentStep() < sections().length - 1) {
-              <button pButton label="Próximo" icon="pi pi-arrow-right" iconPos="right" (click)="nextStep()"></button>
-            } @else {
               <button pButton label="Enviar resposta" icon="pi pi-check" [loading]="state() === 'submitting'" (click)="onSubmit()"></button>
+            } @else {
+              @if (currentStep() > 0) {
+                <button pButton label="Anterior" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (click)="prevStep()"></button>
+              } @else {
+                <span></span>
+              }
+              @if (currentStep() < sections().length - 1) {
+                <button pButton label="Próximo" icon="pi pi-arrow-right" iconPos="right" (click)="nextStep()"></button>
+              } @else {
+                <button pButton label="Enviar resposta" icon="pi pi-check" [loading]="state() === 'submitting'" (click)="onSubmit()"></button>
+              }
             }
           </div>
         </div>
@@ -329,11 +334,18 @@ export class FormRendererComponent implements OnInit {
   readonly fileNames = signal<Record<string, string[]>>({});
   readonly startedAt = new Date();
 
+  readonly isSinglePage = computed(() => this.formData()?.layout === 'SINGLE_PAGE');
   readonly currentSection = computed(() => this.sections()[this.currentStep()] ?? null);
   readonly progressPercent = computed(() => {
     const total = this.sections().length;
     return total <= 1 ? 100 : ((this.currentStep() + 1) / total) * 100;
   });
+
+  readonly visibleSections = computed(() =>
+    this.isSinglePage()
+      ? this.sections()
+      : (this.currentSection() ? [this.currentSection()!] : [])
+  );
 
   private readonly UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -453,6 +465,19 @@ export class FormRendererComponent implements OnInit {
     return !Object.keys(newErrors).length;
   }
 
+  private validateAll(): boolean {
+    const newErrors: Record<string, string> = {};
+    for (const section of this.sections()) {
+      for (const q of section.questions) {
+        if (!this.isVisible(q) || q.type === 'statement') continue;
+        const err = this.validateQuestion(q);
+        if (err) newErrors[q.id] = err;
+      }
+    }
+    this.errors.set(newErrors);
+    return !Object.keys(newErrors).length;
+  }
+
   private validateQuestion(q: Question): string | null {
     const val = this.answers()[q.id];
     const empty = val === undefined || val === null || val === '' || (Array.isArray(val) && !val.length);
@@ -503,7 +528,8 @@ export class FormRendererComponent implements OnInit {
   // ── Submit ──
 
   onSubmit(): void {
-    if (!this.validateStep()) return;
+    const valid = this.isSinglePage() ? this.validateAll() : this.validateStep();
+    if (!valid) return;
     const form = this.formData()!;
     this.state.set('submitting');
 
