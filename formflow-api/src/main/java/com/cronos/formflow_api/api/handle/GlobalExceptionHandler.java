@@ -96,7 +96,8 @@ public class GlobalExceptionHandler {
         return switch (code) {
             case "EMAIL_ALREADY_EXISTS", "SLUG_ALREADY_TAKEN" -> HttpStatus.CONFLICT;
             case "FORM_NOT_PUBLISHED", "VERSION_MISMATCH", "FILE_NOT_CONFIRMED" -> HttpStatus.CONFLICT;
-            case "INVALID_TOKEN" -> HttpStatus.UNAUTHORIZED;
+            case "INVALID_TOKEN", "PASSWORD_REQUIRED" -> HttpStatus.UNAUTHORIZED;
+            case "WRONG_PASSWORD" -> HttpStatus.FORBIDDEN;
             default -> HttpStatus.UNPROCESSABLE_CONTENT;
         };
     }

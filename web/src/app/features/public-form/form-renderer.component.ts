@@ -48,7 +48,7 @@ interface ConditionRule {
   value: any;
 }
 
-type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' | 'error';
+type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' | 'success' | 'error';
 
 @Component({
   selector: 'app-form-renderer',
@@ -83,6 +83,28 @@ type RendererState = 'loading' | 'welcome' | 'form' | 'submitting' | 'success' |
           </div>
           <h2 class="text-xl font-display font-bold text-surface-900 mb-2">Formulário não encontrado</h2>
           <p class="text-sm text-surface-500">Este formulário não existe, não está publicado ou expirou.</p>
+        </div>
+      }
+
+      <!-- ── PASSWORD ── -->
+      @if (state() === 'password') {
+        <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up max-[480px]:p-5 max-[480px]:rounded-xl">
+          <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-primary-50 flex items-center justify-center">
+            <i class="pi pi-lock text-2xl text-primary-500"></i>
+          </div>
+          <h2 class="text-xl font-display font-bold text-surface-900 mb-2 text-center">Formulário protegido</h2>
+          <p class="text-sm text-surface-500 mb-6 text-center">Digite a senha para acessar este formulário.</p>
+          <div class="flex flex-col gap-3">
+            <input pInputText type="password" class="w-full" placeholder="Senha de acesso"
+                   [(ngModel)]="passwordInput"
+                   (keydown.enter)="submitPassword()" />
+            @if (passwordError()) {
+              <p-message severity="error" [text]="passwordError()!" styleClass="w-full" />
+            }
+            <button pButton label="Acessar" icon="pi pi-arrow-right" iconPos="right"
+                    [loading]="passwordChecking()"
+                    (click)="submitPassword()"></button>
+          </div>
         </div>
       }
 
@@ -334,6 +356,10 @@ export class FormRendererComponent implements OnInit {
   readonly fileNames = signal<Record<string, string[]>>({});
   readonly startedAt = new Date();
 
+  passwordInput = '';
+  readonly passwordError = signal<string | null>(null);
+  readonly passwordChecking = signal(false);
+
   readonly isSinglePage = computed(() => this.formData()?.layout === 'SINGLE_PAGE');
   readonly currentSection = computed(() => this.sections()[this.currentStep()] ?? null);
   readonly progressPercent = computed(() => {
@@ -350,19 +376,40 @@ export class FormRendererComponent implements OnInit {
   private readonly UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   ngOnInit(): void {
+    this.loadForm();
+  }
+
+  private loadForm(password?: string): void {
     const id = this.formId();
     const request$ = this.UUID_REGEX.test(id)
-      ? this.formApi.getPublicForm(id)
-      : this.formApi.getPublicFormBySlug(id);
+      ? this.formApi.getPublicForm(id, password)
+      : this.formApi.getPublicFormBySlug(id, password);
 
     request$.subscribe({
       next: (data) => {
         this.formData.set(data);
         this.sections.set((data.schema?.sections ?? []).filter((s: any) => s.questions?.length > 0));
+        this.passwordChecking.set(false);
         this.state.set(data.welcomeMessage || data.description ? 'welcome' : 'form');
       },
-      error: () => this.state.set('error'),
+      error: (err) => {
+        this.passwordChecking.set(false);
+        if (err.status === 401 && err.error?.error === 'PASSWORD_REQUIRED') {
+          this.state.set('password');
+        } else if (err.status === 403 && err.error?.error === 'WRONG_PASSWORD') {
+          this.passwordError.set('Senha incorreta. Tente novamente.');
+        } else {
+          this.state.set('error');
+        }
+      },
     });
+  }
+
+  submitPassword(): void {
+    if (!this.passwordInput.trim()) return;
+    this.passwordError.set(null);
+    this.passwordChecking.set(true);
+    this.loadForm(this.passwordInput);
   }
 
   hasFilesNames(qId: string): boolean {

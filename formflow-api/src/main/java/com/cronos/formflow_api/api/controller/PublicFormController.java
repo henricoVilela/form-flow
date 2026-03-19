@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -42,12 +43,16 @@ public class PublicFormController {
      * @return dados públicos do formulário com schema completo
      */
     @GetMapping("/{formId}")
-    public ResponseEntity<PublicFormResponse> getPublicForm(@PathVariable UUID formId) {
-        return ResponseEntity.ok(formService.getPublicForm(formId));
+    public ResponseEntity<PublicFormResponse> getPublicForm(
+            @PathVariable UUID formId,
+            @RequestHeader(value = "X-Form-Password", required = false) String password) {
+        return ResponseEntity.ok(formService.getPublicForm(formId, password));
     }
 
     @GetMapping("/slug/{slug}")
-    public ResponseEntity<PublicFormResponse> getPublicFormBySlug(@PathVariable String slug) {
-        return ResponseEntity.ok(formService.getPublicFormBySlug(slug));
+    public ResponseEntity<PublicFormResponse> getPublicFormBySlug(
+            @PathVariable String slug,
+            @RequestHeader(value = "X-Form-Password", required = false) String password) {
+        return ResponseEntity.ok(formService.getPublicFormBySlug(slug, password));
     }
 }

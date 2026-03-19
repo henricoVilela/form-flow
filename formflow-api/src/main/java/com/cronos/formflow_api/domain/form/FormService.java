@@ -171,21 +171,29 @@ public class FormService {
         return FormVersionResponse.from(fv);
     }
 
-    public PublicFormResponse getPublicFormBySlug(String slug) {
+    public PublicFormResponse getPublicFormBySlug(String slug, String password) {
         Form form = formRepository.findBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
-        return buildPublicFormResponse(form);
+        return buildPublicFormResponse(form, password);
     }
 
-    public PublicFormResponse getPublicForm(UUID formId) {
+    public PublicFormResponse getPublicForm(UUID formId, String password) {
         Form form = formRepository.findById(formId)
                 .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
-        return buildPublicFormResponse(form);
+        return buildPublicFormResponse(form, password);
     }
 
-    private PublicFormResponse buildPublicFormResponse(Form form) {
+    private PublicFormResponse buildPublicFormResponse(Form form, String password) {
         if (form.getStatus() != FormStatus.PUBLISHED) {
             throw new ResourceNotFoundException("Formulário não está disponível");
+        }
+        if (form.getVisibility() == FormVisibility.PASSWORD_PROTECTED) {
+            if (password == null || password.isBlank()) {
+                throw new BusinessException("PASSWORD_REQUIRED", "Este formulário requer uma senha de acesso");
+            }
+            if (!passwordEncoder.matches(password, form.getPasswordHash())) {
+                throw new BusinessException("WRONG_PASSWORD", "Senha incorreta");
+            }
         }
         FormVersion latestVersion = formVersionRepository.findLatestByFormId(form.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Nenhuma versão publicada encontrada"));

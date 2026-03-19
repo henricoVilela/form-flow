@@ -30,8 +30,11 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
     return next(req);
   }
 
-  // Não intercepta requests de auth (evita loop)
+  // Não intercepta requests de auth (evita loop) nem rotas públicas
   if (req.url.includes('/auth/login') || req.url.includes('/auth/register') || req.url.includes('/auth/refresh')) {
+    return next(req);
+  }
+  if (req.url.includes('/public/')) {
     return next(req);
   }
 

@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env';
@@ -230,12 +230,14 @@ export class FormApiService {
     return this.http.post<FormResponse>(`${this.baseUrl}/${id}/duplicate`, {});
   }
 
-  getPublicForm(formId: string): Observable<PublicFormResponse> {
-    return this.http.get<PublicFormResponse>(`${environment.apiUrl}/public/forms/${formId}`);
+  getPublicForm(formId: string, password?: string): Observable<PublicFormResponse> {
+    const headers = password ? new HttpHeaders({ 'X-Form-Password': password }) : new HttpHeaders();
+    return this.http.get<PublicFormResponse>(`${environment.apiUrl}/public/forms/${formId}`, { headers });
   }
 
-  getPublicFormBySlug(slug: string): Observable<PublicFormResponse> {
-    return this.http.get<PublicFormResponse>(`${environment.apiUrl}/public/forms/slug/${slug}`);
+  getPublicFormBySlug(slug: string, password?: string): Observable<PublicFormResponse> {
+    const headers = password ? new HttpHeaders({ 'X-Form-Password': password }) : new HttpHeaders();
+    return this.http.get<PublicFormResponse>(`${environment.apiUrl}/public/forms/slug/${slug}`, { headers });
   }
 
   submitResponse(formId: string, request: SubmitResponseRequest): Observable<SubmitResponseResponse> {
