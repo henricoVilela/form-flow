@@ -78,6 +78,14 @@ public class ResponseService {
             throw new BusinessException("FORM_NOT_PUBLISHED", "Este formulário não está disponível para respostas");
         }
 
+        // Valida limite global de respostas do formulário
+        if (form.getMaxResponses() != null) {
+            long total = responseRepository.countByFormId(formId);
+            if (total >= form.getMaxResponses()) {
+                throw new BusinessException("FORM_RESPONSE_LIMIT_REACHED", "Este formulário atingiu o limite máximo de respostas");
+            }
+        }
+
         // Valida token de respondente se fornecido
         FormRespondent respondent = null;
         if (respondentToken != null && !respondentToken.isBlank()) {
@@ -213,7 +221,7 @@ public class ResponseService {
         switch (type) {
             case "short_text", "long_text", "email", "phone", "url" ->
                     builder.valueText(value.asString(null));
-            case "number" ->
+            case "number", "rating" ->
                     builder.valueNumber(value.isNull() ? null : new BigDecimal(value.asString()));
             case "date" ->
                     builder.valueDate(value.isNull() ? null : LocalDate.parse(value.asString()));

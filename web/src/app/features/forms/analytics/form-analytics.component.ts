@@ -42,14 +42,14 @@ const CHART_COLORS = [
 
       <div class="flex items-center gap-2 flex-wrap">
         <!-- Days selector -->
-        <div class="flex gap-1 p-1 bg-surface-100 rounded-lg">
+        <div class="flex gap-1 p-1 bg-surface-100 dark:bg-surface-700 rounded-lg">
           @for (opt of daysOptions; track opt.value) {
             <button
               (click)="setDays(opt.value)"
               [class]="'px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150 '
                 + (selectedDays() === opt.value
-                  ? 'bg-white text-surface-900 shadow-sm'
-                  : 'text-surface-500 hover:text-surface-700')"
+                  ? 'bg-white dark:bg-surface-600 text-surface-900 dark:text-surface-50 shadow-sm'
+                  : 'text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200')"
             >{{ opt.label }}</button>
           }
         </div>
@@ -76,7 +76,7 @@ const CHART_COLORS = [
       } @else {
         <div class="ff-card">
           <p class="text-xs font-semibold text-surface-400 uppercase tracking-wide mb-2">Total</p>
-          <p class="text-3xl font-bold text-surface-900">{{ analytics()?.summary?.totalResponses ?? 0 }}</p>
+          <p class="text-3xl font-bold text-surface-900 dark:text-surface-50">{{ analytics()?.summary?.totalResponses ?? 0 }}</p>
           <p class="text-xs text-surface-400 mt-1">respostas recebidas</p>
         </div>
 
@@ -94,7 +94,7 @@ const CHART_COLORS = [
 
         <div class="ff-card">
           <p class="text-xs font-semibold text-surface-400 uppercase tracking-wide mb-2">Tempo médio</p>
-          <p class="text-3xl font-bold text-surface-900">
+          <p class="text-3xl font-bold text-surface-900 dark:text-surface-50">
             {{ formatDuration(analytics()?.summary?.averageCompletionTimeSeconds ?? null) }}
           </p>
           <p class="text-xs text-surface-400 mt-1">de preenchimento</p>
@@ -105,7 +105,7 @@ const CHART_COLORS = [
     <!-- Timeline chart -->
     <div class="ff-card mb-6">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-sm font-semibold text-surface-700">Respostas por dia</h3>
+        <h3 class="text-sm font-semibold text-surface-700 dark:text-surface-200">Respostas por dia</h3>
         @if (!loading() && analytics()) {
           <span class="text-xs text-surface-400">últimos {{ selectedDays() }} dias</span>
         }
@@ -133,10 +133,10 @@ const CHART_COLORS = [
     <!-- No responses empty state -->
     @if (!loading() && (analytics()?.summary?.totalResponses ?? 0) === 0) {
       <div class="ff-card text-center py-12">
-        <div class="w-16 h-16 mx-auto mb-4 bg-surface-50 rounded-2xl flex items-center justify-center">
+        <div class="w-16 h-16 mx-auto mb-4 bg-surface-50 dark:bg-surface-700 rounded-2xl flex items-center justify-center">
           <i class="pi pi-chart-bar text-2xl text-surface-300"></i>
         </div>
-        <h3 class="text-base font-semibold text-surface-700 mb-1">Sem dados para analisar</h3>
+        <h3 class="text-base font-semibold text-surface-700 dark:text-surface-200 mb-1">Sem dados para analisar</h3>
         <p class="text-sm text-surface-500">Compartilhe o formulário para começar a receber respostas.</p>
       </div>
     }
@@ -144,7 +144,7 @@ const CHART_COLORS = [
     <!-- Question cards grid -->
     @if (!loading() && visibleQuestions().length > 0) {
       <div class="mb-4">
-        <h2 class="text-sm font-semibold text-surface-600 uppercase tracking-wide">
+        <h2 class="text-sm font-semibold text-surface-600 dark:text-surface-400 uppercase tracking-wide">
           Por questão — {{ visibleQuestions().length }} questão{{ visibleQuestions().length !== 1 ? 'ões' : '' }}
         </h2>
       </div>
@@ -156,16 +156,16 @@ const CHART_COLORS = [
             <!-- Question header -->
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-start gap-2 flex-1 min-w-0">
-                <span class="w-7 h-7 rounded-md bg-surface-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <i class="pi {{ getTypeIcon(q) }} text-xs text-surface-500"></i>
+                <span class="w-7 h-7 rounded-md bg-surface-100 dark:bg-surface-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <i class="pi {{ getTypeIcon(q) }} text-xs text-surface-500 dark:text-surface-400"></i>
                 </span>
                 <div class="min-w-0">
-                  <p class="text-sm font-medium text-surface-900 line-clamp-2">{{ q.label }}</p>
+                  <p class="text-sm font-medium text-surface-900 dark:text-surface-50 line-clamp-2">{{ q.label }}</p>
                   <p class="text-xs text-surface-400 mt-0.5">{{ getTypeLabel(q) }}</p>
                 </div>
               </div>
               <div class="text-right shrink-0">
-                <p class="text-sm font-semibold text-surface-900">{{ q.totalAnswered }}</p>
+                <p class="text-sm font-semibold text-surface-900 dark:text-surface-50">{{ q.totalAnswered }}</p>
                 <p class="text-xs text-surface-400">respondidas</p>
               </div>
             </div>
@@ -174,9 +174,9 @@ const CHART_COLORS = [
             <div>
               <div class="flex justify-between text-xs text-surface-400 mb-1">
                 <span>Taxa de resposta</span>
-                <span class="font-medium text-surface-600">{{ (q.answerRate * 100).toFixed(0) }}%</span>
+                <span class="font-medium text-surface-600 dark:text-surface-400">{{ (q.answerRate * 100).toFixed(0) }}%</span>
               </div>
-              <div class="h-1.5 bg-surface-100 rounded-full overflow-hidden">
+              <div class="h-1.5 bg-surface-100 dark:bg-surface-700 rounded-full overflow-hidden">
                 <div
                   class="h-full rounded-full bg-indigo-500 transition-all"
                   [style.width.%]="q.answerRate * 100"
@@ -194,12 +194,12 @@ const CHART_COLORS = [
 
             <!-- CPF / CNPJ: documento coletado, sem stats numéricas -->
             @else if (q.documentType === 'cpf' || q.documentType === 'cnpj') {
-              <div class="flex items-center gap-4 bg-surface-50 rounded-lg p-4">
-                <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-                  <i class="pi pi-id-card text-indigo-600"></i>
+              <div class="flex items-center gap-4 bg-surface-50 dark:bg-surface-700/50 rounded-lg p-4">
+                <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
+                  <i class="pi pi-id-card text-indigo-600 dark:text-indigo-400"></i>
                 </div>
                 <div>
-                  <p class="text-2xl font-bold text-surface-900">{{ q.totalAnswered }}</p>
+                  <p class="text-2xl font-bold text-surface-900 dark:text-surface-50">{{ q.totalAnswered }}</p>
                   <p class="text-xs text-surface-500">
                     {{ q.documentType === 'cpf' ? 'CPFs' : 'CNPJs' }} coletados
                     · {{ (q.answerRate * 100).toFixed(0) }}% de fornecimento
@@ -221,26 +221,26 @@ const CHART_COLORS = [
             <!-- Numeric / Rating / Scale stats -->
             @else if (q.numericStats) {
               <div class="grid grid-cols-2 gap-3">
-                <div class="bg-surface-50 rounded-lg p-3 text-center">
+                <div class="bg-surface-50 dark:bg-surface-700/50 rounded-lg p-3 text-center">
                   <p class="text-xs text-surface-400 mb-1">Média</p>
                   <p class="text-xl font-bold text-indigo-600">{{ q.numericStats.average | number:'1.1-2' }}</p>
                 </div>
-                <div class="bg-surface-50 rounded-lg p-3 text-center">
+                <div class="bg-surface-50 dark:bg-surface-700/50 rounded-lg p-3 text-center">
                   <p class="text-xs text-surface-400 mb-1">Mediana</p>
                   <p class="text-xl font-bold text-violet-600">{{ q.numericStats.median | number:'1.1-2' }}</p>
                 </div>
-                <div class="bg-surface-50 rounded-lg p-3 text-center">
+                <div class="bg-surface-50 dark:bg-surface-700/50 rounded-lg p-3 text-center">
                   <p class="text-xs text-surface-400 mb-1">Mínimo</p>
-                  <p class="text-xl font-bold text-surface-700">{{ q.numericStats.min | number:'1.0-2' }}</p>
+                  <p class="text-xl font-bold text-surface-700 dark:text-surface-200">{{ q.numericStats.min | number:'1.0-2' }}</p>
                 </div>
-                <div class="bg-surface-50 rounded-lg p-3 text-center">
+                <div class="bg-surface-50 dark:bg-surface-700/50 rounded-lg p-3 text-center">
                   <p class="text-xs text-surface-400 mb-1">Máximo</p>
-                  <p class="text-xl font-bold text-surface-700">{{ q.numericStats.max | number:'1.0-2' }}</p>
+                  <p class="text-xl font-bold text-surface-700 dark:text-surface-200">{{ q.numericStats.max | number:'1.0-2' }}</p>
                 </div>
               </div>
               @if (q.numericStats.standardDeviation != null) {
                 <p class="text-xs text-surface-400 text-center">
-                  Desvio padrão: <span class="font-medium text-surface-600">{{ q.numericStats.standardDeviation | number:'1.1-2' }}</span>
+                  Desvio padrão: <span class="font-medium text-surface-600 dark:text-surface-400">{{ q.numericStats.standardDeviation | number:'1.1-2' }}</span>
                 </p>
               }
             }
@@ -248,19 +248,19 @@ const CHART_COLORS = [
             <!-- Text stats -->
             @else if (q.textStats) {
               <div class="grid grid-cols-3 gap-3 mb-2">
-                <div class="bg-surface-50 rounded-lg p-3 text-center">
+                <div class="bg-surface-50 dark:bg-surface-700/50 rounded-lg p-3 text-center">
                   <p class="text-xs text-surface-400 mb-1">Comp. médio</p>
-                  <p class="text-lg font-bold text-surface-900">{{ q.textStats.averageLength | number:'1.0-0' }}</p>
+                  <p class="text-lg font-bold text-surface-900 dark:text-surface-50">{{ q.textStats.averageLength | number:'1.0-0' }}</p>
                   <p class="text-xs text-surface-400">caracteres</p>
                 </div>
-                <div class="bg-surface-50 rounded-lg p-3 text-center">
+                <div class="bg-surface-50 dark:bg-surface-700/50 rounded-lg p-3 text-center">
                   <p class="text-xs text-surface-400 mb-1">Mínimo</p>
-                  <p class="text-lg font-bold text-surface-900">{{ q.textStats.minLength }}</p>
+                  <p class="text-lg font-bold text-surface-900 dark:text-surface-50">{{ q.textStats.minLength }}</p>
                   <p class="text-xs text-surface-400">caracteres</p>
                 </div>
-                <div class="bg-surface-50 rounded-lg p-3 text-center">
+                <div class="bg-surface-50 dark:bg-surface-700/50 rounded-lg p-3 text-center">
                   <p class="text-xs text-surface-400 mb-1">Máximo</p>
-                  <p class="text-lg font-bold text-surface-900">{{ q.textStats.maxLength }}</p>
+                  <p class="text-lg font-bold text-surface-900 dark:text-surface-50">{{ q.textStats.maxLength }}</p>
                   <p class="text-xs text-surface-400">caracteres</p>
                 </div>
               </div>
@@ -280,13 +280,13 @@ const CHART_COLORS = [
             <!-- Date stats -->
             @else if (q.dateStats) {
               <div class="grid grid-cols-2 gap-3">
-                <div class="bg-surface-50 rounded-lg p-3">
+                <div class="bg-surface-50 dark:bg-surface-700/50 rounded-lg p-3">
                   <p class="text-xs text-surface-400 mb-1">Primeira data</p>
-                  <p class="text-sm font-semibold text-surface-800">{{ formatDateShort(q.dateStats.earliest) }}</p>
+                  <p class="text-sm font-semibold text-surface-800 dark:text-surface-100">{{ formatDateShort(q.dateStats.earliest) }}</p>
                 </div>
-                <div class="bg-surface-50 rounded-lg p-3">
+                <div class="bg-surface-50 dark:bg-surface-700/50 rounded-lg p-3">
                   <p class="text-xs text-surface-400 mb-1">Última data</p>
-                  <p class="text-sm font-semibold text-surface-800">{{ formatDateShort(q.dateStats.latest) }}</p>
+                  <p class="text-sm font-semibold text-surface-800 dark:text-surface-100">{{ formatDateShort(q.dateStats.latest) }}</p>
                 </div>
               </div>
             }
@@ -294,13 +294,13 @@ const CHART_COLORS = [
             <!-- File stats -->
             @else if (q.fileStats) {
               <div class="grid grid-cols-2 gap-3">
-                <div class="bg-surface-50 rounded-lg p-3 text-center">
+                <div class="bg-surface-50 dark:bg-surface-700/50 rounded-lg p-3 text-center">
                   <p class="text-xs text-surface-400 mb-1">Total de arquivos</p>
-                  <p class="text-2xl font-bold text-surface-900">{{ q.fileStats.totalFiles }}</p>
+                  <p class="text-2xl font-bold text-surface-900 dark:text-surface-50">{{ q.fileStats.totalFiles }}</p>
                 </div>
-                <div class="bg-surface-50 rounded-lg p-3 text-center">
+                <div class="bg-surface-50 dark:bg-surface-700/50 rounded-lg p-3 text-center">
                   <p class="text-xs text-surface-400 mb-1">Média por resposta</p>
-                  <p class="text-2xl font-bold text-surface-900">{{ q.fileStats.averageFilesPerResponse | number:'1.1-1' }}</p>
+                  <p class="text-2xl font-bold text-surface-900 dark:text-surface-50">{{ q.fileStats.averageFilesPerResponse | number:'1.1-1' }}</p>
                 </div>
               </div>
             }

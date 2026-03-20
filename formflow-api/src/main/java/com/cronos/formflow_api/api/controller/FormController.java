@@ -22,6 +22,7 @@ import com.cronos.formflow_api.api.dto.request.CreateFormRequest;
 import com.cronos.formflow_api.api.dto.request.PublishFormRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateFormRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateFormSettingsRequest;
+import com.cronos.formflow_api.api.dto.response.DashboardStatsResponse;
 import com.cronos.formflow_api.api.dto.response.FormResponse;
 import com.cronos.formflow_api.api.dto.response.FormVersionResponse;
 import com.cronos.formflow_api.api.dto.response.PublishResponse;
@@ -43,6 +44,11 @@ public class FormController {
             @AuthenticationPrincipal User user,
             @Valid @RequestBody CreateFormRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(formService.create(user, request));
+    }
+
+    @GetMapping("/dashboard-stats")
+    public ResponseEntity<DashboardStatsResponse> dashboardStats(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(formService.getDashboardStats(user));
     }
 
     @GetMapping

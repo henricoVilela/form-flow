@@ -98,7 +98,7 @@ public class GlobalExceptionHandler {
             case "FORM_NOT_PUBLISHED", "VERSION_MISMATCH", "FILE_NOT_CONFIRMED" -> HttpStatus.CONFLICT;
             case "INVALID_TOKEN", "PASSWORD_REQUIRED", "TOKEN_INVALID" -> HttpStatus.UNAUTHORIZED;
             case "WRONG_PASSWORD" -> HttpStatus.FORBIDDEN;
-            case "RESPONDENT_LIMIT_REACHED" -> HttpStatus.FORBIDDEN;
+            case "RESPONDENT_LIMIT_REACHED", "FORM_RESPONSE_LIMIT_REACHED" -> HttpStatus.FORBIDDEN;
             default -> HttpStatus.UNPROCESSABLE_CONTENT;
         };
     }

@@ -15,10 +15,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.cronos.formflow_api.api.dto.request.CreateFormRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateFormRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateFormSettingsRequest;
+import com.cronos.formflow_api.api.dto.response.DashboardStatsResponse;
 import com.cronos.formflow_api.api.dto.response.FormResponse;
 import com.cronos.formflow_api.api.dto.response.FormVersionResponse;
 import com.cronos.formflow_api.api.dto.response.PublicFormResponse;
 import com.cronos.formflow_api.api.dto.response.PublishResponse;
+import com.cronos.formflow_api.domain.response.ResponseRepository;
 import com.cronos.formflow_api.domain.form.validation.SchemaConditionValidator;
 import com.cronos.formflow_api.domain.user.User;
 import com.cronos.formflow_api.shared.exception.BusinessException;
@@ -40,6 +42,7 @@ public class FormService {
     private final SchemaConditionValidator schemaConditionValidator;
     private final PasswordEncoder passwordEncoder;
     private final FormRespondentService respondentService;
+    private final ResponseRepository responseRepository;
 
     @Transactional
     public FormResponse create(User user, CreateFormRequest request) {
@@ -51,6 +54,16 @@ public class FormService {
                 .draftSchema(null)
                 .build();
         return FormResponse.from(formRepository.save(form), null);
+    }
+
+    public DashboardStatsResponse getDashboardStats(User user) {
+        java.time.LocalDateTime weekAgo = java.time.LocalDateTime.now().minusDays(7);
+        long total = responseRepository.countByUserId(user.getId());
+        long thisWeek = responseRepository.countByUserIdAndSubmittedAtAfter(user.getId(), weekAgo);
+        return DashboardStatsResponse.builder()
+                .totalResponses(total)
+                .responsesThisWeek(thisWeek)
+                .build();
     }
 
     public Page<FormResponse> listByUser(User user, Pageable pageable) {
@@ -72,7 +85,7 @@ public class FormService {
     public FormResponse update(User user, UUID id, UpdateFormRequest request) {
         Form form = findFormOwnedBy(user, id);
         form.setTitle(request.getTitle());
-        if (request.getDescription() != null) form.setDescription(request.getDescription());
+        form.setDescription(request.getDescription());
         if (request.getLayout() != null) form.setLayout(request.getLayout());
         
         if (request.getSchema() != null && !form.getVersions().isEmpty()) {

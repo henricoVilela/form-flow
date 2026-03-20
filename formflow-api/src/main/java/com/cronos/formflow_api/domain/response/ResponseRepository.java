@@ -29,6 +29,18 @@ public interface ResponseRepository extends JpaRepository<Response, UUID>, JpaSp
     long countByFormId(UUID formId);
 
     /**
+     * Total de respostas de todos os formulários de um usuário.
+     */
+    @Query("SELECT COUNT(r) FROM Response r JOIN r.form f WHERE f.user.id = :userId")
+    long countByUserId(@Param("userId") UUID userId);
+
+    /**
+     * Total de respostas dos formulários de um usuário após uma data.
+     */
+    @Query("SELECT COUNT(r) FROM Response r JOIN r.form f WHERE f.user.id = :userId AND r.submittedAt > :after")
+    long countByUserIdAndSubmittedAtAfter(@Param("userId") UUID userId, @Param("after") LocalDateTime after);
+
+    /**
      * Total de respostas após uma data (para "últimos N dias").
      */
     @Query("SELECT COUNT(r) FROM Response r WHERE r.form.id = :formId AND r.submittedAt > :after")

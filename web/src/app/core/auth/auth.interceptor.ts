@@ -66,7 +66,12 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
           }),
         );
       } else if (error.status === 403 && !isRefreshing) {
-        authService.logout();
+        // Apenas faz logout se for erro de autorização puro (sem código de negócio)
+        const businessCode = error.error?.error;
+        const businessCodes = ['WRONG_PASSWORD', 'RESPONDENT_LIMIT_REACHED', 'FORM_RESPONSE_LIMIT_REACHED'];
+        if (!businessCode || !businessCodes.includes(businessCode)) {
+          authService.logout();
+        }
       }
 
       return throwError(() => error);

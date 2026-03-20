@@ -49,7 +49,7 @@ interface ConditionRule {
   value: any;
 }
 
-type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' | 'success' | 'error' | 'token-error' | 'token-limit';
+type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' | 'success' | 'error' | 'token-error' | 'token-limit' | 'form-limit';
 
 @Component({
   selector: 'app-form-renderer',
@@ -98,7 +98,7 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
         </div>
       }
 
-      <!-- ── LIMITE ATINGIDO ── -->
+      <!-- ── LIMITE ATINGIDO (respondente) ── -->
       @if (state() === 'token-limit') {
         <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up text-center py-16 max-[480px]:p-5 max-[480px]:rounded-xl">
           <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-amber-50 flex items-center justify-center">
@@ -106,6 +106,17 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
           </div>
           <h2 class="text-xl font-display font-bold text-surface-900 mb-2">Limite atingido</h2>
           <p class="text-sm text-surface-500">O número máximo de respostas para este acesso já foi atingido.</p>
+        </div>
+      }
+
+      <!-- ── LIMITE GLOBAL DO FORMULÁRIO ── -->
+      @if (state() === 'form-limit') {
+        <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up text-center py-16 max-[480px]:p-5 max-[480px]:rounded-xl">
+          <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-amber-50 flex items-center justify-center">
+            <i class="pi pi-ban text-2xl text-amber-400"></i>
+          </div>
+          <h2 class="text-xl font-display font-bold text-surface-900 mb-2">Formulário encerrado</h2>
+          <p class="text-sm text-surface-500">Este formulário atingiu o limite máximo de respostas e não está mais aceitando novas submissões.</p>
         </div>
       }
 
@@ -431,6 +442,8 @@ export class FormRendererComponent implements OnInit {
           this.state.set('token-error');
         } else if (code === 'RESPONDENT_LIMIT_REACHED') {
           this.state.set('token-limit');
+        } else if (code === 'FORM_RESPONSE_LIMIT_REACHED') {
+          this.state.set('form-limit');
         } else {
           this.state.set('error');
         }
@@ -643,8 +656,13 @@ export class FormRendererComponent implements OnInit {
     }, this.respondentToken ?? undefined).subscribe({
       next: () => this.state.set('success'),
       error: (err) => {
-        this.state.set('form');
-        this.toast.add({ severity: 'error', summary: 'Erro', detail: err.error?.message ?? 'Erro ao enviar resposta', life: 6000 });
+        const code = err.error?.error;
+        if (code === 'FORM_RESPONSE_LIMIT_REACHED') {
+          this.state.set('form-limit');
+        } else {
+          this.state.set('form');
+          this.toast.add({ severity: 'error', summary: 'Erro', detail: err.error?.message ?? 'Erro ao enviar resposta', life: 6000 });
+        }
       },
     });
   }

@@ -190,7 +190,7 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
         [(visible)]="editInfoVisible"
         header="Editar formulário"
         [modal]="true"
-        [style]="{ width: '460px' }"
+        [style]="{ width: '480px', minHeight: '40rem' }"
         [draggable]="false">
         <div class="flex flex-col gap-4 pt-2">
           <div>
@@ -431,7 +431,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     this.editInfoSaving.set(true);
     this.formApi.update(this.id(), {
       title,
-      description: this.editInfoForm.description || undefined,
+      description: this.editInfoForm.description.trim() || null,
       layout: this.editInfoForm.layout,
       schema: this.store.toSchema(),
     }).subscribe({

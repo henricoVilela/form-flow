@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 
+import { Router } from '@angular/router';
 import { AuthStore } from '@core/auth/auth.store';
 import { FormApiService, FormResponse } from '@core/api/form-api.service';
 
@@ -24,7 +25,7 @@ import { FormApiService, FormResponse } from '@core/api/form-api.service';
         pButton
         label="Novo formulário"
         icon="pi pi-plus"
-        routerLink="/forms/new"
+        (click)="newForm()"
         class="p-button-sm"
       ></button>
     </div>
@@ -71,7 +72,7 @@ import { FormApiService, FormResponse } from '@core/api/form-api.service';
           <p class="text-sm text-surface-500 mb-4">Crie seu primeiro formulário para começar</p>
           <button
             pButton label="Criar formulário" icon="pi pi-plus"
-            routerLink="/forms/new" class="p-button-sm p-button-outlined"
+            (click)="newForm()" class="p-button-sm p-button-outlined"
           ></button>
         </div>
       } @else {
@@ -114,6 +115,7 @@ import { FormApiService, FormResponse } from '@core/api/form-api.service';
 export class DashboardComponent implements OnInit {
   readonly store = inject(AuthStore);
   private readonly formApi = inject(FormApiService);
+  private readonly router = inject(Router);
 
   readonly loading = signal(true);
   readonly recentForms = signal<FormResponse[]>([]);
@@ -127,26 +129,38 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadForms();
+    this.loadStats();
   }
 
   private loadForms(): void {
     this.formApi.list(0, 6).subscribe({
       next: (data) => {
         this.recentForms.set(data.content);
-
         const total = data.page.totalElements;
         const published = data.content.filter(f => f.status === 'PUBLISHED').length;
-
         this.stats.update(s => [
           { ...s[0], value: String(total) },
           { ...s[1], value: String(published) },
-          { ...s[2], value: '—' },  // TODO: total de respostas via analytics
-          { ...s[3], value: '—' },  // TODO: respostas esta semana
+          s[2],
+          s[3],
         ]);
-
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
+    });
+  }
+
+  private loadStats(): void {
+    this.formApi.getDashboardStats().subscribe({
+      next: ({ totalResponses, responsesThisWeek }) => {
+        this.stats.update(s => [
+          s[0],
+          s[1],
+          { ...s[2], value: String(totalResponses) },
+          { ...s[3], value: String(responsesThisWeek) },
+        ]);
+      },
+      error: (err) => console.error('[Dashboard] Falha ao carregar stats:', err),
     });
   }
 
@@ -164,6 +178,10 @@ export class DashboardComponent implements OnInit {
       case 'ARCHIVED':  return 'Arquivado';
       default:          return 'Rascunho';
     }
+  }
+
+  newForm(): void {
+    this.router.navigate(['/forms'], { queryParams: { new: '1' } });
   }
 
   formatDate(dateStr: string): string {

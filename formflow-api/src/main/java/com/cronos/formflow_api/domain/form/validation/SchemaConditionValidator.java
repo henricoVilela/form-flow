@@ -228,7 +228,7 @@ public class SchemaConditionValidator {
      */
     private Set<String> getAllowedOperators(String questionType) {
         if (TEXT_TYPES.contains(questionType)) return TEXT_OPERATORS;
-        if ("number".equals(questionType)) return NUMBER_OPERATORS;
+        if ("number".equals(questionType) || "rating".equals(questionType)) return NUMBER_OPERATORS;
         if (CHOICE_TYPES.contains(questionType)) return CHOICE_OPERATORS;
         if ("date".equals(questionType)) return DATE_OPERATORS;
         return UNIVERSAL_OPERATORS; // file_upload, statement, etc.

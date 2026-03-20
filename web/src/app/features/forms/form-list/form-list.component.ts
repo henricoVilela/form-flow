@@ -1,7 +1,7 @@
-import { Component, inject, OnInit, signal, computed, ViewChild } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -260,13 +260,15 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
     <p-confirmDialog />
   `,
 })
-export class FormListComponent implements OnInit {
+export class FormListComponent implements OnInit, AfterViewInit {
   private readonly formApi = inject(FormApiService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(MessageService);
   private readonly confirmService = inject(ConfirmationService);
 
   @ViewChild('actionsMenu') actionsMenu: any;
+  @ViewChild('createDialog') createDialog!: CreateFormDialogComponent;
 
   // ── State ──
   readonly loading = signal(true);
@@ -330,6 +332,12 @@ export class FormListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadForms();
+  }
+
+  ngAfterViewInit(): void {
+    if (this.route.snapshot.queryParamMap.get('new') === '1') {
+      setTimeout(() => this.createDialog.open(), 0);
+    }
   }
 
   // ── Data loading ──
@@ -398,7 +406,7 @@ export class FormListComponent implements OnInit {
           command: () => this.router.navigate(['/forms', form.id, 'analytics']),
         },
         {
-          label: 'Copiar link público',
+          label: 'Copiar link',
           icon: 'pi pi-link',
           command: () => this.copyPublicLink(form),
         },
@@ -448,6 +456,7 @@ export class FormListComponent implements OnInit {
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
+        this.confirmService.close();
         this.formApi.archive(form.id).subscribe({
           next: () => {
             this.toast.add({ severity: 'success', summary: 'Arquivado', detail: form.title });

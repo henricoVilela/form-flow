@@ -180,7 +180,7 @@ export interface CreateFormRequest {
 
 export interface UpdateFormRequest {
   title: string;
-  description?: string;
+  description?: string | null;
   layout?: 'MULTI_STEP' | 'SINGLE_PAGE';
   schema?: any;
 }
@@ -265,6 +265,10 @@ export class FormApiService {
 
   updateSettings(formId: string, request: FormSettingsRequest): Observable<FormResponse> {
     return this.http.put<FormResponse>(`${this.baseUrl}/${formId}/settings`, request);
+  }
+
+  getDashboardStats(): Observable<{ totalResponses: number; responsesThisWeek: number }> {
+    return this.http.get<{ totalResponses: number; responsesThisWeek: number }>(`${this.baseUrl}/dashboard-stats`);
   }
 
   getAnalytics(formId: string, days = 30): Observable<AnalyticsResponse> {
