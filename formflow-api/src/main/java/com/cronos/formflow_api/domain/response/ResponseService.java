@@ -19,6 +19,8 @@ import com.cronos.formflow_api.api.dto.response.ResponseDetailResponse;
 import com.cronos.formflow_api.api.dto.response.ResponseSummaryResponse;
 import com.cronos.formflow_api.domain.form.Form;
 import com.cronos.formflow_api.domain.form.FormRepository;
+import com.cronos.formflow_api.domain.form.FormRespondent;
+import com.cronos.formflow_api.domain.form.FormRespondentService;
 import com.cronos.formflow_api.domain.form.FormStatus;
 import com.cronos.formflow_api.domain.form.FormVersion;
 import com.cronos.formflow_api.domain.form.FormVersionRepository;
@@ -50,6 +52,7 @@ public class ResponseService {
     private final EmailNotificationRepository emailNotificationRepository;
     private final ConditionEvaluator conditionEvaluator;
     private final PayloadValidator payloadValidator;
+    private final FormRespondentService respondentService;
 
     /**
      * Submete uma resposta ao formulário.
@@ -67,12 +70,21 @@ public class ResponseService {
      * 7. Agenda notificação por e-mail
      */
     @Transactional
-    public ResponseDetailResponse submit(UUID formId, SubmitResponseRequest request) {
+    public ResponseDetailResponse submit(UUID formId, SubmitResponseRequest request, String respondentToken) {
         Form form = formRepository.findById(formId)
                 .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
 
         if (form.getStatus() != FormStatus.PUBLISHED) {
             throw new BusinessException("FORM_NOT_PUBLISHED", "Este formulário não está disponível para respostas");
+        }
+
+        // Valida token de respondente se fornecido
+        FormRespondent respondent = null;
+        if (respondentToken != null && !respondentToken.isBlank()) {
+            respondent = respondentService.validateToken(respondentToken);
+            if (!respondent.getForm().getId().equals(formId)) {
+                throw new BusinessException("TOKEN_INVALID", "Token não pertence a este formulário");
+            }
         }
 
         FormVersion formVersion = formVersionRepository.findById(request.getFormVersionId())
@@ -93,11 +105,17 @@ public class ResponseService {
         Response response = Response.builder()
                 .form(form)
                 .formVersion(formVersion)
+                .respondent(respondent)
                 .payload(payload)
                 .metadata(request.getMetadata())
                 .build();
 
         responseRepository.save(response);
+
+        // Incrementa contador do respondente
+        if (respondent != null) {
+            respondentService.incrementResponseCount(respondent);
+        }
 
         // Persiste respostas individuais (apenas questões visíveis)
         saveAnswers(response, form, payload, formVersion, visibleQuestionIds);

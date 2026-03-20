@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.hibernate.annotations.Type;
 
 import com.cronos.formflow_api.domain.form.Form;
+import com.cronos.formflow_api.domain.form.FormRespondent;
 import com.cronos.formflow_api.domain.form.FormVersion;
 
 import jakarta.persistence.CascadeType;
@@ -50,6 +51,10 @@ public class Response {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "form_version_id", nullable = false)
     private FormVersion formVersion;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "respondent_id")
+    private FormRespondent respondent;
 
     @Type(JsonNodeType.class)
     @Column(columnDefinition = "jsonb", nullable = false)

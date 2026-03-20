@@ -230,18 +230,21 @@ export class FormApiService {
     return this.http.post<FormResponse>(`${this.baseUrl}/${id}/duplicate`, {});
   }
 
-  getPublicForm(formId: string, password?: string): Observable<PublicFormResponse> {
+  getPublicForm(formId: string, password?: string, respondentToken?: string): Observable<PublicFormResponse> {
     const headers = password ? new HttpHeaders({ 'X-Form-Password': password }) : new HttpHeaders();
-    return this.http.get<PublicFormResponse>(`${environment.apiUrl}/public/forms/${formId}`, { headers });
+    const params = respondentToken ? new HttpParams().set('t', respondentToken) : new HttpParams();
+    return this.http.get<PublicFormResponse>(`${environment.apiUrl}/public/forms/${formId}`, { headers, params });
   }
 
-  getPublicFormBySlug(slug: string, password?: string): Observable<PublicFormResponse> {
+  getPublicFormBySlug(slug: string, password?: string, respondentToken?: string): Observable<PublicFormResponse> {
     const headers = password ? new HttpHeaders({ 'X-Form-Password': password }) : new HttpHeaders();
-    return this.http.get<PublicFormResponse>(`${environment.apiUrl}/public/forms/slug/${slug}`, { headers });
+    const params = respondentToken ? new HttpParams().set('t', respondentToken) : new HttpParams();
+    return this.http.get<PublicFormResponse>(`${environment.apiUrl}/public/forms/slug/${slug}`, { headers, params });
   }
 
-  submitResponse(formId: string, request: SubmitResponseRequest): Observable<SubmitResponseResponse> {
-    return this.http.post<SubmitResponseResponse>(`${this.baseUrl}/${formId}/responses`, request);
+  submitResponse(formId: string, request: SubmitResponseRequest, respondentToken?: string): Observable<SubmitResponseResponse> {
+    const params = respondentToken ? new HttpParams().set('t', respondentToken) : new HttpParams();
+    return this.http.post<SubmitResponseResponse>(`${this.baseUrl}/${formId}/responses`, request, { params });
   }
 
   listResponses(formId: string, page = 0, size = 20): Observable<PageResponse<ResponseSummaryResponse>> {
@@ -268,4 +271,33 @@ export class FormApiService {
     const params = new HttpParams().set('days', days.toString());
     return this.http.get<AnalyticsResponse>(`${this.baseUrl}/${formId}/analytics`, { params });
   }
+
+  // ── Respondentes ──
+
+  listRespondents(formId: string): Observable<RespondentResponse[]> {
+    return this.http.get<RespondentResponse[]>(`${this.baseUrl}/${formId}/respondents`);
+  }
+
+  createRespondent(formId: string, request: { name: string; maxResponses?: number }): Observable<RespondentResponse> {
+    return this.http.post<RespondentResponse>(`${this.baseUrl}/${formId}/respondents`, request);
+  }
+
+  updateRespondent(formId: string, respondentId: string, request: { name: string; maxResponses?: number; active?: boolean }): Observable<RespondentResponse> {
+    return this.http.put<RespondentResponse>(`${this.baseUrl}/${formId}/respondents/${respondentId}`, request);
+  }
+
+  deleteRespondent(formId: string, respondentId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${formId}/respondents/${respondentId}`);
+  }
+}
+
+export interface RespondentResponse {
+  id: string;
+  formId: string;
+  name: string;
+  token: string;
+  maxResponses: number | null;
+  responseCount: number;
+  active: boolean;
+  createdAt: string;
 }

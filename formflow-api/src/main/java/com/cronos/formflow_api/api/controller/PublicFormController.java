@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cronos.formflow_api.api.dto.response.PublicFormResponse;
@@ -45,14 +46,16 @@ public class PublicFormController {
     @GetMapping("/{formId}")
     public ResponseEntity<PublicFormResponse> getPublicForm(
             @PathVariable UUID formId,
-            @RequestHeader(value = "X-Form-Password", required = false) String password) {
-        return ResponseEntity.ok(formService.getPublicForm(formId, password));
+            @RequestHeader(value = "X-Form-Password", required = false) String password,
+            @RequestParam(value = "t", required = false) String respondentToken) {
+        return ResponseEntity.ok(formService.getPublicForm(formId, password, respondentToken));
     }
 
     @GetMapping("/slug/{slug}")
     public ResponseEntity<PublicFormResponse> getPublicFormBySlug(
             @PathVariable String slug,
-            @RequestHeader(value = "X-Form-Password", required = false) String password) {
-        return ResponseEntity.ok(formService.getPublicFormBySlug(slug, password));
+            @RequestHeader(value = "X-Form-Password", required = false) String password,
+            @RequestParam(value = "t", required = false) String respondentToken) {
+        return ResponseEntity.ok(formService.getPublicFormBySlug(slug, password, respondentToken));
     }
 }

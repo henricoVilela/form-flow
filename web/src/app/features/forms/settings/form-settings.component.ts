@@ -11,8 +11,12 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SkeletonModule } from 'primeng/skeleton';
 import { DividerModule } from 'primeng/divider';
 import { TooltipModule } from 'primeng/tooltip';
-import { MessageService } from 'primeng/api';
-import { FormApiService, FormResponse, FormVisibility } from '@core/api/form-api.service';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { TagModule } from 'primeng/tag';
+import { DialogModule } from 'primeng/dialog';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { MessageService, ConfirmationService } from 'primeng/api';
+import { FormApiService, FormResponse, FormVisibility, RespondentResponse } from '@core/api/form-api.service';
 
 @Component({
   selector: 'app-form-settings',
@@ -20,7 +24,9 @@ import { FormApiService, FormResponse, FormVisibility } from '@core/api/form-api
     CommonModule, FormsModule,
     ButtonModule, InputTextModule, TextareaModule, InputNumberModule,
     SelectModule, DatePickerModule, SkeletonModule, DividerModule, TooltipModule,
+    ToggleSwitchModule, TagModule, DialogModule, ConfirmDialogModule,
   ],
+  providers: [ConfirmationService],
   template: `
     <!-- Header -->
     <div class="flex items-center gap-3 mb-8">
@@ -203,6 +209,61 @@ import { FormApiService, FormResponse, FormVisibility } from '@core/api/form-api
           </div>
         </div>
 
+        <!-- ── Respondentes ── -->
+        <div class="ff-card">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-semibold text-surface-900 dark:text-surface-50 flex items-center gap-2">
+              <i class="pi pi-users text-primary-500 text-sm"></i>
+              Respondentes com acesso direto
+            </h2>
+            <button pButton label="Adicionar" icon="pi pi-plus" size="small" (click)="openAddRespondent()"></button>
+          </div>
+          <p class="text-xs text-surface-400 dark:text-surface-500 mb-4">
+            Crie links individuais para respondentes específicos (ex: prefeituras, departamentos). Cada um recebe um link único e pode ter limite de respostas próprio.
+          </p>
+
+          @if (respondentsLoading()) {
+            <div class="space-y-2">
+              @for (i of [1,2,3]; track i) {
+                <p-skeleton height="52px" />
+              }
+            </div>
+          } @else if (respondents().length === 0) {
+            <div class="text-center py-8 text-surface-400 dark:text-surface-500">
+              <i class="pi pi-users text-3xl mb-2 block"></i>
+              <p class="text-sm">Nenhum respondente cadastrado.</p>
+            </div>
+          } @else {
+            <div class="space-y-2">
+              @for (r of respondents(); track r.id) {
+                <div class="flex items-center gap-3 p-3 border border-surface-200 dark:border-surface-700 rounded-xl">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-0.5">
+                      <span class="text-sm font-medium text-surface-900 dark:text-surface-50 truncate">{{ r.name }}</span>
+                      @if (!r.active) {
+                        <p-tag value="Inativo" severity="secondary" />
+                      }
+                    </div>
+                    <p class="text-xs text-surface-400 dark:text-surface-500">
+                      {{ r.responseCount }} resposta{{ r.responseCount !== 1 ? 's' : '' }}
+                      @if (r.maxResponses) { · limite: {{ r.maxResponses }} }
+                    </p>
+                  </div>
+                  <button pButton icon="pi pi-copy" severity="secondary" [text]="true" size="small"
+                          pTooltip="Copiar link" tooltipPosition="top"
+                          (click)="copyLink(r)"></button>
+                  <button pButton icon="pi pi-pencil" severity="secondary" [text]="true" size="small"
+                          pTooltip="Editar" tooltipPosition="top"
+                          (click)="openEditRespondent(r)"></button>
+                  <button pButton icon="pi pi-trash" severity="danger" [text]="true" size="small"
+                          pTooltip="Remover" tooltipPosition="top"
+                          (click)="confirmDeleteRespondent(r)"></button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
         <!-- Save button (bottom) -->
         <div class="flex justify-end">
           <button
@@ -214,12 +275,50 @@ import { FormApiService, FormResponse, FormVisibility } from '@core/api/form-api
 
       </div>
     }
+
+    <!-- ── Dialog: Adicionar/Editar Respondente ── -->
+    <p-dialog
+      [(visible)]="respondentDialogVisible"
+      [header]="editingRespondent() ? 'Editar Respondente' : 'Novo Respondente'"
+      [modal]="true"
+      [style]="{ width: '420px' }"
+      [draggable]="false">
+      <div class="flex flex-col gap-4 pt-2">
+        <div>
+          <label class="ff-input-label">Nome do respondente</label>
+          <input pInputText class="w-full" placeholder="Ex: Prefeitura de São Paulo"
+                 [(ngModel)]="respondentForm.name" />
+        </div>
+        <div>
+          <label class="ff-input-label">
+            Limite de respostas
+            <span class="text-surface-400 font-normal ml-1">(0 = ilimitado)</span>
+          </label>
+          <p-inputNumber [(ngModel)]="respondentForm.maxResponses" [min]="0" [showButtons]="true" styleClass="w-full" />
+        </div>
+        @if (editingRespondent()) {
+          <div class="flex items-center justify-between">
+            <label class="ff-input-label mb-0">Ativo</label>
+            <p-toggleswitch [(ngModel)]="respondentForm.active" />
+          </div>
+        }
+      </div>
+      <ng-template pTemplate="footer">
+        <button pButton label="Cancelar" severity="secondary" [text]="true" (click)="respondentDialogVisible = false"></button>
+        <button pButton [label]="editingRespondent() ? 'Salvar' : 'Criar'" icon="pi pi-check"
+                [loading]="respondentSaving()"
+                (click)="saveRespondent()"></button>
+      </ng-template>
+    </p-dialog>
+
+    <p-confirmdialog />
   `,
 })
 export class FormSettingsComponent implements OnInit {
   private readonly formApi = inject(FormApiService);
   private readonly router = inject(Router);
   private readonly toast = inject(MessageService);
+  private readonly confirm = inject(ConfirmationService);
 
   readonly id = input.required<string>();
 
@@ -242,6 +341,14 @@ export class FormSettingsComponent implements OnInit {
     { label: 'Protegido por senha', value: 'PASSWORD_PROTECTED' },
   ];
 
+  // ── Respondentes ──
+  readonly respondents = signal<RespondentResponse[]>([]);
+  readonly respondentsLoading = signal(false);
+  readonly respondentSaving = signal(false);
+  readonly editingRespondent = signal<RespondentResponse | null>(null);
+  respondentDialogVisible = false;
+  respondentForm = { name: '', maxResponses: 0, active: true };
+
   ngOnInit(): void {
     this.formApi.getById(this.id()).subscribe({
       next: (form) => {
@@ -253,11 +360,90 @@ export class FormSettingsComponent implements OnInit {
         this.welcomeMessage = form.welcomeMessage ?? '';
         this.thankYouMessage = form.thankYouMessage ?? '';
         this.loading.set(false);
+        this.loadRespondents();
       },
       error: () => {
         this.toast.add({ severity: 'error', summary: 'Erro', detail: 'Formulário não encontrado' });
         this.router.navigate(['/forms']);
       },
+    });
+  }
+
+  private loadRespondents(): void {
+    this.respondentsLoading.set(true);
+    this.formApi.listRespondents(this.id()).subscribe({
+      next: (list) => { this.respondents.set(list); this.respondentsLoading.set(false); },
+      error: () => this.respondentsLoading.set(false),
+    });
+  }
+
+  openAddRespondent(): void {
+    this.editingRespondent.set(null);
+    this.respondentForm = { name: '', maxResponses: 0, active: true };
+    this.respondentDialogVisible = true;
+  }
+
+  openEditRespondent(r: RespondentResponse): void {
+    this.editingRespondent.set(r);
+    this.respondentForm = { name: r.name, maxResponses: r.maxResponses ?? 0, active: r.active };
+    this.respondentDialogVisible = true;
+  }
+
+  saveRespondent(): void {
+    const name = this.respondentForm.name.trim();
+    if (!name) return;
+    const maxResponses = this.respondentForm.maxResponses > 0 ? this.respondentForm.maxResponses : undefined;
+    this.respondentSaving.set(true);
+    const editing = this.editingRespondent();
+
+    const request$ = editing
+      ? this.formApi.updateRespondent(this.id(), editing.id, { name, maxResponses, active: this.respondentForm.active })
+      : this.formApi.createRespondent(this.id(), { name, maxResponses });
+
+    request$.subscribe({
+      next: (r) => {
+        if (editing) {
+          this.respondents.update(list => list.map(x => x.id === r.id ? r : x));
+        } else {
+          this.respondents.update(list => [...list, r]);
+        }
+        this.respondentSaving.set(false);
+        this.respondentDialogVisible = false;
+        this.toast.add({ severity: 'success', summary: 'Salvo!', detail: `Respondente "${r.name}" ${editing ? 'atualizado' : 'criado'}` });
+      },
+      error: (err) => {
+        this.respondentSaving.set(false);
+        this.toast.add({ severity: 'error', summary: 'Erro', detail: err.error?.message ?? 'Falha ao salvar respondente' });
+      },
+    });
+  }
+
+  confirmDeleteRespondent(r: RespondentResponse): void {
+    this.confirm.confirm({
+      message: `Remover o respondente "${r.name}"? Os links associados deixarão de funcionar.`,
+      header: 'Confirmar remoção',
+      icon: 'pi pi-trash',
+      acceptButtonStyleClass: 'p-button-danger',
+      acceptLabel: 'Remover',
+      rejectLabel: 'Cancelar',
+      accept: () => {
+        this.formApi.deleteRespondent(this.id(), r.id).subscribe({
+          next: () => {
+            this.respondents.update(list => list.filter(x => x.id !== r.id));
+            this.toast.add({ severity: 'success', summary: 'Removido', detail: `Respondente "${r.name}" removido` });
+          },
+          error: () => this.toast.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao remover respondente' }),
+        });
+      },
+    });
+  }
+
+  copyLink(r: RespondentResponse): void {
+    const form = this.form();
+    const slug = form?.slug || form?.id;
+    const url = `${window.location.origin}/f/${slug}?t=${r.token}`;
+    navigator.clipboard.writeText(url).then(() => {
+      this.toast.add({ severity: 'success', summary: 'Copiado!', detail: `Link de "${r.name}" copiado` });
     });
   }
 

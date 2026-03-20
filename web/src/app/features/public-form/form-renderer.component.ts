@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal, computed, input } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -48,7 +49,7 @@ interface ConditionRule {
   value: any;
 }
 
-type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' | 'success' | 'error';
+type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' | 'success' | 'error' | 'token-error' | 'token-limit';
 
 @Component({
   selector: 'app-form-renderer',
@@ -83,6 +84,28 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
           </div>
           <h2 class="text-xl font-display font-bold text-surface-900 mb-2">Formulário não encontrado</h2>
           <p class="text-sm text-surface-500">Este formulário não existe, não está publicado ou expirou.</p>
+        </div>
+      }
+
+      <!-- ── TOKEN INVÁLIDO ── -->
+      @if (state() === 'token-error') {
+        <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up text-center py-16 max-[480px]:p-5 max-[480px]:rounded-xl">
+          <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-red-50 flex items-center justify-center">
+            <i class="pi pi-ban text-2xl text-red-400"></i>
+          </div>
+          <h2 class="text-xl font-display font-bold text-surface-900 mb-2">Link inválido</h2>
+          <p class="text-sm text-surface-500">Este link de acesso não é válido ou foi desativado.</p>
+        </div>
+      }
+
+      <!-- ── LIMITE ATINGIDO ── -->
+      @if (state() === 'token-limit') {
+        <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up text-center py-16 max-[480px]:p-5 max-[480px]:rounded-xl">
+          <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-amber-50 flex items-center justify-center">
+            <i class="pi pi-lock text-2xl text-amber-400"></i>
+          </div>
+          <h2 class="text-xl font-display font-bold text-surface-900 mb-2">Limite atingido</h2>
+          <p class="text-sm text-surface-500">O número máximo de respostas para este acesso já foi atingido.</p>
         </div>
       }
 
@@ -322,7 +345,9 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
           } @else {
             <p class="text-sm text-surface-500 mb-6">Obrigado por preencher o formulário.</p>
           }
-          <button pButton label="Enviar outra resposta" icon="pi pi-refresh" severity="secondary" [outlined]="true" (click)="resetForm()"></button>
+          @if (!respondentToken) {
+            <button pButton label="Enviar outra resposta" icon="pi pi-refresh" severity="secondary" [outlined]="true" (click)="resetForm()"></button>
+          }
         </div>
       }
 
@@ -344,6 +369,7 @@ export class FormRendererComponent implements OnInit {
   private readonly formApi = inject(FormApiService);
   private readonly uploadApi = inject(UploadApiService);
   private readonly toast = inject(MessageService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly formId = input.required<string>();
 
@@ -359,6 +385,7 @@ export class FormRendererComponent implements OnInit {
   passwordInput = '';
   readonly passwordError = signal<string | null>(null);
   readonly passwordChecking = signal(false);
+  respondentToken: string | null = null;
 
   readonly isSinglePage = computed(() => this.formData()?.layout === 'SINGLE_PAGE');
   readonly currentSection = computed(() => this.sections()[this.currentStep()] ?? null);
@@ -376,14 +403,15 @@ export class FormRendererComponent implements OnInit {
   private readonly UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   ngOnInit(): void {
+    this.respondentToken = this.route.snapshot.queryParamMap.get('t');
     this.loadForm();
   }
 
   private loadForm(password?: string): void {
     const id = this.formId();
     const request$ = this.UUID_REGEX.test(id)
-      ? this.formApi.getPublicForm(id, password)
-      : this.formApi.getPublicFormBySlug(id, password);
+      ? this.formApi.getPublicForm(id, password, this.respondentToken ?? undefined)
+      : this.formApi.getPublicFormBySlug(id, password, this.respondentToken ?? undefined);
 
     request$.subscribe({
       next: (data) => {
@@ -394,10 +422,15 @@ export class FormRendererComponent implements OnInit {
       },
       error: (err) => {
         this.passwordChecking.set(false);
-        if (err.status === 401 && err.error?.error === 'PASSWORD_REQUIRED') {
+        const code = err.error?.error;
+        if (err.status === 401 && code === 'PASSWORD_REQUIRED') {
           this.state.set('password');
-        } else if (err.status === 403 && err.error?.error === 'WRONG_PASSWORD') {
+        } else if (err.status === 403 && code === 'WRONG_PASSWORD') {
           this.passwordError.set('Senha incorreta. Tente novamente.');
+        } else if (code === 'TOKEN_INVALID') {
+          this.state.set('token-error');
+        } else if (code === 'RESPONDENT_LIMIT_REACHED') {
+          this.state.set('token-limit');
         } else {
           this.state.set('error');
         }
@@ -607,7 +640,7 @@ export class FormRendererComponent implements OnInit {
         submittedAt: new Date().toISOString(),
         userAgent: navigator.userAgent,
       },
-    }).subscribe({
+    }, this.respondentToken ?? undefined).subscribe({
       next: () => this.state.set('success'),
       error: (err) => {
         this.state.set('form');

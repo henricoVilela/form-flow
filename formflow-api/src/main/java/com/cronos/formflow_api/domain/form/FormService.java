@@ -39,6 +39,7 @@ public class FormService {
     private final QuestionRepository questionRepository;
     private final SchemaConditionValidator schemaConditionValidator;
     private final PasswordEncoder passwordEncoder;
+    private final FormRespondentService respondentService;
 
     @Transactional
     public FormResponse create(User user, CreateFormRequest request) {
@@ -171,23 +172,26 @@ public class FormService {
         return FormVersionResponse.from(fv);
     }
 
-    public PublicFormResponse getPublicFormBySlug(String slug, String password) {
+    public PublicFormResponse getPublicFormBySlug(String slug, String password, String respondentToken) {
         Form form = formRepository.findBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
-        return buildPublicFormResponse(form, password);
+        return buildPublicFormResponse(form, password, respondentToken);
     }
 
-    public PublicFormResponse getPublicForm(UUID formId, String password) {
+    public PublicFormResponse getPublicForm(UUID formId, String password, String respondentToken) {
         Form form = formRepository.findById(formId)
                 .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
-        return buildPublicFormResponse(form, password);
+        return buildPublicFormResponse(form, password, respondentToken);
     }
 
-    private PublicFormResponse buildPublicFormResponse(Form form, String password) {
+    private PublicFormResponse buildPublicFormResponse(Form form, String password, String respondentToken) {
         if (form.getStatus() != FormStatus.PUBLISHED) {
             throw new ResourceNotFoundException("Formulário não está disponível");
         }
-        if (form.getVisibility() == FormVisibility.PASSWORD_PROTECTED) {
+        // Token de respondente tem precedência — bypassa verificação de senha
+        if (respondentToken != null && !respondentToken.isBlank()) {
+            respondentService.validateToken(respondentToken);
+        } else if (form.getVisibility() == FormVisibility.PASSWORD_PROTECTED) {
             if (password == null || password.isBlank()) {
                 throw new BusinessException("PASSWORD_REQUIRED", "Este formulário requer uma senha de acesso");
             }

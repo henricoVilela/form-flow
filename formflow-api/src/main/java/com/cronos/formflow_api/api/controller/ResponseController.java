@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cronos.formflow_api.api.dto.request.SubmitResponseRequest;
@@ -36,9 +37,10 @@ public class ResponseController {
     @PostMapping
     public ResponseEntity<ResponseDetailResponse> submit(
             @PathVariable UUID formId,
+            @RequestParam(value = "t", required = false) String respondentToken,
             @Valid @RequestBody SubmitResponseRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(responseService.submit(formId, request));
+                .body(responseService.submit(formId, request, respondentToken));
     }
 
     @GetMapping
