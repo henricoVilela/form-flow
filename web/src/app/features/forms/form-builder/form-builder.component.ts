@@ -6,6 +6,11 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { SelectModule } from 'primeng/select';
+import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, filter, takeUntil } from 'rxjs';
 
 import { FormApiService, FormResponse } from '@core/api/form-api.service';
@@ -18,8 +23,9 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
 @Component({
   selector: 'app-form-builder',
   imports: [
-    CommonModule, RouterLink,
+    CommonModule, RouterLink, FormsModule,
     ButtonModule, SkeletonModule, TooltipModule, ConfirmDialogModule,
+    DialogModule, InputTextModule, TextareaModule, SelectModule,
     BuilderToolboxComponent, BuilderCanvasComponent,
     BuilderPropertiesComponent, BuilderPreviewDialogComponent,
   ],
@@ -44,32 +50,35 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
              pTooltip="Voltar" tooltipPosition="bottom">
             <i class="pi pi-arrow-left"></i>
           </a>
-          <div>
-            <h1 class="text-base font-display font-bold text-surface-900 dark:text-surface-50 leading-tight">
-              {{ form()!.title }}
-            </h1>
-            <p class="text-xs text-surface-400 flex items-center gap-2">
-              <span [class]="form()!.status === 'PUBLISHED' ? 'text-emerald-500' : 'text-surface-400'">
-                {{ form()!.status === 'PUBLISHED' ? 'Publicado' : 'Rascunho' }}
-              </span>
-              @if (form()!.currentVersion) {
-                <span>· v{{ form()!.currentVersion }}</span>
-              }
-
-              @if (store.saving()) {
-                <span class="text-blue-500 flex items-center gap-1">
-                  <i class="pi pi-spin pi-spinner text-[10px]"></i> Salvando...
+          <div class="flex items-center gap-1.5">
+            <div>
+              <h1 class="text-base font-display font-bold text-surface-900 dark:text-surface-50 leading-tight">
+                {{ form()!.title }}
+              </h1>
+              <p class="text-xs text-surface-400 flex items-center gap-2">
+                <span [class]="form()!.status === 'PUBLISHED' ? 'text-emerald-500' : 'text-surface-400'">
+                  {{ form()!.status === 'PUBLISHED' ? 'Publicado' : 'Rascunho' }}
                 </span>
-              } @else if (store.dirty()) {
-                <span class="text-amber-500">· Alterações não salvas</span>
-              } @else if (store.lastSavedAt()) {
-                <span class="text-emerald-500 flex items-center gap-1">
-                  <i class="pi pi-check text-[10px]"></i> Salvo {{ formatTimeSince(store.lastSavedAt()!) }}
-                </span>
-              }
-
-              <span>· {{ store.totalQuestions() }} pergunta{{ store.totalQuestions() !== 1 ? 's' : '' }}</span>
-            </p>
+                @if (form()!.currentVersion) {
+                  <span>· v{{ form()!.currentVersion }}</span>
+                }
+                @if (store.saving()) {
+                  <span class="text-blue-500 flex items-center gap-1">
+                    <i class="pi pi-spin pi-spinner text-[10px]"></i> Salvando...
+                  </span>
+                } @else if (store.dirty()) {
+                  <span class="text-amber-500">· Alterações não salvas</span>
+                } @else if (store.lastSavedAt()) {
+                  <span class="text-emerald-500 flex items-center gap-1">
+                    <i class="pi pi-check text-[10px]"></i> Salvo {{ formatTimeSince(store.lastSavedAt()!) }}
+                  </span>
+                }
+                <span>· {{ store.totalQuestions() }} pergunta{{ store.totalQuestions() !== 1 ? 's' : '' }}</span>
+              </p>
+            </div>
+            <button pButton icon="pi pi-pencil" severity="secondary" [text]="true" size="small"
+                    pTooltip="Editar título e layout" tooltipPosition="bottom"
+                    (click)="openEditInfo()"></button>
           </div>
         </div>
 
@@ -175,6 +184,34 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
 
       <app-builder-preview-dialog #previewDialog />
       <p-confirmDialog />
+
+      <!-- ── Dialog: Editar informações ── -->
+      <p-dialog
+        [(visible)]="editInfoVisible"
+        header="Editar formulário"
+        [modal]="true"
+        [style]="{ width: '460px' }"
+        [draggable]="false">
+        <div class="flex flex-col gap-4 pt-2">
+          <div>
+            <label class="ff-input-label">Título <span class="text-red-500">*</span></label>
+            <input pInputText class="w-full" placeholder="Título do formulário" [(ngModel)]="editInfoForm.title" />
+          </div>
+          <div>
+            <label class="ff-input-label">Descrição <span class="text-surface-400 font-normal">(opcional)</span></label>
+            <textarea pTextarea class="w-full" [rows]="3" placeholder="Descrição breve..." [(ngModel)]="editInfoForm.description"></textarea>
+          </div>
+          <div>
+            <label class="ff-input-label">Layout</label>
+            <p-select [(ngModel)]="editInfoForm.layout" [options]="layoutOptions"
+                      optionLabel="label" optionValue="value" styleClass="w-full" />
+          </div>
+        </div>
+        <ng-template pTemplate="footer">
+          <button pButton label="Cancelar" severity="secondary" [text]="true" (click)="editInfoVisible = false"></button>
+          <button pButton label="Salvar" icon="pi pi-check" [loading]="editInfoSaving()" (click)="saveEditInfo()"></button>
+        </ng-template>
+      </p-dialog>
     }
   `,
   styles: [`
@@ -212,6 +249,15 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   readonly form = signal<FormResponse | null>(null);
   readonly publishing = signal(false);
   readonly activePanel = signal<'toolbox' | 'canvas' | 'properties'>('canvas');
+
+  // ── Editar informações ──
+  editInfoVisible = false;
+  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' };
+  readonly editInfoSaving = signal(false);
+  readonly layoutOptions = [
+    { label: 'Multi-etapas (uma seção por vez)', value: 'MULTI_STEP' },
+    { label: 'Página única (tudo em uma tela)', value: 'SINGLE_PAGE' },
+  ];
 
   private readonly destroy$ = new Subject<void>();
   private readonly autoSave$ = new Subject<void>();
@@ -371,6 +417,35 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
 
   goToSettings(): void {
     this.router.navigate(['/forms', this.id(), 'settings']);
+  }
+
+  openEditInfo(): void {
+    const f = this.form()!;
+    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' };
+    this.editInfoVisible = true;
+  }
+
+  saveEditInfo(): void {
+    const title = this.editInfoForm.title.trim();
+    if (!title) return;
+    this.editInfoSaving.set(true);
+    this.formApi.update(this.id(), {
+      title,
+      description: this.editInfoForm.description || undefined,
+      layout: this.editInfoForm.layout,
+      schema: this.store.toSchema(),
+    }).subscribe({
+      next: () => {
+        this.form.update(f => f ? { ...f, title, description: this.editInfoForm.description || null, layout: this.editInfoForm.layout } : f);
+        this.editInfoSaving.set(false);
+        this.editInfoVisible = false;
+        this.toast.add({ severity: 'success', summary: 'Salvo!', detail: 'Informações atualizadas' });
+      },
+      error: (err) => {
+        this.editInfoSaving.set(false);
+        this.toast.add({ severity: 'error', summary: 'Erro', detail: err.error?.message ?? 'Falha ao salvar' });
+      },
+    });
   }
 
   formatTimeSince(date: Date): string {
