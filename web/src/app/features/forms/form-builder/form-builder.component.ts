@@ -85,7 +85,7 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
         <div class="flex items-center gap-2">
           <button
             pButton icon="pi pi-save" severity="secondary" [text]="true" size="small"
-            pTooltip="Salvar rascunho (Ctrl+S)" tooltipPosition="bottom"
+            pTooltip="Salvar rascunho (Ctrl+S) · Duplicar questão (Ctrl+D) · Excluir questão (Del)" tooltipPosition="bottom"
             [loading]="store.saving()"
             [disabled]="!store.dirty() || store.saving()"
             (click)="saveDraft()"
@@ -286,15 +286,48 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Ctrl+S para salvar manualmente */
+  /** Atalhos de teclado globais do builder */
   @HostListener('window:keydown', ['$event'])
   onKeyDown(event: KeyboardEvent): void {
-    if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+    const ctrl = event.ctrlKey || event.metaKey;
+
+    // Ctrl+S — salvar rascunho
+    if (ctrl && event.key === 's') {
       event.preventDefault();
       if (this.store.dirty() && !this.store.saving()) {
         this.saveDraft();
       }
+      return;
     }
+
+    // Atalhos que requerem questão selecionada e foco fora de inputs
+    if (this.isInputFocused(event)) return;
+
+    const selectedId = this.store.selectedQuestionId();
+    if (!selectedId) return;
+
+    // Del / Backspace — remover questão selecionada
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      event.preventDefault();
+      this.store.removeQuestion(selectedId);
+      return;
+    }
+
+    // Ctrl+D — duplicar questão selecionada
+    if (ctrl && event.key === 'd') {
+      event.preventDefault();
+      this.store.duplicateQuestion(selectedId);
+    }
+  }
+
+  private isInputFocused(event: KeyboardEvent): boolean {
+    const target = event.target as HTMLElement;
+    return (
+      target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.tagName === 'SELECT' ||
+      target.isContentEditable
+    );
   }
 
   ngOnInit(): void {

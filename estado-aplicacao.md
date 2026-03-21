@@ -109,7 +109,7 @@
 |---|---------|-----------|-------------|
 | F8 | **Notificações** | Badge no topbar com contagem. Dropdown com últimas respostas recebidas. | Média |
 | F9 | **i18n** | pt-BR como padrão, preparar en-US com Angular i18n ou ngx-translate. | Média |
-| F10 | **Atalhos de teclado** | Além do Ctrl+S já implementado: Del (remover questão), Ctrl+D (duplicar), Ctrl+Z (undo). | Média |
+| ~~F10~~ | ~~**Atalhos de teclado**~~ | ~~Além do Ctrl+S já implementado: Del (remover questão), Ctrl+D (duplicar), Ctrl+Z (undo).~~ | ✅ **Concluído** |
 | F11 | **Undo/Redo no builder** | Stack de estados para desfazer/refazer ações no builder. | Alta |
 
 ---

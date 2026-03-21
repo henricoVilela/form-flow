@@ -103,6 +103,7 @@ export class BuilderStore {
   // ── Section actions ──
 
   addSection(): void {
+    this.pushHistory();
     const index = this.sections().length + 1;
     const section = createSection(`Seção ${index}`);
     this.sections.update(s => [...s, section]);
@@ -129,6 +130,7 @@ export class BuilderStore {
   }
 
   removeSection(sectionId: string): void {
+    this.pushHistory();
     const remaining = this.sections().filter(sec => sec.id !== sectionId);
     this.sections.set(remaining);
 
@@ -141,6 +143,7 @@ export class BuilderStore {
   }
 
   moveSectionUp(sectionId: string): void {
+    this.pushHistory();
     this.sections.update(sections => {
       const idx = sections.findIndex(s => s.id === sectionId);
       if (idx <= 0) return sections;
@@ -152,6 +155,7 @@ export class BuilderStore {
   }
 
   moveSectionDown(sectionId: string): void {
+    this.pushHistory();
     this.sections.update(sections => {
       const idx = sections.findIndex(s => s.id === sectionId);
       if (idx < 0 || idx >= sections.length - 1) return sections;
@@ -165,6 +169,7 @@ export class BuilderStore {
   // ── Question actions ──
 
   addQuestion(sectionId: string, type: QuestionType): void {
+    this.pushHistory();
     const question = createQuestion(type);
     this.sections.update(sections =>
       sections.map(s =>
@@ -190,6 +195,7 @@ export class BuilderStore {
   }
 
   removeQuestion(questionId: string): void {
+    this.pushHistory();
     this.sections.update(sections =>
       sections.map(s => ({
         ...s,
@@ -203,6 +209,7 @@ export class BuilderStore {
   }
 
   duplicateQuestion(questionId: string): void {
+    this.pushHistory();
     this.sections.update(sections =>
       sections.map(s => {
         const idx = s.questions.findIndex(q => q.id === questionId);
@@ -223,6 +230,7 @@ export class BuilderStore {
   }
 
   reorderQuestions(sectionId: string, previousIndex: number, currentIndex: number): void {
+    this.pushHistory();
     this.sections.update(sections =>
       sections.map(s => {
         if (s.id !== sectionId) return s;
@@ -250,6 +258,7 @@ export class BuilderStore {
   // ── Options ──
 
   addOption(questionId: string): void {
+    this.pushHistory();
     this.sections.update(sections =>
       sections.map(s => ({
         ...s,
@@ -264,6 +273,7 @@ export class BuilderStore {
   }
 
   removeOption(questionId: string, optionId: string): void {
+    this.pushHistory();
     this.sections.update(sections =>
       sections.map(s => ({
         ...s,
@@ -296,6 +306,25 @@ export class BuilderStore {
       }))
     );
     this.markDirty();
+  }
+
+  // ── Undo history ──
+
+  private _history: BuilderSection[][] = [];
+  private readonly MAX_HISTORY = 50;
+
+  private pushHistory(): void {
+    this._history.push(JSON.parse(JSON.stringify(this.sections())));
+    if (this._history.length > this.MAX_HISTORY) {
+      this._history.shift();
+    }
+  }
+
+  undo(): boolean {
+    if (this._history.length === 0) return false;
+    this.sections.set(this._history.pop()!);
+    this.markDirty();
+    return true;
   }
 
   // ── Dirty tracking ──
