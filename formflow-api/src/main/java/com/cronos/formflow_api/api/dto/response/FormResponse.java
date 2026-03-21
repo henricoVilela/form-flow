@@ -32,8 +32,13 @@ public class FormResponse {
     private String slug;
     private Integer maxResponses;
     private LocalDateTime expiresAt;
+    private long responseCount;
 
     public static FormResponse from(Form form, FormVersion version) {
+        return from(form, version, 0L);
+    }
+
+    public static FormResponse from(Form form, FormVersion version, long responseCount) {
         return FormResponse.builder()
                 .id(form.getId())
                 .title(form.getTitle())
@@ -51,6 +56,7 @@ public class FormResponse {
                 .slug(form.getSlug())
                 .maxResponses(form.getMaxResponses())
                 .expiresAt(form.getExpiresAt())
+                .responseCount(responseCount)
                 .build();
     }
 }

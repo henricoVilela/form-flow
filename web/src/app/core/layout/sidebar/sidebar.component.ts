@@ -113,8 +113,8 @@ export class SidebarComponent {
   readonly mainNav: NavItem[] = [
     { label: 'Dashboard',    icon: 'pi pi-home',       route: '/dashboard' },
     { label: 'Formulários',  icon: 'pi pi-file-edit',  route: '/forms' },
-    // { label: 'Respostas',    icon: 'pi pi-inbox',      route: '/responses' },
-    // { label: 'Analytics',    icon: 'pi pi-chart-bar',  route: '/analytics' },
+    { label: 'Respostas',    icon: 'pi pi-inbox',      route: '/responses' },
+    { label: 'Analytics',    icon: 'pi pi-chart-bar',  route: '/analytics' },
   ];
 
   readonly accountNav: NavItem[] = [

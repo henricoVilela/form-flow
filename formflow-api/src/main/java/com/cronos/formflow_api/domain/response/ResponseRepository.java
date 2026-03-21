@@ -18,6 +18,9 @@ public interface ResponseRepository extends JpaRepository<Response, UUID>, JpaSp
 
     Page<Response> findByFormId(UUID formId, Pageable pageable);
 
+    @Query("SELECT r.form.id, COUNT(r) FROM Response r WHERE r.form.id IN :formIds GROUP BY r.form.id")
+    List<Object[]> countByFormIds(@Param("formIds") List<UUID> formIds);
+
     Optional<Response> findByIdAndFormId(UUID id, UUID formId);
 
     @Query("SELECT r FROM Response r WHERE r.form.id = :formId ORDER BY r.submittedAt DESC")

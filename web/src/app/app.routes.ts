@@ -32,6 +32,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/forms/form-list/form-list.component').then(m => m.FormListComponent),
       },
       {
+        path: 'responses',
+        loadComponent: () => import('./features/responses/responses.component').then(m => m.ResponsesComponent),
+      },
+      {
+        path: 'analytics',
+        loadComponent: () => import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent),
+      },
+      {
         path: 'forms/:id/edit',
         loadComponent: () => import('./features/forms/form-builder/form-builder.component').then(m => m.FormBuilderComponent),
       },

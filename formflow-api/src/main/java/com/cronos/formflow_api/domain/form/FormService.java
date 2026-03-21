@@ -2,6 +2,7 @@ package com.cronos.formflow_api.domain.form;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -67,12 +68,19 @@ public class FormService {
     }
 
     public Page<FormResponse> listByUser(User user, Pageable pageable) {
-        return formRepository
-                .findByUserIdAndStatusNot(user.getId(), FormStatus.ARCHIVED, pageable)
-                .map(form -> {
-                    FormVersion latest = formVersionRepository.findLatestByFormId(form.getId()).orElse(null);
-                    return FormResponse.from(form, latest);
-                });
+        Page<Form> page = formRepository.findByUserIdAndStatusNot(user.getId(), FormStatus.ARCHIVED, pageable);
+
+        List<UUID> formIds = page.getContent().stream().map(Form::getId).toList();
+        Map<UUID, Long> countByFormId = responseRepository.countByFormIds(formIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> (Long) row[1]
+                ));
+
+        return page.map(form -> {
+            FormVersion latest = formVersionRepository.findLatestByFormId(form.getId()).orElse(null);
+            return FormResponse.from(form, latest, countByFormId.getOrDefault(form.getId(), 0L));
+        });
     }
 
     public FormResponse getById(User user, UUID id) {

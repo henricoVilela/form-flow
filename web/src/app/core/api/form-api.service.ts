@@ -22,6 +22,7 @@ export interface FormResponse {
   slug: string | null;
   maxResponses: number | null;
   expiresAt: string | null;
+  responseCount: number;
 }
 
 export interface FormSettingsRequest {

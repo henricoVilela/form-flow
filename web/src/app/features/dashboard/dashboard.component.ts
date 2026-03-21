@@ -100,7 +100,13 @@ import { FormApiService, FormResponse } from '@core/api/form-api.service';
                     v{{ form.currentVersion }}
                   </span>
                 }
-                <span class="flex items-center gap-1">
+                @if (form.status === 'PUBLISHED') {
+                  <span class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                    <i class="pi pi-inbox text-[10px]"></i>
+                    {{ form.responseCount }} {{ form.responseCount === 1 ? 'resposta' : 'respostas' }}
+                  </span>
+                }
+                <span class="flex items-center gap-1 ml-auto">
                   <i class="pi pi-calendar text-[10px]"></i>
                   {{ formatDate(form.updatedAt) }}
                 </span>

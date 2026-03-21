@@ -206,7 +206,7 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
                 pTooltip="Ver respostas recebidas" tooltipPosition="bottom"
               >
                 <i class="pi pi-inbox text-[11px]"></i>
-                Ver respostas
+                {{ form.responseCount }} {{ form.responseCount === 1 ? 'resposta' : 'respostas' }}
               </button>
             }
 
