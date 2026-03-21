@@ -4,6 +4,7 @@ import { MenuModule } from 'primeng/menu';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { MenuItem } from 'primeng/api';
+import { Router } from '@angular/router';
 import { AuthStore } from '@core/auth/auth.store';
 import { AuthService } from '@core/auth/auth.service';
 import { LayoutService } from '../layout.service';
@@ -81,12 +82,13 @@ export class TopbarComponent {
   readonly layout = inject(LayoutService);
   readonly theme = inject(ThemeService);
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly menuItems: MenuItem[] = [
     {
       label: 'Meu Perfil',
       icon: 'pi pi-user',
-      // command: () => this.router.navigate(['/settings/profile']),
+      command: () => this.router.navigate(['/settings/profile']),
     },
     { separator: true },
     {

@@ -101,7 +101,7 @@
 | ~~F4~~ | ~~**Responsividade mobile**~~ | ~~Sidebar toggle (hamburger) em telas < 768px. Ajustes no builder para mobile.~~ | ✅ **Concluído** |
 | ~~F5~~ | ~~**Tema escuro**~~ | ~~Toggle claro/escuro via CSS variables. PrimeNG suporta `darkModeSelector`.~~ | ~~Média~~ | ✅ **Concluído** |
 | ~~F6~~ | ~~**Configurações do formulário**~~ | ~~Tela `/forms/:id/settings` para editar: visibilidade (público/privado/senha), slug, max_responses, expires_at, welcome/thank you messages.~~ | ✅ **Concluído** |
-| F7 | **Perfil do usuário** | Tela `/settings/profile` para editar nome e senha. | Baixa |
+| ~~F7~~ | ~~**Perfil do usuário**~~ | ~~Tela `/settings/profile` para editar nome e senha.~~ | ✅ **Concluído** |
 
 ### Prioridade Baixa
 

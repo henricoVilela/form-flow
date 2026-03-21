@@ -47,6 +47,10 @@ export const routes: Routes = [
         path: 'forms/:id/settings',
         loadComponent: () => import('./features/forms/settings/form-settings.component').then(m => m.FormSettingsComponent),
       },
+      {
+        path: 'settings/profile',
+        loadComponent: () => import('./features/settings/profile/user-profile.component').then(m => m.UserProfileComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
