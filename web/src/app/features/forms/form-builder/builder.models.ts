@@ -118,6 +118,7 @@ export const QUESTION_TYPES: QuestionTypeInfo[] = [
   { type: 'single_choice', label: 'Escolha única',   icon: 'pi pi-circle',        group: 'Escolha' },
   { type: 'multi_choice',  label: 'Múltipla escolha',icon: 'pi pi-check-square',  group: 'Escolha' },
   { type: 'dropdown',      label: 'Dropdown',        icon: 'pi pi-chevron-down',  group: 'Escolha' },
+  { type: 'matrix',        label: 'Matriz',          icon: 'pi pi-table',         group: 'Escolha' },
   { type: 'date',          label: 'Data',            icon: 'pi pi-calendar',      group: 'Outros' },
   { type: 'file_upload',   label: 'Upload',          icon: 'pi pi-upload',        group: 'Outros' },
   { type: 'statement',     label: 'Texto informativo',icon: 'pi pi-info-circle',  group: 'Outros' },
@@ -162,6 +163,20 @@ export function createQuestion(type: QuestionType): BuilderQuestion {
   }
   if (type === 'number') {
     base.numberConfig = { documentType: 'none' };
+  }
+  if (type === 'matrix') {
+    base.matrixConfig = {
+      rows: [
+        { id: uuid(), label: 'Linha 1' },
+        { id: uuid(), label: 'Linha 2' },
+        { id: uuid(), label: 'Linha 3' },
+      ],
+      columns: [
+        { id: uuid(), label: 'Opção 1', value: 1 },
+        { id: uuid(), label: 'Opção 2', value: 2 },
+        { id: uuid(), label: 'Opção 3', value: 3 },
+      ],
+    };
   }
 
   return base;

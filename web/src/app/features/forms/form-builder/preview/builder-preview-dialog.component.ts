@@ -3,29 +3,16 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { TextareaModule } from 'primeng/textarea';
-import { RadioButtonModule } from 'primeng/radiobutton';
-import { CheckboxModule } from 'primeng/checkbox';
-import { SelectModule } from 'primeng/select';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { DatePickerModule } from 'primeng/datepicker';
-import { RatingModule } from 'primeng/rating';
-import { InputMaskModule } from 'primeng/inputmask';
-import { SliderModule } from 'primeng/slider';
-import { MessageModule } from 'primeng/message';
-import { StepperModule } from 'primeng/stepper';
 
 import { BuilderStore } from '../builder.store';
 import { BuilderQuestion } from '../builder.models';
+import { QuestionFieldComponent } from '@shared/question-field/question-field.component';
 
 @Component({
   selector: 'app-builder-preview-dialog',
   imports: [
     CommonModule, FormsModule, DialogModule, ButtonModule,
-    InputTextModule, TextareaModule, RadioButtonModule, CheckboxModule,
-    SelectModule, InputNumberModule, DatePickerModule,
-    RatingModule, SliderModule, InputMaskModule, MessageModule, StepperModule,
+    QuestionFieldComponent,
   ],
   template: `
     <p-dialog
@@ -46,10 +33,10 @@ import { BuilderQuestion } from '../builder.models';
       } @else if (submitted()) {
         <!-- Tela de sucesso -->
         <div class="text-center py-16 px-6">
-          <div class="w-16 h-16 mx-auto mb-4 bg-emerald-50 rounded-2xl flex items-center justify-center">
+          <div class="w-16 h-16 mx-auto mb-4 bg-emerald-50 dark:bg-emerald-950 rounded-2xl flex items-center justify-center">
             <i class="pi pi-check text-3xl text-emerald-500"></i>
           </div>
-          <h3 class="text-xl font-display font-bold text-surface-900 mb-2">Resposta enviada!</h3>
+          <h3 class="text-xl font-display font-bold text-surface-900 dark:text-surface-0 mb-2">Resposta enviada!</h3>
           <p class="text-sm text-surface-500 mb-6">Obrigado por preencher o formulário.</p>
           <div class="flex justify-center gap-2">
             <button pButton label="Preencher novamente" icon="pi pi-refresh"
@@ -61,7 +48,7 @@ import { BuilderQuestion } from '../builder.models';
         <div>
           <!-- Progress bar -->
           @if (store.settings().showProgressBar && visibleSections().length > 1) {
-            <div class="h-1 bg-slate-200 rounded-sm mx-6 mt-4">
+            <div class="h-1 bg-surface-200 dark:bg-surface-700 rounded-sm mx-6 mt-4">
               <div class="h-full bg-[var(--ff-primary)] rounded-sm transition-[width] duration-300" [style.width.%]="progressPercent()"></div>
             </div>
             <div class="text-xs text-surface-400 text-center mt-1 mb-4">
@@ -73,8 +60,8 @@ import { BuilderQuestion } from '../builder.models';
           @let section = visibleSections()[currentStep()]; 
           
             <div class="px-6">
-              <div class="py-3 px-4 bg-slate-50 rounded-lg mb-5">
-                <h3 class="text-lg font-display font-semibold text-surface-900">
+              <div class="py-3 px-4 bg-surface-100 dark:bg-surface-800 rounded-lg mb-5">
+                <h3 class="text-lg font-display font-semibold text-surface-900 dark:text-surface-0">
                   {{ section.title || 'Seção ' + (currentStep() + 1) }}
                 </h3>
                 @if (section.description) {
@@ -83,128 +70,16 @@ import { BuilderQuestion } from '../builder.models';
               </div>
 
               @for (q of section.questions; track q.id) {
-                <!-- Avaliação de condição: mostra/oculta -->
                 @if (isQuestionVisible(q)) {
                   <div class="mb-6">
-                    <label class="block text-sm font-medium text-[var(--ff-text)] mb-2">
-                      @if (store.settings().showQuestionNumbers) {
-                        <span class="text-surface-400">{{ getGlobalIndex(q.id) }}.</span>
-                      }
-                      {{ q.label || 'Pergunta sem título' }}
-                      @if (q.required) {
-                        <span class="text-red-500 ml-0.5">*</span>
-                      }
-                    </label>
-
-                    @if (q.description) {
-                      <p class="text-xs text-surface-400 mb-2">{{ q.description }}</p>
-                    }
-
-                    <!-- ═══ Render por tipo (interativo) ═══ -->
-                    @switch (q.type) {
-                      @case ('short_text') {
-                        <input pInputText class="w-full" [placeholder]="q.placeholder || 'Resposta curta'"
-                               [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
-                      }
-                      @case ('long_text') {
-                        <textarea pTextarea class="w-full" [rows]="3" [placeholder]="q.placeholder || 'Resposta longa'"
-                                  [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)"></textarea>
-                      }
-                      @case ('email') {
-                        <input pInputText type="email" class="w-full" [placeholder]="q.placeholder || 'email@exemplo.com'"
-                               [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
-                      }
-                      @case ('phone') {
-                        <p-inputmask mask="(99) 99999-9999" [placeholder]="q.placeholder || '(00) 00000-0000'" styleClass="w-full"
-                               [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
-                      }
-                      @case ('url') {
-                        <input pInputText type="url" class="w-full" [placeholder]="q.placeholder || 'https://'"
-                               [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
-                      }
-                      @case ('number') {
-                        @if (q.numberConfig?.documentType === 'cpf') {
-                          <p-inputmask mask="999.999.999-99" [placeholder]="q.placeholder || '000.000.000-00'" styleClass="w-full"
-                                 [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
-                        } @else if (q.numberConfig?.documentType === 'cnpj') {
-                          <p-inputmask mask="99.999.999/9999-99" [placeholder]="q.placeholder || '00.000.000/0000-00'" styleClass="w-full"
-                                 [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
-                        } @else {
-                          <p-inputNumber [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)"
-                                         [placeholder]="q.placeholder || '0'" styleClass="w-full"
-                                         [min]="q.validations.min ?? undefined" [max]="q.validations.max ?? undefined" />
-                        }
-                      }
-                      @case ('date') {
-                        <p-datepicker [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)"
-                                      dateFormat="dd/mm/yy" styleClass="w-full" placeholder="Selecione uma data" />
-                      }
-                      @case ('single_choice') {
-                        <div class="flex flex-col gap-3">
-                          @for (opt of q.options; track opt.id) {
-                            <div class="flex items-center gap-2">
-                              <p-radiobutton [name]="q.id" [value]="opt.value"
-                                             [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
-                              <label class="text-sm text-surface-700 cursor-pointer">{{ opt.label }}</label>
-                            </div>
-                          }
-                        </div>
-                      }
-                      @case ('multi_choice') {
-                        <div class="flex flex-col gap-3">
-                          @for (opt of q.options; track opt.id) {
-                            <div class="flex items-center gap-2">
-                              <p-checkbox [value]="opt.value"
-                                          [ngModel]="answers()[q.id] || []"
-                                          (ngModelChange)="setAnswer(q.id, $event)" />
-                              <label class="text-sm text-surface-700 cursor-pointer">{{ opt.label }}</label>
-                            </div>
-                          }
-                        </div>
-                      }
-                      @case ('dropdown') {
-                        <p-select [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)"
-                                  [options]="q.options" optionLabel="label" optionValue="value"
-                                  placeholder="Selecione uma opção" styleClass="w-full" />
-                      }
-                      @case ('file_upload') {
-                        <div class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-[var(--ff-border)] rounded-lg">
-                          <i class="pi pi-upload text-lg text-surface-300 mb-1"></i>
-                          <span class="text-xs text-surface-400">Upload simulado (não envia arquivos no preview)</span>
-                        </div>
-                      }
-                      @case ('rating') {
-                        <p-rating [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" [stars]="q.ratingConfig?.max ?? 5" />
-                      }
-                      @case ('scale') {
-                        <div class="flex items-center gap-3">
-                          <span class="text-xs text-surface-500 shrink-0">{{ q.scaleConfig?.minLabel }}</span>
-                          <div class="flex gap-1.5 flex-1 justify-center flex-wrap">
-                            @for (n of getScaleRange(q.scaleConfig?.min ?? 1, q.scaleConfig?.max ?? 10); track n) {
-                              <button
-                                class="w-9 h-9 flex items-center justify-center border-[1.5px] rounded-lg text-[13px] font-medium cursor-pointer transition-all duration-150"
-                                [ngClass]="answers()[q.id] === n
-                                  ? 'bg-[var(--ff-primary)] text-white border-[var(--ff-primary)]'
-                                  : 'bg-white text-[var(--ff-text-secondary)] border-[var(--ff-border)] hover:border-blue-300 hover:text-[var(--ff-primary)] hover:bg-blue-50'"
-                                (click)="setAnswer(q.id, n)"
-                              >{{ n }}</button>
-                            }
-                          </div>
-                          <span class="text-xs text-surface-500 shrink-0">{{ q.scaleConfig?.maxLabel }}</span>
-                        </div>
-                      }
-                      @case ('statement') {
-                        <div class="flex items-start py-3 px-4 bg-blue-50 rounded-lg">
-                          <i class="pi pi-info-circle text-primary-400 mr-2"></i>
-                          <span class="text-sm text-surface-600">{{ q.label }}</span>
-                        </div>
-                      }
-                    }
-
-                    <!-- Mensagens de erro de validação -->
-                    @if (hasError(q.id)) {
-                      <p-message severity="error" [text]="getError(q.id)" styleClass="mt-2 w-full" />
-                    }
+                    <app-question-field
+                      [question]="q"
+                      [answer]="answers()[q.id]"
+                      [error]="errors()[q.id] || null"
+                      [showNumber]="store.settings().showQuestionNumbers"
+                      [questionNumber]="getGlobalIndex(q.id)"
+                      (answerChange)="setAnswer(q.id, $event)"
+                    />
                   </div>
                 }
               }
@@ -445,7 +320,4 @@ export class BuilderPreviewDialogComponent {
     return 0;
   }
 
-  getScaleRange(min: number, max: number): number[] {
-    return Array.from({ length: max - min + 1 }, (_, i) => min + i);
-  }
 }

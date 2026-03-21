@@ -237,6 +237,11 @@ public class ResponseService {
                 value.forEach(v -> files.add(v.asString()));
                 builder.valueFiles(files.toArray(new String[0]));
             }
+            case "matrix" -> {
+                if (!value.isNull() && value.isObject()) {
+                    builder.valueText(value.toString());
+                }
+            }
         }
 
         return builder.build();
@@ -283,6 +288,9 @@ public class ResponseService {
             List<String> parts = new ArrayList<>();
             value.forEach(v -> parts.add(v.asString()));
             return String.join(", ", parts);
+        }
+        if (value.isObject()) {
+            return value.toString();
         }
         return value.asString("");
     }

@@ -292,6 +292,51 @@ import { BuilderQuestion, QUESTION_TYPES } from '../builder.models';
             </div>
           }
 
+          <!-- ── MATRIX config ── -->
+          @if (q.type === 'matrix' && q.matrixConfig) {
+            <div class="field">
+              <label class="field-label">Linhas</label>
+              @for (row of q.matrixConfig.rows; track row.id; let ri = $index) {
+                <div class="option-row">
+                  <span class="option-index">{{ ri + 1 }}</span>
+                  <input pInputText class="flex-1"
+                    [ngModel]="row.label"
+                    (ngModelChange)="updateMatrixRowLabel(ri, $event)"
+                    [placeholder]="'Linha ' + (ri + 1)"
+                  />
+                  <button class="icon-btn-sm icon-btn--danger"
+                    (click)="removeMatrixRow(ri)"
+                    [disabled]="q.matrixConfig!.rows.length <= 1">
+                    <i class="pi pi-times text-xs"></i>
+                  </button>
+                </div>
+              }
+              <button pButton label="Adicionar linha" icon="pi pi-plus" severity="secondary"
+                [text]="true" size="small" class="mt-1" (click)="addMatrixRow()"></button>
+            </div>
+
+            <div class="field">
+              <label class="field-label">Colunas</label>
+              @for (col of q.matrixConfig.columns; track col.id; let ci = $index) {
+                <div class="option-row">
+                  <span class="option-index">{{ ci + 1 }}</span>
+                  <input pInputText class="flex-1"
+                    [ngModel]="col.label"
+                    (ngModelChange)="updateMatrixColumnLabel(ci, $event)"
+                    [placeholder]="'Coluna ' + (ci + 1)"
+                  />
+                  <button class="icon-btn-sm icon-btn--danger"
+                    (click)="removeMatrixColumn(ci)"
+                    [disabled]="q.matrixConfig!.columns.length <= 1">
+                    <i class="pi pi-times text-xs"></i>
+                  </button>
+                </div>
+              }
+              <button pButton label="Adicionar coluna" icon="pi pi-plus" severity="secondary"
+                [text]="true" size="small" class="mt-1" (click)="addMatrixColumn()"></button>
+            </div>
+          }
+
           <!-- ── FILE UPLOAD config ── -->
           @if (q.type === 'file_upload') {
             <div class="field">
@@ -596,5 +641,67 @@ export class BuilderPropertiesComponent {
         maxLabel
       }
     });
+  }
+
+  // ── Matrix ──
+
+  addMatrixRow(): void {
+    const q = this.store.selectedQuestion();
+    if (!q?.matrixConfig) return;
+    const idx = q.matrixConfig.rows.length + 1;
+    this.update({
+      matrixConfig: {
+        ...q.matrixConfig,
+        rows: [...q.matrixConfig.rows, { id: crypto.randomUUID(), label: `Linha ${idx}` }],
+      },
+    });
+  }
+
+  removeMatrixRow(index: number): void {
+    const q = this.store.selectedQuestion();
+    if (!q?.matrixConfig || q.matrixConfig.rows.length <= 1) return;
+    this.update({
+      matrixConfig: {
+        ...q.matrixConfig,
+        rows: q.matrixConfig.rows.filter((_, i) => i !== index),
+      },
+    });
+  }
+
+  updateMatrixRowLabel(index: number, label: string): void {
+    const q = this.store.selectedQuestion();
+    if (!q?.matrixConfig) return;
+    const rows = q.matrixConfig.rows.map((r, i) => i === index ? { ...r, label } : r);
+    this.update({ matrixConfig: { ...q.matrixConfig, rows } });
+  }
+
+  addMatrixColumn(): void {
+    const q = this.store.selectedQuestion();
+    if (!q?.matrixConfig) return;
+    const idx = q.matrixConfig.columns.length + 1;
+    this.update({
+      matrixConfig: {
+        ...q.matrixConfig,
+        columns: [...q.matrixConfig.columns, { id: crypto.randomUUID(), label: `Coluna ${idx}`, value: idx }],
+      },
+    });
+  }
+
+  removeMatrixColumn(index: number): void {
+    const q = this.store.selectedQuestion();
+    if (!q?.matrixConfig || q.matrixConfig.columns.length <= 1) return;
+    this.update({
+      matrixConfig: {
+        ...q.matrixConfig,
+        columns: q.matrixConfig.columns.filter((_, i) => i !== index),
+      },
+    });
+  }
+
+  updateMatrixColumnLabel(index: number, label: string): void {
+    const q = this.store.selectedQuestion();
+    if (!q?.matrixConfig) return;
+    const columns = q.matrixConfig.columns.map((c, i) => i === index ? { ...c, label } : c);
+    this.update({ matrixConfig: { ...q.matrixConfig, columns } });
   }
 }

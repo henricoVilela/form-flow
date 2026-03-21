@@ -122,7 +122,7 @@
 |---|---------|-----------|-------------|
 | B1 | **Visibilidade efetiva** | O V9 criou os campos mas falta implementar a lógica: verificar expires_at, max_responses, visibility + password no `PublicFormController`. Endpoint `POST /public/forms/{id}/verify-password`. | Média |
 | B2 | **Slug amigável** | Gerar slug único automático a partir do título. Endpoint `GET /public/forms/slug/{slug}` como alternativa ao UUID. | Baixa |
-| B3 | **Questão Matriz** | Adicionar `matrix` ao CHECK constraint, extração/persistência de respostas de matriz no ResponseService. | Média |
+| ~~B3~~ | ~~**Questão Matriz**~~ | ~~Adicionar `matrix` ao CHECK constraint, extração/persistência de respostas de matriz no ResponseService.~~ | ✅ **Concluído** |
 | B4 | **Salvar rascunho do schema** | O `PUT /forms/{id}` recebe `schema` no body mas o campo não é persistido em `forms` (só em `form_versions` ao publicar). Opção: criar campo `draft_schema` na tabela `forms` ou salvar como versão não-publicada. | Média |
 
 ### Prioridade Baixa

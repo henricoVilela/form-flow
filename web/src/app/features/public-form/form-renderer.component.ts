@@ -4,22 +4,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { TextareaModule } from 'primeng/textarea';
-import { RadioButtonModule } from 'primeng/radiobutton';
-import { CheckboxModule } from 'primeng/checkbox';
-import { SelectModule } from 'primeng/select';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { DatePickerModule } from 'primeng/datepicker';
-import { RatingModule } from 'primeng/rating';
-import { InputMaskModule } from 'primeng/inputmask';
 import { MessageModule } from 'primeng/message';
-import { ProgressBarModule } from 'primeng/progressbar';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 import { UploadApiService } from '@core/api/upload-api.service';
 import { FormApiService, PublicFormResponse } from '@core/api/form-api.service';
+import { QuestionFieldComponent, RendererQuestion } from '@shared/question-field/question-field.component';
 
 interface Section {
   id: string;
@@ -28,19 +20,8 @@ interface Section {
   questions: Question[];
 }
 
-interface Question {
-  id: string;
-  type: string;
-  label: string;
-  description: string;
-  required: boolean;
-  placeholder: string;
-  options: { id: string; label: string; value: string }[];
-  validations: any;
+interface Question extends RendererQuestion {
   conditions: { operator: 'AND' | 'OR'; rules: ConditionRule[] } | null;
-  ratingConfig: { max: number; icon: string } | null;
-  scaleConfig: { min: number; max: number; minLabel: string; maxLabel: string } | null;
-  numberConfig: { documentType: 'none' | 'cpf' | 'cnpj' } | null;
 }
 
 interface ConditionRule {
@@ -55,9 +36,8 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
   selector: 'app-form-renderer',
   imports: [
     CommonModule, FormsModule,
-    ButtonModule, InputTextModule, TextareaModule, RadioButtonModule,
-    CheckboxModule, SelectModule, InputNumberModule, DatePickerModule,
-    RatingModule, InputMaskModule, MessageModule, ProgressBarModule, SkeletonModule, ToastModule,
+    ButtonModule, InputTextModule, MessageModule, SkeletonModule, ToastModule,
+    QuestionFieldComponent,
   ],
   providers: [MessageService],
   template: `
@@ -187,140 +167,19 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
               }
               @for (q of section.questions; track q.id) {
                 @if (isVisible(q)) {
-                <div class="mb-6">
-                  @if (q.type !== 'statement') {
-                    <label class="block text-[15px] font-medium text-surface-900 mb-2 leading-snug">
-                      {{ q.label || 'Pergunta sem título' }}
-                      @if (q.required) { <span class="text-red-500">*</span> }
-                    </label>
-                    @if (q.description) {
-                      <p class="text-xs text-surface-400 mb-2">{{ q.description }}</p>
-                    }
-                  }
-
-                  @switch (q.type) {
-                    @case ('short_text') {
-                      <input pInputText class="w-full" [placeholder]="q.placeholder || ''"
-                             [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
-                    }
-                    @case ('long_text') {
-                      <textarea pTextarea class="w-full" [rows]="4" [placeholder]="q.placeholder || ''"
-                                [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)"></textarea>
-                    }
-                    @case ('email') {
-                      <input pInputText type="email" class="w-full" [placeholder]="q.placeholder || 'email&#64;exemplo.com'"
-                             [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
-                    }
-                    @case ('phone') {
-                      <p-inputmask mask="(99) 99999-9999" [placeholder]="q.placeholder || '(00) 00000-0000'" styleClass="w-full"
-                             [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
-                    }
-                    @case ('url') {
-                      <input pInputText type="url" class="w-full" [placeholder]="q.placeholder || 'https://'"
-                             [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
-                    }
-                    @case ('number') {
-                      @if (q.numberConfig?.documentType === 'cpf') {
-                        <p-inputmask mask="999.999.999-99" [placeholder]="q.placeholder || '000.000.000-00'" styleClass="w-full"
-                               [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
-                      } @else if (q.numberConfig?.documentType === 'cnpj') {
-                        <p-inputmask mask="99.999.999/9999-99" [placeholder]="q.placeholder || '00.000.000/0000-00'" styleClass="w-full"
-                               [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
-                      } @else {
-                        <p-inputNumber [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)"
-                                       [placeholder]="q.placeholder || ''" styleClass="w-full" />
-                      }
-                    }
-                    @case ('date') {
-                      <p-datepicker [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)"
-                                    dateFormat="dd/mm/yy" styleClass="w-full" placeholder="Selecione uma data" />
-                    }
-                    @case ('single_choice') {
-                      <div class="flex flex-col gap-3">
-                        @for (opt of q.options; track opt.id) {
-                          <div class="flex items-center gap-2">
-                            <p-radiobutton [name]="q.id" [value]="opt.value"
-                                           [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" />
-                            <label class="text-sm text-surface-700 cursor-pointer">{{ opt.label }}</label>
-                          </div>
-                        }
-                      </div>
-                    }
-                    @case ('multi_choice') {
-                      <div class="flex flex-col gap-3">
-                        @for (opt of q.options; track opt.id) {
-                          <div class="flex items-center gap-2">
-                            <p-checkbox [value]="opt.value"
-                                        [ngModel]="answers()[q.id] || []"
-                                        (ngModelChange)="setAnswer(q.id, $event)" />
-                            <label class="text-sm text-surface-700 cursor-pointer">{{ opt.label }}</label>
-                          </div>
-                        }
-                      </div>
-                    }
-                    @case ('dropdown') {
-                      <p-select [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)"
-                                [options]="q.options" optionLabel="label" optionValue="value"
-                                placeholder="Selecione uma opção" styleClass="w-full" />
-                    }
-                    @case ('file_upload') {
-                      <div class="flex flex-col items-center justify-center p-8 border-2 border-dashed border-surface-200 rounded-xl cursor-pointer transition-all duration-200 hover:border-primary-300 hover:bg-surface-50"
-                        (click)="fileInput.click()"
-                        (dragover)="$event.preventDefault()"
-                        (drop)="onFileDrop($event, q.id)">
-                        <input #fileInput type="file" hidden [multiple]="true" (change)="onFileSelect($event, q.id)" />
-                        <i class="pi pi-cloud-upload text-2xl text-surface-300 mb-2"></i>
-                        <p class="text-sm text-surface-500">Arraste arquivos ou clique para enviar</p>
-                        @if (q.validations?.maxFiles) {
-                          <p class="text-xs text-surface-400 mt-1">Máx. {{ q.validations.maxFiles }} arquivos</p>
-                        }
-                      </div>
-                      @if (hasFilesNames(q.id)) {
-                        <div class="mt-2 space-y-1">
-                          @for (fname of fileNames()[q.id]; track fname; let fi = $index) {
-                            <div class="flex items-center gap-2 text-[13px] text-surface-500 bg-surface-50 rounded-lg px-3 py-2">
-                              <i class="pi pi-file text-xs text-surface-400"></i>
-                              <span class="flex-1 truncate">{{ fname }}</span>
-                              <button class="bg-transparent border-0 p-0 text-surface-400 cursor-pointer transition-colors duration-150 hover:text-red-500 leading-none" (click)="removeFile(q.id, fi)">
-                                <i class="pi pi-times text-xs"></i>
-                              </button>
-                            </div>
-                          }
-                        </div>
-                      }
-                    }
-                    @case ('rating') {
-                      <p-rating [ngModel]="answers()[q.id]" (ngModelChange)="setAnswer(q.id, $event)" [stars]="q.ratingConfig?.max ?? 5"/>
-                    }
-                    @case ('scale') {
-                      <div class="flex items-center gap-3">
-                        <span class="text-xs text-surface-500 shrink-0">{{ q.scaleConfig?.minLabel }}</span>
-                        <div class="flex gap-1.5 flex-1 justify-center flex-wrap">
-                          @for (n of scaleRange(q.scaleConfig?.min ?? 1, q.scaleConfig?.max ?? 10); track n) {
-                            <button class="w-10 h-10 flex items-center justify-center border-[1.5px] rounded-[10px] text-sm font-medium cursor-pointer transition-all duration-150 hover:border-primary-300 hover:text-primary-600 hover:bg-primary-50"
-                                    [ngClass]="answers()[q.id] === n
-                                      ? 'bg-primary-600 text-white border-primary-600 scale-[1.08]'
-                                      : 'bg-white border-surface-200 text-surface-500'"
-                                    (click)="setAnswer(q.id, n)">{{ n }}</button>
-                          }
-                        </div>
-                        <span class="text-xs text-surface-500 shrink-0">{{ q.scaleConfig?.maxLabel }}</span>
-                      </div>
-                    }
-                    @case ('statement') {
-                      <div class="flex gap-2.5 px-[18px] py-[14px] bg-primary-50 rounded-[10px]">
-                        <i class="pi pi-info-circle text-primary-400 shrink-0 mt-0.5"></i>
-                        <span class="text-sm text-surface-600">{{ q.label }}</span>
-                      </div>
-                    }
-                  }
-
-                  @if (hasError(q.id)) {
-                    <p-message severity="error" [text]="getError(q.id)" styleClass="mt-2 w-full" />
-                  }
-                </div>
+                  <div class="mb-6">
+                    <app-question-field
+                      [question]="q"
+                      [answer]="answers()[q.id]"
+                      [error]="errors()[q.id] || null"
+                      [fileNames]="fileNames()[q.id] || []"
+                      (answerChange)="setAnswer(q.id, $event)"
+                      (filesSelected)="uploadFiles(q.id, $event)"
+                      (fileRemove)="removeFile(q.id, $event)"
+                    />
+                  </div>
+                }
               }
-            }
           }
 
           <!-- Nav -->
@@ -458,10 +317,6 @@ export class FormRendererComponent implements OnInit {
     this.loadForm(this.passwordInput);
   }
 
-  hasFilesNames(qId: string): boolean {
-    return !!this.fileNames()[qId]?.length;
-  }
-
   startForm(): void { this.state.set('form'); }
 
   resetForm(): void {
@@ -478,30 +333,9 @@ export class FormRendererComponent implements OnInit {
     }
   }
 
-  isSelected(qId: string, value: string): boolean {
-    const arr = this.answers()[qId];
-    return arr && Array.isArray(arr) && arr.includes(value);
-  }
-
-  toggleMulti(qId: string, value: string): void {
-    const current: string[] = this.answers()[qId] || [];
-    this.setAnswer(qId, current.includes(value) ? current.filter(v => v !== value) : [...current, value]);
-  }
-
   // ── File upload ──
 
-  onFileSelect(event: Event, qId: string): void {
-    event.preventDefault();
-    const files = (event.target as HTMLInputElement).files;
-    if (files) this.uploadFiles(qId, Array.from(files));
-  }
-
-  onFileDrop(event: DragEvent, qId: string): void {
-    event.preventDefault();
-    if (event.dataTransfer?.files) this.uploadFiles(qId, Array.from(event.dataTransfer.files));
-  }
-
-  private uploadFiles(qId: string, files: File[]): void {
+  uploadFiles(qId: string, files: File[]): void {
     for (const file of files) {
       this.uploadApi.uploadFile(this.formId(), file).subscribe({
         next: (fileId) => {
@@ -573,6 +407,12 @@ export class FormRendererComponent implements OnInit {
 
   private validateQuestion(q: Question): string | null {
     const val = this.answers()[q.id];
+    if (q.type === 'matrix' && q.matrixConfig) {
+      const rowCount = q.matrixConfig.rows.length;
+      const answered = val && typeof val === 'object' ? Object.keys(val).length : 0;
+      if (q.required && answered < rowCount) return 'Responda todas as linhas';
+      return null;
+    }
     const empty = val === undefined || val === null || val === '' || (Array.isArray(val) && !val.length);
     if (q.required && empty) return 'Campo obrigatório';
     if (empty) return null;
@@ -667,7 +507,4 @@ export class FormRendererComponent implements OnInit {
     });
   }
 
-  scaleRange(min: number, max: number): number[] {
-    return Array.from({ length: max - min + 1 }, (_, i) => min + i);
-  }
 }
