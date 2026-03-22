@@ -53,8 +53,8 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
           type="text"
           placeholder="Buscar formulários..."
           class="w-full"
-          [(ngModel)]="searchQuery"
-          (input)="onSearchChange()"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
         />
       </p-iconfield>
 
@@ -102,14 +102,14 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
       <div class="ff-card text-center py-16 mt-4">
         <div class="w-20 h-20 mx-auto mb-5 bg-surface-50 dark:bg-surface-700 rounded-2xl
                     flex items-center justify-center">
-          @if (searchQuery || activeFilter() !== 'ALL') {
+          @if (searchQuery() || activeFilter() !== 'ALL') {
             <i class="pi pi-search text-3xl text-surface-300"></i>
           } @else {
             <i class="pi pi-file-edit text-3xl text-surface-300"></i>
           }
         </div>
 
-        @if (searchQuery || activeFilter() !== 'ALL') {
+        @if (searchQuery() || activeFilter() !== 'ALL') {
           <h3 class="text-lg font-semibold text-surface-700 dark:text-surface-200 mb-1">Nenhum resultado</h3>
           <p class="text-sm text-surface-500 mb-5">
             Nenhum formulário encontrado com os filtros atuais.
@@ -278,8 +278,7 @@ export class FormListComponent implements OnInit, AfterViewInit {
   readonly currentPage = signal(0);
   readonly activeFilter = signal<StatusFilter>('ALL');
 
-  searchQuery = '';
-  private searchTimeout: any;
+  readonly searchQuery = signal('');
   private selectedForm: FormResponse | null = null;
 
   readonly pageSize = 12;
@@ -291,11 +290,16 @@ export class FormListComponent implements OnInit, AfterViewInit {
     { label: 'Publicados', value: 'PUBLISHED', count: null },
   ];
 
-  // ── Filtered forms (client-side search) ──
+  // ── Filtered forms (client-side search + status) ──
   readonly filteredForms = computed(() => {
     let result = this.forms();
-    const query = this.searchQuery.toLowerCase().trim();
 
+    const filter = this.activeFilter();
+    if (filter !== 'ALL') {
+      result = result.filter(f => f.status === filter);
+    }
+
+    const query = this.searchQuery().toLowerCase().trim();
     if (query) {
       result = result.filter(f =>
         f.title.toLowerCase().includes(query) ||
@@ -479,20 +483,10 @@ export class FormListComponent implements OnInit, AfterViewInit {
 
   onStatusFilter(filter: StatusFilter): void {
     this.activeFilter.set(filter);
-    // O backend atual não filtra por status no endpoint list, então
-    // quando implementar filtro server-side, chamar loadForms() aqui.
-    // Por ora, o filteredForms computed faz filter client-side.
-  }
-
-  onSearchChange(): void {
-    clearTimeout(this.searchTimeout);
-    this.searchTimeout = setTimeout(() => {
-      // debounce de 300ms - para busca server-side futura
-    }, 300);
   }
 
   clearFilters(): void {
-    this.searchQuery = '';
+    this.searchQuery.set('');
     this.activeFilter.set('ALL');
   }
 
