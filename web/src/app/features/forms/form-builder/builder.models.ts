@@ -101,6 +101,7 @@ export interface FormSchema {
 
 export interface KioskSettings {
   resetDelay: number; // segundos antes do reset automático (padrão: 5)
+  theme: 'auto' | 'light' | 'dark'; // padrão: 'auto' (segue prefers-color-scheme)
 }
 
 export interface FormSettings {

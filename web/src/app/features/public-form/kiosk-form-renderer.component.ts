@@ -1,17 +1,18 @@
 import {
-  Component, inject, input, signal, computed, OnDestroy, OnInit,
+  Component, inject, input, signal, computed, OnDestroy, OnInit, HostBinding,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
+import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 
 import { FormApiService, PublicFormResponse } from '@core/api/form-api.service';
 import { QuestionFieldComponent, RendererQuestion } from '@shared/question-field/question-field.component';
 import { UploadApiService } from '@core/api/upload-api.service';
 
-// ── Interfaces (espelham as do form-renderer) ───────────────────────────────
+// ── Interfaces ───────────────────────────────────────────────────────────────
 
 interface Section {
   id: string;
@@ -32,25 +33,24 @@ interface ConditionRule {
 
 type KioskState = 'form' | 'submitting' | 'thanks';
 
-// Mapeamento de emojis por posição (1=muito insatisfeito → N=muito satisfeito)
 const EMOJIS_5 = ['😠', '😕', '😐', '🙂', '😄'];
 
 function buildEmojiSet(max: number): string[] {
   if (max === 5) return EMOJIS_5;
   if (max === 3) return ['😠', '😐', '😄'];
   if (max === 4) return ['😕', '😐', '🙂', '😄'];
-  return Array.from({ length: max }, (_, i) => {
-    const idx = Math.round((i / (max - 1)) * (EMOJIS_5.length - 1));
-    return EMOJIS_5[idx];
-  });
+  return Array.from({ length: max }, (_, i) =>
+    EMOJIS_5[Math.round((i / (max - 1)) * (EMOJIS_5.length - 1))]
+  );
 }
 
-// ── Component ───────────────────────────────────────────────────────────────
+// ── Component ────────────────────────────────────────────────────────────────
 
 @Component({
   selector: 'app-kiosk-form-renderer',
-  imports: [CommonModule, FormsModule, ButtonModule, ToastModule, QuestionFieldComponent],
+  imports: [CommonModule, FormsModule, ButtonModule, ToastModule, TooltipModule, QuestionFieldComponent],
   providers: [MessageService],
+  host: { '[class.kiosk-light]': '!isDark()' },
   template: `
     <p-toast position="top-center" />
 
@@ -58,16 +58,15 @@ function buildEmojiSet(max: number): string[] {
     @if (kioskState() !== 'thanks') {
       <div class="kiosk-bg min-h-screen flex flex-col items-center justify-center px-6 py-10 relative">
 
-        <!-- Form title chip -->
-        <p class="text-slate-400 text-xs uppercase tracking-[0.2em] mb-6 font-medium">
+        <!-- Form title -->
+        <p class="k-muted text-xs uppercase tracking-[0.2em] mb-6 font-medium">
           {{ formData().title }}
         </p>
 
-        <!-- Hero question card -->
+        <!-- Hero card -->
         <div class="kiosk-card w-full max-w-2xl text-center">
 
-          <!-- Primary question label -->
-          <h1 class="text-2xl sm:text-3xl font-bold text-white leading-snug mb-10 px-2">
+          <h1 class="k-heading text-2xl sm:text-3xl font-bold leading-snug mb-10 px-2">
             {{ primaryQuestion()?.label || 'Como foi sua experiência?' }}
           </h1>
 
@@ -85,7 +84,6 @@ function buildEmojiSet(max: number): string[] {
                   [attr.aria-label]="'Nota ' + value"
                 >
                   <span class="emoji-glyph">{{ emoji }}</span>
-                  <!-- <span class="emoji-label text-xs mt-1 text-slate-400">{{ value }}</span> -->
                 </button>
               }
             </div>
@@ -113,9 +111,9 @@ function buildEmojiSet(max: number): string[] {
           @else if (primaryQuestion()?.type === 'scale') {
             @let sc = primaryQuestion()!.scaleConfig!;
             <div class="space-y-4">
-              <div class="flex justify-between text-sm text-slate-400 px-2">
-                <span>{{ sc.minLabel }}</span>
-                <span>{{ sc.maxLabel }}</span>
+              <div class="flex justify-between text-sm px-2">
+                <span class="k-muted">{{ sc.minLabel }}</span>
+                <span class="k-muted">{{ sc.maxLabel }}</span>
               </div>
               <div class="flex justify-center flex-wrap gap-2">
                 @for (n of scaleRange(sc.min, sc.max); let i = $index; track i) {
@@ -130,11 +128,11 @@ function buildEmojiSet(max: number): string[] {
             </div>
           }
 
-          <!-- ── AUTO-SUBMIT indicator ── -->
+          <!-- Auto-submit indicator -->
           @if (primaryAnswer() !== null && visibleSecondary().length === 0 && kioskState() !== 'submitting') {
             <div class="mt-8 flex flex-col items-center gap-3">
-              <p class="text-slate-400 text-sm">Enviando avaliação…</p>
-              <div class="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+              <p class="k-muted text-sm">Enviando avaliação…</p>
+              <div class="k-progress-track w-48 h-1 rounded-full overflow-hidden">
                 <div
                   class="h-full bg-primary-400 rounded-full"
                   [style.width.%]="autoSubmitProgress()"
@@ -144,19 +142,19 @@ function buildEmojiSet(max: number): string[] {
             </div>
           }
 
-          <!-- ── SUBMITTING spinner ── -->
+          <!-- Submitting spinner -->
           @if (kioskState() === 'submitting') {
-            <div class="mt-8 flex items-center justify-center gap-3 text-slate-300">
+            <div class="mt-8 flex items-center justify-center gap-3 k-muted">
               <i class="pi pi-spin pi-spinner text-xl"></i>
               <span class="text-sm">Registrando…</span>
             </div>
           }
         </div>
 
-        <!-- ── Conditional questions ── -->
+        <!-- Conditional questions -->
         @if (primaryAnswer() !== null && visibleSecondary().length > 0) {
           <div class="w-full max-w-2xl mt-6 animate-slide-up">
-            <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
+            <div class="kiosk-secondary-card rounded-2xl p-6 space-y-5">
               @for (q of visibleSecondary(); track q.id) {
                 <div>
                   <app-question-field
@@ -184,49 +182,60 @@ function buildEmojiSet(max: number): string[] {
           </div>
         }
 
-        <!-- Branding -->
-        <div class="absolute bottom-5 flex items-center gap-1.5 opacity-30">
-          <span class="text-xs text-slate-400">Criado com</span>
-          <div class="flex items-center gap-1">
-            <div class="w-5 h-5 bg-primary-500 rounded flex items-center justify-center">
-              <i class="pi pi-bolt text-white text-xs"></i>
+        <!-- Bottom bar: branding + toggle -->
+        <div class="absolute bottom-5 left-0 right-0 flex items-center justify-between px-5">
+          <!-- Branding -->
+          <div class="flex items-center gap-1.5 opacity-30">
+            <span class="k-muted text-xs">Criado com</span>
+            <div class="flex items-center gap-1">
+              <div class="w-5 h-5 bg-primary-500 rounded flex items-center justify-center">
+                <i class="pi pi-bolt text-white text-xs"></i>
+              </div>
+              <span class="k-muted text-xs font-semibold">FormFlow</span>
             </div>
-            <span class="text-xs font-semibold text-slate-300">FormFlow</span>
           </div>
+
+          <!-- Theme toggle (apenas quando tema = auto) -->
+          @if (themeSetting() === 'auto') {
+            <button
+              class="kiosk-theme-toggle"
+              (click)="toggleTheme()"
+              [pTooltip]="isDark() ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
+              tooltipPosition="top"
+              [attr.aria-label]="isDark() ? 'Tema claro' : 'Tema escuro'"
+            >
+              <i [class]="isDark() ? 'pi pi-sun' : 'pi pi-moon'"></i>
+            </button>
+          }
         </div>
       </div>
     }
 
     <!-- ── THANKS STATE ── -->
     @if (kioskState() === 'thanks') {
-      <div class="thanks-bg min-h-screen flex flex-col items-center justify-center px-6 text-center animate-slide-up">
+      <div class="thanks-bg min-h-screen flex flex-col items-center justify-center px-6 text-center animate-slide-up relative">
         <div class="text-7xl sm:text-8xl mb-6 select-none">✅</div>
 
-        <h1 class="text-3xl sm:text-4xl font-bold text-white mb-4">
-          Obrigado!
-        </h1>
+        <h1 class="k-thanks-heading text-3xl sm:text-4xl font-bold mb-4">Obrigado!</h1>
 
         @if (formData().thankYouMessage) {
-          <p class="text-white/70 text-lg max-w-md mb-10 whitespace-pre-line leading-relaxed">
+          <p class="k-thanks-body text-lg max-w-md mb-10 whitespace-pre-line leading-relaxed">
             {{ formData().thankYouMessage }}
           </p>
         } @else {
-          <p class="text-white/60 text-lg mb-10">
+          <p class="k-thanks-body text-lg mb-10">
             Sua avaliação foi registrada com sucesso.
           </p>
         }
 
-        <!-- Countdown bar -->
-        <div class="w-64 h-1.5 bg-white/20 rounded-full overflow-hidden mb-3">
+        <div class="k-countdown-track w-64 h-1.5 rounded-full overflow-hidden mb-3">
           <div
-            class="h-full bg-white/70 rounded-full"
+            class="k-countdown-bar h-full rounded-full"
             [style.width.%]="countdownPercent()"
             style="transition: width 1s linear"
           ></div>
         </div>
-        <p class="text-white/40 text-sm mb-8">
-          Nova avaliação em {{ countdown() }}s
-        </p>
+        <p class="k-thanks-faint text-sm mb-8">Nova avaliação em {{ countdown() }}s</p>
 
         <button
           pButton
@@ -236,151 +245,339 @@ function buildEmojiSet(max: number): string[] {
           [outlined]="true"
           (click)="resetKiosk()"
         ></button>
+
+        <!-- Theme toggle também na tela de agradecimento -->
+        @if (themeSetting() === 'auto') {
+          <button
+            class="kiosk-theme-toggle absolute bottom-5 right-5"
+            (click)="toggleTheme()"
+            [attr.aria-label]="isDark() ? 'Tema claro' : 'Tema escuro'"
+          >
+            <i [class]="isDark() ? 'pi pi-sun' : 'pi pi-moon'"></i>
+          </button>
+        }
       </div>
     }
   `,
   styles: [`
-    .kiosk-bg {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-    }
-    .thanks-bg {
-      background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #064e3b 100%);
-    }
-    .kiosk-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 1.5rem;
-      padding: 2.5rem 2rem;
+    /* ─────────────────────────────────────────────
+       CSS Custom Properties — Dark (padrão)
+    ───────────────────────────────────────────── */
+    :host {
+      --k-bg:              linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      --k-thanks-bg:       linear-gradient(135deg, #064e3b 0%, #065f46 50%, #064e3b 100%);
+
+      --k-heading:         #ffffff;
+      --k-muted:           rgba(148,163,184,1);   /* slate-400 */
+      --k-body:            rgba(255,255,255,0.70);
+      --k-faint:           rgba(255,255,255,0.40);
+
+      --k-card-bg:         rgba(255,255,255,0.04);
+      --k-card-border:     rgba(255,255,255,0.08);
+      --k-2nd-card-bg:     rgba(255,255,255,0.05);
+      --k-2nd-card-border: rgba(255,255,255,0.10);
+
+      --k-emoji-hover:     rgba(255,255,255,0.08);
+      --k-emoji-sel-bg:    rgba(255,255,255,0.15);
+      --k-emoji-sel-bdr:   rgba(255,255,255,0.40);
+
+      --k-star-empty:      rgba(255,255,255,0.20);
+
+      --k-scale-bdr:       rgba(255,255,255,0.15);
+      --k-scale-text:      rgba(255,255,255,0.60);
+      --k-scale-hov-bdr:   rgba(255,255,255,0.50);
+      --k-scale-hov-text:  #ffffff;
+      --k-scale-hov-bg:    rgba(255,255,255,0.08);
+      --k-scale-sel-bg:    #ffffff;
+      --k-scale-sel-text:  #0f172a;
+      --k-scale-sel-bdr:   #ffffff;
+
+      --k-progress-track:  rgba(255,255,255,0.10);
+
+      --k-thanks-heading:  #ffffff;
+      --k-thanks-body:     rgba(255,255,255,0.70);
+      --k-thanks-faint:    rgba(255,255,255,0.40);
+      --k-cdown-track:     rgba(255,255,255,0.20);
+      --k-cdown-bar:       rgba(255,255,255,0.70);
+
+      --k-toggle-bg:       rgba(255,255,255,0.10);
+      --k-toggle-text:     rgba(255,255,255,0.55);
+      --k-toggle-hov:      rgba(255,255,255,0.18);
+
+      --k-field-label:     rgba(255,255,255,0.85);
+      --k-field-hint:      rgba(255,255,255,0.40);
     }
 
-    /* ── Emoji buttons ── */
+    /* ─────────────────────────────────────────────
+       CSS Custom Properties — Light (override)
+    ───────────────────────────────────────────── */
+    :host.kiosk-light {
+      --k-bg:              linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #f8fafc 100%);
+      --k-thanks-bg:       linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #ecfdf5 100%);
+
+      --k-heading:         #0f172a;
+      --k-muted:           #64748b;              /* slate-500 */
+      --k-body:            rgba(15,23,42,0.65);
+      --k-faint:           rgba(15,23,42,0.38);
+
+      --k-card-bg:         rgba(255,255,255,0.88);
+      --k-card-border:     rgba(15,23,42,0.08);
+      --k-2nd-card-bg:     rgba(255,255,255,0.92);
+      --k-2nd-card-border: rgba(15,23,42,0.10);
+
+      --k-emoji-hover:     rgba(15,23,42,0.05);
+      --k-emoji-sel-bg:    rgba(99,102,241,0.08);
+      --k-emoji-sel-bdr:   rgba(99,102,241,0.45);
+
+      --k-star-empty:      rgba(15,23,42,0.18);
+
+      --k-scale-bdr:       rgba(15,23,42,0.15);
+      --k-scale-text:      rgba(15,23,42,0.55);
+      --k-scale-hov-bdr:   rgba(15,23,42,0.40);
+      --k-scale-hov-text:  #0f172a;
+      --k-scale-hov-bg:    rgba(15,23,42,0.05);
+      --k-scale-sel-bg:    #0f172a;
+      --k-scale-sel-text:  #ffffff;
+      --k-scale-sel-bdr:   #0f172a;
+
+      --k-progress-track:  rgba(15,23,42,0.10);
+
+      --k-thanks-heading:  #064e3b;
+      --k-thanks-body:     rgba(6,78,59,0.70);
+      --k-thanks-faint:    rgba(6,78,59,0.45);
+      --k-cdown-track:     rgba(6,78,59,0.15);
+      --k-cdown-bar:       rgba(6,78,59,0.55);
+
+      --k-toggle-bg:       rgba(15,23,42,0.08);
+      --k-toggle-text:     rgba(15,23,42,0.50);
+      --k-toggle-hov:      rgba(15,23,42,0.13);
+
+      --k-field-label:     rgba(15,23,42,0.85);
+      --k-field-hint:      rgba(15,23,42,0.40);
+    }
+
+    /* ─────────────────────────────────────────────
+       Utility classes que consomem as variáveis
+    ───────────────────────────────────────────── */
+    .k-heading       { color: var(--k-heading); }
+    .k-muted         { color: var(--k-muted); }
+    .k-body          { color: var(--k-body); }
+    .k-faint         { color: var(--k-faint); }
+    .k-thanks-heading{ color: var(--k-thanks-heading); }
+    .k-thanks-body   { color: var(--k-thanks-body); }
+    .k-thanks-faint  { color: var(--k-thanks-faint); }
+
+    .k-progress-track { background: var(--k-progress-track); }
+    .k-countdown-track { background: var(--k-cdown-track); }
+    .k-countdown-bar  { background: var(--k-cdown-bar); }
+
+    /* ─────────────────────────────────────────────
+       Backgrounds
+    ───────────────────────────────────────────── */
+    .kiosk-bg    { background: var(--k-bg); }
+    .thanks-bg   { background: var(--k-thanks-bg); }
+
+    /* ─────────────────────────────────────────────
+       Cards
+    ───────────────────────────────────────────── */
+    .kiosk-card {
+      background:    var(--k-card-bg);
+      border:        1px solid var(--k-card-border);
+      border-radius: 1.5rem;
+      padding:       2.5rem 2rem;
+    }
+    .kiosk-secondary-card {
+      background: var(--k-2nd-card-bg);
+      border:     1px solid var(--k-2nd-card-border);
+    }
+
+    /* ─────────────────────────────────────────────
+       Emoji buttons
+    ───────────────────────────────────────────── */
     .kiosk-emoji-btn {
-      display: flex;
+      display:        flex;
       flex-direction: column;
-      align-items: center;
-      background: transparent;
-      border: 2px solid transparent;
-      border-radius: 1rem;
-      padding: 0.5rem 0.6rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      align-items:    center;
+      background:     transparent;
+      border:         2px solid transparent;
+      border-radius:  1rem;
+      padding:        0.5rem 0.6rem;
+      cursor:         pointer;
+      transition:     all 0.2s ease;
     }
     .kiosk-emoji-btn:hover {
-      background: rgba(255,255,255,0.08);
-      transform: scale(1.1);
+      background:  var(--k-emoji-hover);
+      transform:   scale(1.1);
     }
     .kiosk-emoji-btn.selected {
-      background: rgba(255,255,255,0.15);
-      border-color: rgba(255,255,255,0.4);
-      transform: scale(1.18);
+      background:   var(--k-emoji-sel-bg);
+      border-color: var(--k-emoji-sel-bdr);
+      transform:    scale(1.18);
     }
-    .kiosk-emoji-btn.dimmed {
-      opacity: 0.35;
-    }
+    .kiosk-emoji-btn.dimmed { opacity: 0.35; }
+
     .emoji-glyph {
-      font-size: 3.5rem;
+      font-size:   3.5rem;
       line-height: 1;
-      display: block;
+      display:     block;
     }
     @media (min-width: 640px) {
       .emoji-glyph { font-size: 4.5rem; }
     }
 
-    /* ── Star buttons ── */
+    /* ─────────────────────────────────────────────
+       Star buttons
+    ───────────────────────────────────────────── */
     .kiosk-star-btn {
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      color: rgba(255,255,255,0.2);
-      font-size: 2.5rem;
-      padding: 0.25rem;
-      transition: all 0.15s ease;
+      background:  transparent;
+      border:      none;
+      cursor:      pointer;
+      color:       var(--k-star-empty);
+      padding:     0.25rem;
+      transition:  all 0.15s ease;
       line-height: 1;
     }
-    .kiosk-star-btn:hover { color: #fbbf24; transform: scale(1.15); }
+    .kiosk-star-btn:hover  { color: #fbbf24; transform: scale(1.15); }
     .kiosk-star-btn.filled { color: #fbbf24; }
     .kiosk-star-btn i { font-size: 2.5rem; }
     @media (min-width: 640px) {
       .kiosk-star-btn i { font-size: 3.5rem; }
     }
 
-    /* ── Scale buttons ── */
+    /* ─────────────────────────────────────────────
+       Scale buttons
+    ───────────────────────────────────────────── */
     .kiosk-scale-btn {
-      width: 3.25rem;
-      height: 3.25rem;
+      width:         3.25rem;
+      height:        3.25rem;
       border-radius: 0.75rem;
-      border: 2px solid rgba(255,255,255,0.15);
-      background: transparent;
-      color: rgba(255,255,255,0.6);
-      font-size: 1.1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s ease;
+      border:        2px solid var(--k-scale-bdr);
+      background:    transparent;
+      color:         var(--k-scale-text);
+      font-size:     1.1rem;
+      font-weight:   600;
+      cursor:        pointer;
+      transition:    all 0.15s ease;
     }
     .kiosk-scale-btn:hover {
-      border-color: rgba(255,255,255,0.5);
-      color: white;
-      background: rgba(255,255,255,0.08);
+      border-color: var(--k-scale-hov-bdr);
+      color:        var(--k-scale-hov-text);
+      background:   var(--k-scale-hov-bg);
     }
     .kiosk-scale-btn.selected {
-      background: white;
-      color: #0f172a;
-      border-color: white;
-      transform: scale(1.1);
+      background:   var(--k-scale-sel-bg);
+      color:        var(--k-scale-sel-text);
+      border-color: var(--k-scale-sel-bdr);
+      transform:    scale(1.1);
     }
 
-    /* Override PrimeNG label/description colors inside kiosk dark card */
-    :host ::ng-deep .kiosk-bg app-question-field label {
-      color: rgba(255,255,255,0.85) !important;
+    /* ─────────────────────────────────────────────
+       Theme toggle button
+    ───────────────────────────────────────────── */
+    .kiosk-theme-toggle {
+      width:         2.25rem;
+      height:        2.25rem;
+      border-radius: 50%;
+      border:        none;
+      background:    var(--k-toggle-bg);
+      color:         var(--k-toggle-text);
+      cursor:        pointer;
+      display:       flex;
+      align-items:   center;
+      justify-content: center;
+      transition:    all 0.2s ease;
+      font-size:     0.9rem;
     }
-    :host ::ng-deep .kiosk-bg app-question-field .text-surface-400 {
-      color: rgba(255,255,255,0.4) !important;
+    .kiosk-theme-toggle:hover {
+      background: var(--k-toggle-hov);
+    }
+
+    /* ─────────────────────────────────────────────
+       Override PrimeNG question-field colors
+    ───────────────────────────────────────────── */
+    :host ::ng-deep .kiosk-secondary-card app-question-field label {
+      color: var(--k-field-label) !important;
+    }
+    :host ::ng-deep .kiosk-secondary-card app-question-field p {
+      color: var(--k-field-hint) !important;
     }
   `],
 })
 export class KioskFormRendererComponent implements OnInit, OnDestroy {
-  private readonly formApi = inject(FormApiService);
-  private readonly uploadApi = inject(UploadApiService);
-  private readonly toast = inject(MessageService);
+  private readonly formApi    = inject(FormApiService);
+  private readonly uploadApi  = inject(UploadApiService);
+  private readonly toast      = inject(MessageService);
 
-  readonly formData = input.required<PublicFormResponse>();
+  readonly formData       = input.required<PublicFormResponse>();
   readonly respondentToken = input<string | null>(null);
 
-  readonly kioskState = signal<KioskState>('form');
-  readonly answers = signal<Record<string, any>>({});
-  readonly errors = signal<Record<string, string>>({});
-  readonly fileNames = signal<Record<string, string[]>>({});
-  readonly countdown = signal(0);
+  readonly kioskState         = signal<KioskState>('form');
+  readonly answers            = signal<Record<string, any>>({});
+  readonly errors             = signal<Record<string, string>>({});
+  readonly fileNames          = signal<Record<string, string[]>>({});
+  readonly countdown          = signal(0);
   readonly autoSubmitProgress = signal(0);
   readonly autoSubmitTransition = signal('none');
+
+  // ── Tema ──────────────────────────────────────────────────────────────────
+
+  private readonly systemPrefersDark = signal(
+    typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+      : true
+  );
+
+  // Sobrescrita manual (só usada quando tema = 'auto')
+  private readonly manualDark = signal<boolean | null>(null);
+
+  readonly themeSetting = computed<'auto' | 'light' | 'dark'>(() =>
+    (this.formData().schema?.settings?.kioskSettings?.theme ?? 'auto') as 'auto' | 'light' | 'dark'
+  );
+
+  readonly isDark = computed(() => {
+    const setting = this.themeSetting();
+    if (setting === 'dark')  return true;
+    if (setting === 'light') return false;
+    // 'auto': usa override manual ou preferência do sistema
+    return this.manualDark() ?? this.systemPrefersDark();
+  });
+
+  toggleTheme(): void {
+    this.manualDark.set(!this.isDark());
+  }
+
+  // ── Outros signals ────────────────────────────────────────────────────────
 
   private startedAt = new Date();
   private countdownInterval?: ReturnType<typeof setInterval>;
   private autoSubmitTimeout?: ReturnType<typeof setTimeout>;
-  private autoSubmitProgressTimeout?: ReturnType<typeof setTimeout>;
+  private mediaQuery?: MediaQueryList;
+  private mediaQueryListener = (e: MediaQueryListEvent) => {
+    this.systemPrefersDark.set(e.matches);
+  };
 
-  // ── Parsed sections from schema ──────────────────────────────────────────
+  // ── Schema parseado ───────────────────────────────────────────────────────
 
   readonly sections = computed<Section[]>(() => {
     const raw: any[] = this.formData().schema?.sections ?? [];
     return raw
       .filter((s: any) => s.questions?.length > 0)
       .map((s: any) => ({
-        id: s.id,
-        title: s.title ?? '',
+        id:          s.id,
+        title:       s.title ?? '',
         description: s.description ?? '',
-        questions: (s.questions ?? []).map((q: any): Question => ({
-          id: q.id,
-          type: q.type,
-          label: q.label ?? '',
-          description: q.description ?? '',
-          required: q.required ?? false,
-          placeholder: q.placeholder ?? '',
-          options: q.options ?? [],
-          validations: q.validations ?? {},
-          conditions: q.conditions ?? null,
+        questions:   (s.questions ?? []).map((q: any): Question => ({
+          id:           q.id,
+          type:         q.type,
+          label:        q.label ?? '',
+          description:  q.description ?? '',
+          required:     q.required ?? false,
+          placeholder:  q.placeholder ?? '',
+          options:      q.options ?? [],
+          validations:  q.validations ?? {},
+          conditions:   q.conditions ?? null,
           ratingConfig: q.ratingConfig ?? null,
-          scaleConfig: q.scaleConfig ?? null,
+          scaleConfig:  q.scaleConfig ?? null,
           numberConfig: q.numberConfig ?? null,
           matrixConfig: q.matrixConfig ?? null,
         })),
@@ -391,7 +588,6 @@ export class KioskFormRendererComponent implements OnInit, OnDestroy {
     this.sections().flatMap(s => s.questions)
   );
 
-  // Primeira questão de rating/scale — vira o "hero"
   readonly primaryQuestion = computed<Question | null>(() =>
     this.allQuestions().find(q => q.type === 'rating' || q.type === 'scale') ?? null
   );
@@ -401,13 +597,11 @@ export class KioskFormRendererComponent implements OnInit, OnDestroy {
     return q ? (this.answers()[q.id] ?? null) : null;
   });
 
-  // Questões secundárias — excluindo a primária e statements
   readonly secondaryQuestions = computed<Question[]>(() => {
     const primary = this.primaryQuestion();
     return this.allQuestions().filter(q => q.id !== primary?.id && q.type !== 'statement');
   });
 
-  // Visíveis com base nas condições (só avaliadas após primary ter resposta)
   readonly visibleSecondary = computed<Question[]>(() => {
     if (this.primaryAnswer() === null) return [];
     return this.secondaryQuestions().filter(q => this.isVisible(q));
@@ -417,10 +611,9 @@ export class KioskFormRendererComponent implements OnInit, OnDestroy {
     this.primaryQuestion()?.ratingConfig?.icon === 'emoji'
   );
 
-  readonly emojiSet = computed(() => {
-    const max = this.primaryQuestion()?.ratingConfig?.max ?? 5;
-    return buildEmojiSet(max);
-  });
+  readonly emojiSet = computed(() =>
+    buildEmojiSet(this.primaryQuestion()?.ratingConfig?.max ?? 5)
+  );
 
   readonly resetDelay = computed(() =>
     this.formData().schema?.settings?.kioskSettings?.resetDelay ?? 5
@@ -428,29 +621,30 @@ export class KioskFormRendererComponent implements OnInit, OnDestroy {
 
   readonly countdownPercent = computed(() => {
     const total = this.resetDelay();
-    if (total <= 0) return 0;
-    return (this.countdown() / total) * 100;
+    return total <= 0 ? 0 : (this.countdown() / total) * 100;
   });
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
-    // noop — state starts at 'form'
+    if (typeof window !== 'undefined') {
+      this.mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      this.mediaQuery.addEventListener('change', this.mediaQueryListener);
+    }
   }
 
   ngOnDestroy(): void {
     this.clearTimers();
+    this.mediaQuery?.removeEventListener('change', this.mediaQueryListener);
   }
 
-  // ── Primary question selection ────────────────────────────────────────────
+  // ── Seleção primária ──────────────────────────────────────────────────────
 
   onPrimarySelect(value: number): void {
     if (this.kioskState() === 'submitting') return;
-
     const q = this.primaryQuestion();
     if (!q) return;
 
-    // Limpa auto-submit anterior se usuário mudar a nota
     this.clearTimers();
     this.autoSubmitProgress.set(0);
     this.autoSubmitTransition.set('none');
@@ -458,11 +652,8 @@ export class KioskFormRendererComponent implements OnInit, OnDestroy {
     this.answers.update(a => ({ ...a, [q.id]: value }));
     this.errors.update(e => { const c = { ...e }; delete c[q.id]; return c; });
 
-    // Aguarda um tick para o computed visibleSecondary atualizar
     setTimeout(() => {
-      const visible = this.visibleSecondary();
-      if (visible.length === 0) {
-        // Sem questões condicionais — auto-submit em 1.5s com barra de progresso
+      if (this.visibleSecondary().length === 0) {
         this.autoSubmitTransition.set('width 1.5s linear');
         this.autoSubmitProgress.set(100);
         this.autoSubmitTimeout = setTimeout(() => this.onSubmit(), 1500);
@@ -470,7 +661,7 @@ export class KioskFormRendererComponent implements OnInit, OnDestroy {
     }, 30);
   }
 
-  // ── Secondary questions ───────────────────────────────────────────────────
+  // ── Respostas secundárias ─────────────────────────────────────────────────
 
   setAnswer(qId: string, value: any): void {
     this.answers.update(a => ({ ...a, [qId]: value }));
@@ -490,15 +681,12 @@ export class KioskFormRendererComponent implements OnInit, OnDestroy {
   }
 
   removeFile(qId: string, index: number): void {
-    const ids = [...(this.answers()[qId] || [])];
-    ids.splice(index, 1);
-    this.setAnswer(qId, ids);
-    const names = [...(this.fileNames()[qId] || [])];
-    names.splice(index, 1);
+    const ids = [...(this.answers()[qId] || [])]; ids.splice(index, 1); this.setAnswer(qId, ids);
+    const names = [...(this.fileNames()[qId] || [])]; names.splice(index, 1);
     this.fileNames.update(fn => ({ ...fn, [qId]: names }));
   }
 
-  // ── Visibility / Conditions ───────────────────────────────────────────────
+  // ── Condições ─────────────────────────────────────────────────────────────
 
   isVisible(q: Question): boolean {
     if (!q.conditions?.rules?.length) return true;
@@ -510,7 +698,7 @@ export class KioskFormRendererComponent implements OnInit, OnDestroy {
 
   private evalRule(rule: ConditionRule): boolean {
     if (!rule.questionId) return true;
-    const actual = this.answers()[rule.questionId];
+    const actual   = this.answers()[rule.questionId];
     const expected = rule.value;
     switch (rule.operator) {
       case 'equals':       return String(actual ?? '') === String(expected ?? '');
@@ -529,46 +717,35 @@ export class KioskFormRendererComponent implements OnInit, OnDestroy {
   // ── Submit ────────────────────────────────────────────────────────────────
 
   onSubmit(): void {
-    // Valida questões visíveis (exceto primary, que já foi respondida)
+    const primary    = this.primaryQuestion();
     const newErrors: Record<string, string> = {};
-    const primary = this.primaryQuestion();
 
     if (primary && !this.answers()[primary.id]) {
       newErrors[primary.id] = 'Campo obrigatório';
     }
-
     for (const q of this.visibleSecondary()) {
       if (q.type === 'statement') continue;
       const val = this.answers()[q.id];
       const empty = val === undefined || val === null || val === '' || (Array.isArray(val) && !val.length);
-      if (q.required && empty) {
-        newErrors[q.id] = 'Campo obrigatório';
-      }
+      if (q.required && empty) newErrors[q.id] = 'Campo obrigatório';
     }
-
-    if (Object.keys(newErrors).length > 0) {
-      this.errors.set(newErrors);
-      return;
-    }
+    if (Object.keys(newErrors).length > 0) { this.errors.set(newErrors); return; }
 
     this.clearTimers();
     this.kioskState.set('submitting');
 
-    const form = this.formData();
+    const form    = this.formData();
     const payload: Record<string, any> = {};
 
     for (const q of this.allQuestions()) {
-      if (!this.isVisible(q) && q !== primary) continue;
+      if (q.id !== primary?.id && !this.isVisible(q)) continue;
       if (q.type === 'statement') continue;
       const val = this.answers()[q.id];
       if (val !== undefined && val !== null && val !== '') {
         let formatted = val;
-        if (q.type === 'date' && val instanceof Date) {
-          formatted = val.toISOString().split('T')[0];
-        }
-        if (q.type === 'number' && ['cpf', 'cnpj'].includes(q.numberConfig?.documentType ?? '')) {
+        if (q.type === 'date' && val instanceof Date) formatted = val.toISOString().split('T')[0];
+        if (q.type === 'number' && ['cpf', 'cnpj'].includes(q.numberConfig?.documentType ?? ''))
           formatted = String(val).replace(/\D/g, '');
-        }
         payload[q.id] = { type: q.type, value: formatted };
       }
     }
@@ -577,16 +754,15 @@ export class KioskFormRendererComponent implements OnInit, OnDestroy {
       formVersionId: form.formVersionId,
       payload,
       metadata: {
-        startedAt: this.startedAt.toISOString(),
+        startedAt:   this.startedAt.toISOString(),
         submittedAt: new Date().toISOString(),
-        userAgent: navigator.userAgent,
+        userAgent:   navigator.userAgent,
       },
     }, this.respondentToken() ?? undefined).subscribe({
-      next: () => this.showThanks(),
+      next:  () => this.showThanks(),
       error: (err) => {
         this.kioskState.set('form');
-        const code = err.error?.error;
-        const msg = code === 'FORM_RESPONSE_LIMIT_REACHED'
+        const msg = err.error?.error === 'FORM_RESPONSE_LIMIT_REACHED'
           ? 'Este formulário atingiu o limite máximo de respostas.'
           : (err.error?.message ?? 'Erro ao enviar avaliação');
         this.toast.add({ severity: 'error', summary: 'Erro', detail: msg, life: 5000 });
@@ -603,11 +779,8 @@ export class KioskFormRendererComponent implements OnInit, OnDestroy {
 
     this.countdownInterval = setInterval(() => {
       const current = this.countdown();
-      if (current <= 1) {
-        this.resetKiosk();
-      } else {
-        this.countdown.set(current - 1);
-      }
+      if (current <= 1) this.resetKiosk();
+      else this.countdown.set(current - 1);
     }, 1000);
   }
 
@@ -623,25 +796,14 @@ export class KioskFormRendererComponent implements OnInit, OnDestroy {
   }
 
   private clearTimers(): void {
-    if (this.countdownInterval) {
-      clearInterval(this.countdownInterval);
-      this.countdownInterval = undefined;
-    }
-    if (this.autoSubmitTimeout) {
-      clearTimeout(this.autoSubmitTimeout);
-      this.autoSubmitTimeout = undefined;
-    }
-    if (this.autoSubmitProgressTimeout) {
-      clearTimeout(this.autoSubmitProgressTimeout);
-      this.autoSubmitProgressTimeout = undefined;
-    }
+    if (this.countdownInterval)  { clearInterval(this.countdownInterval);  this.countdownInterval  = undefined; }
+    if (this.autoSubmitTimeout)  { clearTimeout(this.autoSubmitTimeout);   this.autoSubmitTimeout  = undefined; }
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   starsRange(): number[] {
-    const max = this.primaryQuestion()?.ratingConfig?.max ?? 5;
-    return Array.from({ length: max }, (_, i) => i + 1);
+    return Array.from({ length: this.primaryQuestion()?.ratingConfig?.max ?? 5 }, (_, i) => i + 1);
   }
 
   scaleRange(min: number, max: number): number[] {

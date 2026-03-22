@@ -209,6 +209,15 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
           </div>
           @if (editInfoForm.layout === 'KIOSK') {
             <div>
+              <label class="ff-input-label">Tema</label>
+              <p-select
+                [(ngModel)]="editInfoForm.kioskTheme"
+                [options]="kioskThemeOptions"
+                optionLabel="label" optionValue="value"
+                styleClass="w-full"
+              />
+            </div>
+            <div>
               <label class="ff-input-label">
                 Tempo de reset automático
                 <span class="text-surface-400 font-normal ml-1">(segundos após o agradecimento)</span>
@@ -267,12 +276,18 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
 
   // ── Editar informações ──
   editInfoVisible = false;
-  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5 };
+  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5, kioskTheme: 'auto' as 'auto' | 'light' | 'dark' };
   readonly editInfoSaving = signal(false);
   readonly layoutOptions = [
     { label: 'Multi-etapas (uma seção por vez)', value: 'MULTI_STEP' },
     { label: 'Página única (tudo em uma tela)', value: 'SINGLE_PAGE' },
     { label: 'Totem / Kiosk (avaliação presencial)', value: 'KIOSK' },
+  ];
+
+  readonly kioskThemeOptions = [
+    { label: '🌗 Automático (segue o sistema)', value: 'auto' },
+    { label: '☀️ Claro', value: 'light' },
+    { label: '🌙 Escuro', value: 'dark' },
   ];
 
   private readonly destroy$ = new Subject<void>();
@@ -472,7 +487,8 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     const f = this.form()!;
     const schema = this.store.toSchema();
     const kioskResetDelay = schema.settings?.kioskSettings?.resetDelay ?? 5;
-    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay };
+    const kioskTheme = (schema.settings?.kioskSettings?.theme ?? 'auto') as 'auto' | 'light' | 'dark';
+    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay, kioskTheme };
     this.editInfoVisible = true;
   }
 
@@ -484,7 +500,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     const updatedSettings = {
       ...currentSchema.settings,
       kioskSettings: this.editInfoForm.layout === 'KIOSK'
-        ? { resetDelay: this.editInfoForm.kioskResetDelay }
+        ? { resetDelay: this.editInfoForm.kioskResetDelay, theme: this.editInfoForm.kioskTheme }
         : undefined,
     };
     this.store.settings.set(updatedSettings);
