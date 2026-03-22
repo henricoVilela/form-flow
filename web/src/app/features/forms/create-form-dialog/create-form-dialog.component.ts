@@ -70,7 +70,9 @@ import { finalize } from 'rxjs';
             styleClass="w-full"
           />
           <small class="text-surface-400 mt-1 block">
-            {{ form.value.layout === 'SINGLE_PAGE' ? 'Todas as perguntas em uma página' : 'Uma seção por vez (wizard)' }}
+            @if (form.value.layout === 'SINGLE_PAGE') { Todas as perguntas em uma página }
+            @else if (form.value.layout === 'KIOSK') { Avaliação presencial para totens e quiosques }
+            @else { Uma seção por vez (wizard) }
           </small>
         </div>
       </form>
@@ -111,12 +113,13 @@ export class CreateFormDialogComponent {
   readonly layoutOptions = [
     { label: 'Multi-step (Wizard)', value: 'MULTI_STEP' },
     { label: 'Página única', value: 'SINGLE_PAGE' },
+    { label: 'Totem / Kiosk', value: 'KIOSK' },
   ];
 
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(2)]],
     description: [''],
-    layout: ['MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE'],
+    layout: ['MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK'],
   });
 
   open(): void {

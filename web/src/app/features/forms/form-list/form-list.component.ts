@@ -176,8 +176,8 @@ type StatusFilter = 'ALL' | 'DRAFT' | 'PUBLISHED';
             <div class="flex items-center gap-4 text-xs text-surface-400 pt-3 border-t border-surface-100 dark:border-surface-700">
               <!-- Layout -->
               <span class="flex items-center gap-1" pTooltip="Layout" tooltipPosition="bottom">
-                <i class="pi pi-{{ form.layout === 'MULTI_STEP' ? 'list' : 'file' }} text-[10px]"></i>
-                {{ form.layout === 'MULTI_STEP' ? 'Multi-step' : 'Página única' }}
+                <i class="pi pi-{{ form.layout === 'MULTI_STEP' ? 'list' : form.layout === 'KIOSK' ? 'tablet' : 'file' }} text-[10px]"></i>
+                {{ form.layout === 'MULTI_STEP' ? 'Multi-step' : form.layout === 'KIOSK' ? 'Kiosk' : 'Página única' }}
               </span>
 
               <!-- Version -->

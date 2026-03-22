@@ -10,7 +10,7 @@ export interface FormResponse {
   title: string;
   description: string | null;
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
-  layout: 'MULTI_STEP' | 'SINGLE_PAGE';
+  layout: 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK';
   currentVersion: number | null;
   draftSchema: any;
   publishedAt: string | null;
@@ -66,7 +66,7 @@ export interface PublicFormResponse {
   formVersionId: string;
   title: string;
   description: string | null;
-  layout: 'MULTI_STEP' | 'SINGLE_PAGE';
+  layout: 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK';
   version: number;
   schema: any;
   welcomeMessage: string | null;
@@ -176,13 +176,13 @@ export interface AnalyticsResponse {
 export interface CreateFormRequest {
   title: string;
   description?: string;
-  layout?: 'MULTI_STEP' | 'SINGLE_PAGE';
+  layout?: 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK';
 }
 
 export interface UpdateFormRequest {
   title: string;
   description?: string | null;
-  layout?: 'MULTI_STEP' | 'SINGLE_PAGE';
+  layout?: 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK';
   schema?: any;
 }
 

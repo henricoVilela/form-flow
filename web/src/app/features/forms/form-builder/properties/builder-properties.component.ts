@@ -255,6 +255,17 @@ const FILE_TYPE_OPTIONS = [
           <!-- ── RATING config ── -->
           @if (q.type === 'rating' && q.ratingConfig) {
             <div class="field">
+              <label class="field-label">Tipo de ícone</label>
+              <p-select
+                [ngModel]="q.ratingConfig.icon"
+                (ngModelChange)="updateRatingIcon($event)"
+                [options]="ratingIconOptions"
+                optionLabel="label"
+                optionValue="value"
+                styleClass="w-full"
+              />
+            </div>
+            <div class="field">
               <label class="field-label">Avaliação máxima</label>
               <p-inputNumber
                 [ngModel]="q.ratingConfig.max"
@@ -615,6 +626,17 @@ export class BuilderPropertiesComponent {
 
   updateNumberDocType(documentType: 'none' | 'cpf' | 'cnpj'): void {
     this.update({ numberConfig: { documentType } });
+  }
+
+  readonly ratingIconOptions = [
+    { label: '⭐ Estrelas', value: 'star' },
+    { label: '😊 Emojis (feliz → triste)', value: 'emoji' },
+  ];
+
+  updateRatingIcon(icon: 'star' | 'emoji'): void {
+    const q = this.store.selectedQuestion();
+    if (!q?.ratingConfig) return;
+    this.update({ ratingConfig: { ...q.ratingConfig, icon } });
   }
 
   updateRatingMax(max: number): void {

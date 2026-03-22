@@ -10,6 +10,7 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, filter, takeUntil } from 'rxjs';
 
@@ -25,7 +26,7 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
   imports: [
     CommonModule, RouterLink, FormsModule,
     ButtonModule, SkeletonModule, TooltipModule, ConfirmDialogModule,
-    DialogModule, InputTextModule, TextareaModule, SelectModule,
+    DialogModule, InputTextModule, TextareaModule, SelectModule, InputNumberModule,
     BuilderToolboxComponent, BuilderCanvasComponent,
     BuilderPropertiesComponent, BuilderPreviewDialogComponent,
   ],
@@ -206,6 +207,20 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
             <p-select [(ngModel)]="editInfoForm.layout" [options]="layoutOptions"
                       optionLabel="label" optionValue="value" styleClass="w-full" />
           </div>
+          @if (editInfoForm.layout === 'KIOSK') {
+            <div>
+              <label class="ff-input-label">
+                Tempo de reset automático
+                <span class="text-surface-400 font-normal ml-1">(segundos após o agradecimento)</span>
+              </label>
+              <p-inputNumber
+                [(ngModel)]="editInfoForm.kioskResetDelay"
+                [min]="2" [max]="30" [showButtons]="true"
+                styleClass="w-full"
+                suffix=" s"
+              />
+            </div>
+          }
         </div>
         <ng-template pTemplate="footer">
           <button pButton label="Cancelar" severity="secondary" [text]="true" (click)="editInfoVisible = false"></button>
@@ -252,11 +267,12 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
 
   // ── Editar informações ──
   editInfoVisible = false;
-  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' };
+  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5 };
   readonly editInfoSaving = signal(false);
   readonly layoutOptions = [
     { label: 'Multi-etapas (uma seção por vez)', value: 'MULTI_STEP' },
     { label: 'Página única (tudo em uma tela)', value: 'SINGLE_PAGE' },
+    { label: 'Totem / Kiosk (avaliação presencial)', value: 'KIOSK' },
   ];
 
   private readonly destroy$ = new Subject<void>();
@@ -454,7 +470,9 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
 
   openEditInfo(): void {
     const f = this.form()!;
-    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' };
+    const schema = this.store.toSchema();
+    const kioskResetDelay = schema.settings?.kioskSettings?.resetDelay ?? 5;
+    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay };
     this.editInfoVisible = true;
   }
 
@@ -462,6 +480,14 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     const title = this.editInfoForm.title.trim();
     if (!title) return;
     this.editInfoSaving.set(true);
+    const currentSchema = this.store.toSchema();
+    const updatedSettings = {
+      ...currentSchema.settings,
+      kioskSettings: this.editInfoForm.layout === 'KIOSK'
+        ? { resetDelay: this.editInfoForm.kioskResetDelay }
+        : undefined,
+    };
+    this.store.settings.set(updatedSettings);
     this.formApi.update(this.id(), {
       title,
       description: this.editInfoForm.description.trim() || null,

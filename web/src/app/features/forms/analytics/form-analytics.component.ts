@@ -145,7 +145,7 @@ const CHART_COLORS = [
     @if (!loading() && visibleQuestions().length > 0) {
       <div class="mb-4">
         <h2 class="text-sm font-semibold text-surface-600 dark:text-surface-400 uppercase tracking-wide">
-          Por questão — {{ visibleQuestions().length }} questão{{ visibleQuestions().length !== 1 ? 'ões' : '' }}
+          Por questão — {{ visibleQuestions().length }} quest{{ visibleQuestions().length !== 1 ? 'ões' : 'ão' }}
         </h2>
       </div>
 

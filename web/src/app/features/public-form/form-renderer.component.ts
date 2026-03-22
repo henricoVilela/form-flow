@@ -12,6 +12,7 @@ import { MessageService } from 'primeng/api';
 import { UploadApiService } from '@core/api/upload-api.service';
 import { FormApiService, PublicFormResponse } from '@core/api/form-api.service';
 import { QuestionFieldComponent, RendererQuestion } from '@shared/question-field/question-field.component';
+import { KioskFormRendererComponent } from './kiosk-form-renderer.component';
 
 interface Section {
   id: string;
@@ -37,13 +38,13 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
   imports: [
     CommonModule, FormsModule,
     ButtonModule, InputTextModule, MessageModule, SkeletonModule, ToastModule,
-    QuestionFieldComponent,
+    QuestionFieldComponent, KioskFormRendererComponent,
   ],
   providers: [MessageService],
   template: `
     <p-toast position="top-center" />
 
-    <div class="min-h-screen flex flex-col items-center px-4 pt-10 pb-[60px] bg-gradient-to-b from-surface-100 to-surface-200 max-[480px]:px-2 max-[480px]:pt-4 max-[480px]:pb-10">
+    <div [class]="isKiosk() && state() === 'form' ? '' : 'min-h-screen flex flex-col items-center px-4 pt-10 pb-[60px] bg-gradient-to-b from-surface-100 to-surface-200 max-[480px]:px-2 max-[480px]:pt-4 max-[480px]:pb-10'">
 
       <!-- ── LOADING ── -->
       @if (state() === 'loading') {
@@ -139,8 +140,16 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
         </div>
       }
 
-      <!-- ── FORM ── -->
-      @if (state() === 'form' && formData()) {
+      <!-- ── FORM: Kiosk ── -->
+      @if (state() === 'form' && formData() && isKiosk()) {
+        <app-kiosk-form-renderer
+          [formData]="formData()!"
+          [respondentToken]="respondentToken"
+        />
+      }
+
+      <!-- ── FORM: Normal ── -->
+      @if (state() === 'form' && formData() && !isKiosk()) {
         <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up max-[480px]:p-5 max-[480px]:rounded-xl">
           <div class="mb-2">
             <h1 class="text-xl font-display font-bold text-surface-900">{{ formData()!.title }}</h1>
@@ -204,7 +213,7 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
       }
 
       <!-- ── SUCCESS ── -->
-      @if (state() === 'success') {
+      @if (state() === 'success' && !isKiosk()) {
         <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up text-center max-[480px]:p-5 max-[480px]:rounded-xl">
           <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-emerald-50 flex items-center justify-center">
             <i class="pi pi-check-circle text-3xl text-emerald-500"></i>
@@ -221,7 +230,8 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
         </div>
       }
 
-      <!-- Branding -->
+      <!-- Branding (oculto no kiosk — o renderer kiosk tem o próprio) -->
+      @if (!isKiosk()) {
       <div class="flex items-center gap-1.5 mt-6 opacity-70">
         <span class="text-xs text-surface-400">Criado com</span>
         <div class="flex items-center gap-1.5">
@@ -231,6 +241,7 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
           <span class="text-sm font-semibold text-surface-500">FormFlow</span>
         </div>
       </div>
+      }
     </div>
   `,
   styles: [],
@@ -258,6 +269,7 @@ export class FormRendererComponent implements OnInit {
   respondentToken: string | null = null;
 
   readonly isSinglePage = computed(() => this.formData()?.layout === 'SINGLE_PAGE');
+  readonly isKiosk = computed(() => this.formData()?.layout === 'KIOSK');
   readonly currentSection = computed(() => this.sections()[this.currentStep()] ?? null);
   readonly progressPercent = computed(() => {
     const total = this.sections().length;
@@ -288,7 +300,9 @@ export class FormRendererComponent implements OnInit {
         this.formData.set(data);
         this.sections.set((data.schema?.sections ?? []).filter((s: any) => s.questions?.length > 0));
         this.passwordChecking.set(false);
-        this.state.set(data.welcomeMessage || data.description ? 'welcome' : 'form');
+        // Kiosk nunca mostra welcome — vai direto para o formulário
+        const showWelcome = data.layout !== 'KIOSK' && (!!data.welcomeMessage || !!data.description);
+        this.state.set(showWelcome ? 'welcome' : 'form');
       },
       error: (err) => {
         this.passwordChecking.set(false);

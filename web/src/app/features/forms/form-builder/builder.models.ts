@@ -78,7 +78,7 @@ export interface BuilderMatrixConfig {
 
 export interface BuilderRatingConfig {
   max: number;
-  icon: string;
+  icon: 'star' | 'emoji';
 }
 
 export interface BuilderScaleConfig {
@@ -99,9 +99,14 @@ export interface FormSchema {
   settings: FormSettings;
 }
 
+export interface KioskSettings {
+  resetDelay: number; // segundos antes do reset automático (padrão: 5)
+}
+
 export interface FormSettings {
   showProgressBar: boolean;
   showQuestionNumbers: boolean;
+  kioskSettings?: KioskSettings;
 }
 
 // ── Catalog of available question types ──

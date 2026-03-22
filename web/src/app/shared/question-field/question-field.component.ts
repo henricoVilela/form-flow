@@ -187,8 +187,44 @@ function fileMatchesAccept(file: File, allowedTypes: string[]): boolean {
       }
 
       @case ('rating') {
-        <p-rating [ngModel]="answer()" (ngModelChange)="answerChange.emit($event)"
-                  [stars]="q.ratingConfig?.max ?? 5" />
+        @if (q.ratingConfig?.icon === 'emoji') {
+          <!-- Emojis: renderizado sem p-rating -->
+          <div class="flex gap-3 flex-wrap">
+            @for (emoji of emojiSet(q.ratingConfig?.max ?? 5); let i = $index; track i) {
+              @let val = i + 1;
+              @let selected = answer() === val;
+              <button
+                type="button"
+                class="flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl border-2 transition-all duration-150 cursor-pointer"
+                [class.border-primary-400]="selected"
+                [class.bg-primary-50]="selected"
+                [class.border-surface-200]="!selected"
+                [class.bg-white]="!selected"
+                [class.dark:bg-surface-800]="!selected"
+                (click)="answerChange.emit(val)"
+              >
+                <span style="font-size: 1.75rem; line-height: 1;">{{ emoji }}</span>
+                <span class="text-xs text-surface-400">{{ val }}</span>
+              </button>
+            }
+          </div>
+        } @else {
+          <!--
+            Estrelas (padrão) e Corações compartilham o mesmo p-rating.
+            Os ng-template #onicon/#officon ficam SEMPRE presentes para que o
+            @ContentChild do PrimeNG os encontre independente do ciclo de vida.
+            A lógica de qual ícone mostrar fica dentro do template.
+          -->
+          <p-rating [ngModel]="answer()" (ngModelChange)="answerChange.emit($event)"
+                    [stars]="q.ratingConfig?.max ?? 5">
+            <ng-template #onicon>
+              <i class="pi pi-star-fill" style="color: #f59e0b; font-size: 1.4rem;"></i>
+            </ng-template>
+            <ng-template #officon>
+              <i class="pi pi-star" style="color: #cbd5e1; font-size: 1.4rem;"></i>
+            </ng-template>
+          </p-rating>
+        }
       }
 
       @case ('scale') {
@@ -345,5 +381,15 @@ export class QuestionFieldComponent {
 
   scaleRange(min: number, max: number): number[] {
     return Array.from({ length: max - min + 1 }, (_, i) => min + i);
+  }
+
+  emojiSet(max: number): string[] {
+    const base = ['😠', '😕', '😐', '🙂', '😄'];
+    if (max === 5) return base;
+    if (max === 3) return ['😠', '😐', '😄'];
+    if (max === 4) return ['😕', '😐', '🙂', '😄'];
+    return Array.from({ length: max }, (_, i) =>
+      base[Math.round((i / (max - 1)) * (base.length - 1))]
+    );
   }
 }
