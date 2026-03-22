@@ -9,16 +9,26 @@ import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { AccordionModule } from 'primeng/accordion';
 import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 import { BuilderStore } from '../builder.store';
 import { BuilderQuestion, QUESTION_TYPES } from '../builder.models';
+
+const FILE_TYPE_OPTIONS = [
+  { label: 'Imagens',     value: 'image/*' },
+  { label: 'PDF',         value: 'application/pdf' },
+  { label: 'Word',        value: '.doc,.docx' },
+  { label: 'Excel / CSV', value: '.xls,.xlsx,.csv' },
+  { label: 'Vídeos',      value: 'video/*' },
+  { label: 'Áudio',       value: 'audio/*' },
+];
 
 @Component({
   selector: 'app-builder-properties',
   imports: [
     CommonModule, FormsModule,
     InputTextModule, TextareaModule, ToggleSwitchModule,
-    InputNumberModule, ButtonModule, DividerModule, AccordionModule, SelectModule,
+    InputNumberModule, ButtonModule, DividerModule, AccordionModule, SelectModule, MultiSelectModule,
   ],
   template: `
     <div class="properties">
@@ -347,6 +357,28 @@ import { BuilderQuestion, QUESTION_TYPES } from '../builder.models';
                 [min]="1" [max]="20" [showButtons]="true" size="small" styleClass="w-full"
               />
             </div>
+            <div class="field">
+              <label class="field-label">Tamanho máximo (MB)</label>
+              <p-inputNumber
+                [ngModel]="q.validations.maxFileSize ?? null"
+                (ngModelChange)="updateValidation('maxFileSize', $event)"
+                [min]="1" [max]="500" [showButtons]="true" size="small" styleClass="w-full"
+                placeholder="Sem limite"
+              />
+            </div>
+            <div class="field">
+              <label class="field-label">Tipos de arquivo permitidos</label>
+              <p-multiselect
+                [ngModel]="q.validations.allowedFileTypes ?? []"
+                (ngModelChange)="updateValidation('allowedFileTypes', $event)"
+                [options]="fileTypeOptions"
+                optionLabel="label" optionValue="value"
+                placeholder="Todos os tipos"
+                styleClass="w-full" size="small"
+                display="chip"
+                appendTo="body"
+              />
+            </div>
           }
 
           <!-- ── CONDITIONS ── -->
@@ -488,6 +520,8 @@ import { BuilderQuestion, QUESTION_TYPES } from '../builder.models';
 })
 export class BuilderPropertiesComponent {
   readonly store = inject(BuilderStore);
+
+  readonly fileTypeOptions = FILE_TYPE_OPTIONS;
 
   readonly conditionOperators = [
     { label: '= Igual', value: 'equals' },

@@ -164,6 +164,9 @@ export function createQuestion(type: QuestionType): BuilderQuestion {
   if (type === 'number') {
     base.numberConfig = { documentType: 'none' };
   }
+  if (type === 'file_upload') {
+    base.validations = { maxFiles: 3 };
+  }
   if (type === 'matrix') {
     base.matrixConfig = {
       rows: [

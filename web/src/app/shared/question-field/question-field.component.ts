@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -26,6 +26,26 @@ export interface RendererQuestion {
   scaleConfig:   { min: number; max: number; minLabel?: string; maxLabel?: string } | null;
   numberConfig:  { documentType: 'none' | 'cpf' | 'cnpj' } | null;
   matrixConfig:  { rows: { id: string; label: string }[]; columns: { id: string; label: string; value: number }[] } | null;
+}
+
+const FILE_TYPE_LABELS: Record<string, string> = {
+  'image/*':         'Imagens',
+  'application/pdf': 'PDF',
+  '.doc,.docx':      'Word',
+  '.xls,.xlsx,.csv': 'Excel/CSV',
+  'video/*':         'Vídeos',
+  'audio/*':         'Áudio',
+};
+
+function fileMatchesAccept(file: File, allowedTypes: string[]): boolean {
+  return allowedTypes.some(type => {
+    const parts = type.split(',').map(t => t.trim());
+    return parts.some(part => {
+      if (part.endsWith('/*')) return file.type.startsWith(part.replace('/*', '/'));
+      if (part.startsWith('.')) return file.name.toLowerCase().endsWith(part.toLowerCase());
+      return file.type === part;
+    });
+  });
 }
 
 @Component({
@@ -194,13 +214,32 @@ export interface RendererQuestion {
           (click)="fileInput.click()"
           (dragover)="$event.preventDefault()"
           (drop)="onFileDrop($event)">
-          <input #fileInput type="file" hidden [multiple]="true" (change)="onFileSelect($event)" />
+          <input #fileInput type="file" hidden [multiple]="true"
+            [accept]="acceptAttr()"
+            (change)="onFileSelect($event)" />
           <i class="pi pi-cloud-upload text-2xl text-surface-300 mb-2"></i>
           <p class="text-sm text-surface-500">Arraste arquivos ou clique para enviar</p>
-          @if (q.validations?.maxFiles) {
-            <p class="text-xs text-surface-400 mt-1">Máx. {{ q.validations.maxFiles }} arquivos</p>
-          }
+          <div class="flex flex-wrap justify-center gap-x-3 mt-1">
+            @if (q.validations?.maxFiles) {
+              <p class="text-xs text-surface-400">Máx. {{ q.validations.maxFiles }} arquivo(s)</p>
+            }
+            @if (q.validations?.maxFileSize) {
+              <p class="text-xs text-surface-400">Máx. {{ q.validations.maxFileSize }} MB por arquivo</p>
+            }
+            @if (fileTypeLabel()) {
+              <p class="text-xs text-surface-400">{{ fileTypeLabel() }}</p>
+            }
+          </div>
         </div>
+        @if (uploadErrors().length) {
+          <div class="mt-2 space-y-1">
+            @for (err of uploadErrors(); track err) {
+              <p class="text-xs text-red-500 flex items-center gap-1">
+                <i class="pi pi-exclamation-circle text-xs"></i>{{ err }}
+              </p>
+            }
+          </div>
+        }
         @if (fileNames().length) {
           <div class="mt-2 space-y-1">
             @for (fname of fileNames(); track fname; let fi = $index) {
@@ -244,20 +283,64 @@ export class QuestionFieldComponent {
   readonly filesSelected = output<File[]>();
   readonly fileRemove    = output<number>();
 
+  readonly uploadErrors = signal<string[]>([]);
+
+  readonly acceptAttr = computed(() => {
+    const types = this.question().validations?.allowedFileTypes as string[] | undefined;
+    return types?.length ? types.join(',') : '*';
+  });
+
+  readonly fileTypeLabel = computed(() => {
+    const types = this.question().validations?.allowedFileTypes as string[] | undefined;
+    if (!types?.length) return null;
+    return types.map(t => FILE_TYPE_LABELS[t] ?? t).join(', ');
+  });
+
   setMatrixAnswer(rowId: string, colId: string): void {
     this.answerChange.emit({ ...(this.answer() ?? {}), [rowId]: colId });
   }
 
   onFileSelect(event: Event): void {
     const files = (event.target as HTMLInputElement).files;
-    if (files?.length) this.filesSelected.emit(Array.from(files));
+    if (files?.length) this.validateAndEmit(Array.from(files));
+    (event.target as HTMLInputElement).value = '';
   }
 
   onFileDrop(event: DragEvent): void {
     event.preventDefault();
     if (event.dataTransfer?.files?.length) {
-      this.filesSelected.emit(Array.from(event.dataTransfer.files));
+      this.validateAndEmit(Array.from(event.dataTransfer.files));
     }
+  }
+
+  private validateAndEmit(files: File[]): void {
+    const v = this.question().validations ?? {};
+    const maxFiles   = (v as any).maxFiles   as number | undefined;
+    const maxSizeMB  = (v as any).maxFileSize as number | undefined;
+    const allowedTypes = (v as any).allowedFileTypes as string[] | undefined;
+
+    const currentCount = this.fileNames().length;
+    const errors: string[] = [];
+    const valid: File[] = [];
+
+    for (const file of files) {
+      if (maxFiles !== undefined && currentCount + valid.length >= maxFiles) {
+        errors.push(`Limite de ${maxFiles} arquivo(s) atingido`);
+        break;
+      }
+      if (maxSizeMB && file.size > maxSizeMB * 1024 * 1024) {
+        errors.push(`"${file.name}" excede o limite de ${maxSizeMB} MB`);
+        continue;
+      }
+      if (allowedTypes?.length && !fileMatchesAccept(file, allowedTypes)) {
+        errors.push(`"${file.name}" não é um tipo de arquivo permitido`);
+        continue;
+      }
+      valid.push(file);
+    }
+
+    this.uploadErrors.set(errors);
+    if (valid.length) this.filesSelected.emit(valid);
   }
 
   scaleRange(min: number, max: number): number[] {
