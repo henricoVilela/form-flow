@@ -134,7 +134,7 @@
 | ~~B7~~ | ~~**Rate limiting**~~ | ~~Limitar submissões por IP/formulário para evitar spam. Spring Boot Bucket4j ou filtro customizado.~~ | ✅ **Concluído** |
 | B8 | **Swagger/OpenAPI** | Adicionar springdoc-openapi para documentação automática da API. | Baixa |
 | B9 | **Testes** | Unit tests (services + validators) + integration tests (controllers + repositories). | Alta |
-| B10 | **Docker Compose completo** | Adicionar container da API ao docker-compose (atualmente só tem PostgreSQL + MinIO). | Baixa |
+| ~~B10~~ | ~~**Docker Compose completo**~~ | ~~Adicionar container da API ao docker-compose (atualmente só tem PostgreSQL + MinIO).~~ | ✅ **Concluído** |
 
 ---
 

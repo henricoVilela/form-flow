@@ -66,6 +66,58 @@ services:
     networks:
       - formflow-network
 
+  api:
+    build:
+      context: ./formflow-api
+      dockerfile: Dockerfile
+    container_name: formflow-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-formflow_db}
+      DB_USER: ${POSTGRES_USER:-formflow_user}
+      DB_PASS: ${POSTGRES_PASSWORD:-formflow_pass}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      JWT_SECRET: ${JWT_SECRET:-formflow-secret-key-change-in-production-min-256-bits}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-noreply@formflow.com}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4200}
+      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
+      TZ: America/Cuiaba
+    networks:
+      - formflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/v1/actuator/health 2>/dev/null || wget -qO- http://localhost:8080/api/v1/auth/me 2>/dev/null; exit 0"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: formflow-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-4200}:80"
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - formflow-network
+
 volumes:
   postgres_data:
     driver: local
