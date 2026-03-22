@@ -131,7 +131,7 @@
 |---|---------|-----------|-------------|
 | B5 | **Multi-tenancy** | Tabelas `tenants` + `tenant_members`, `tenant_id` em todas as tabelas, Hibernate Filter. | Alta |
 | B6 | **Webhooks** | POST para URL configurável quando resposta é submetida. Tabela `webhooks` + job assíncrono. | Média |
-| B7 | **Rate limiting** | Limitar submissões por IP/formulário para evitar spam. Spring Boot Bucket4j ou filtro customizado. | Média |
+| ~~B7~~ | ~~**Rate limiting**~~ | ~~Limitar submissões por IP/formulário para evitar spam. Spring Boot Bucket4j ou filtro customizado.~~ | ✅ **Concluído** |
 | B8 | **Swagger/OpenAPI** | Adicionar springdoc-openapi para documentação automática da API. | Baixa |
 | B9 | **Testes** | Unit tests (services + validators) + integration tests (controllers + repositories). | Alta |
 | B10 | **Docker Compose completo** | Adicionar container da API ao docker-compose (atualmente só tem PostgreSQL + MinIO). | Baixa |

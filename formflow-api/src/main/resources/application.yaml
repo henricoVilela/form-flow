@@ -102,3 +102,10 @@ cleanup:
   orphan-threshold-hours: ${CLEANUP_THRESHOLD:24}     # Arquivos PENDING há mais de 24h = órfão
   batch-size: ${CLEANUP_BATCH:100}                    # Máximo de arquivos por execução
   enabled: ${CLEANUP_ENABLED:true}
+
+rate-limit:
+  enabled: ${RATE_LIMIT_ENABLED:true}
+  submission-limit: ${RATE_LIMIT_SUBMISSION_LIMIT:10}         # máx. submissões por IP por formulário
+  submission-window-seconds: ${RATE_LIMIT_SUBMISSION_WINDOW:60} # janela em segundos
+  upload-presign-limit: ${RATE_LIMIT_PRESIGN_LIMIT:20}        # máx. presigns por IP
+  upload-presign-window-seconds: ${RATE_LIMIT_PRESIGN_WINDOW:60}
