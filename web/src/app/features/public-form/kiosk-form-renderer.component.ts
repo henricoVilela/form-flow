@@ -73,7 +73,7 @@ function buildEmojiSet(max: number): string[] {
 
           <!-- ── EMOJI RATING ── -->
           @if (isEmojiRating()) {
-            <div class="flex justify-center items-end gap-3 sm:gap-5 flex-wrap">
+            <div class="flex justify-center items-end gap-2 sm:gap-5 flex-wrap">
               @for (emoji of emojiSet(); let i = $index; track i) {
                 @let value = i + 1;
                 @let selected = primaryAnswer() === value;
@@ -85,7 +85,7 @@ function buildEmojiSet(max: number): string[] {
                   [attr.aria-label]="'Nota ' + value"
                 >
                   <span class="emoji-glyph">{{ emoji }}</span>
-                  <span class="emoji-label text-xs mt-1 text-slate-400">{{ value }}</span>
+                  <!-- <span class="emoji-label text-xs mt-1 text-slate-400">{{ value }}</span> -->
                 </button>
               }
             </div>
@@ -261,7 +261,7 @@ function buildEmojiSet(max: number): string[] {
       background: transparent;
       border: 2px solid transparent;
       border-radius: 1rem;
-      padding: 0.75rem 1rem;
+      padding: 0.5rem 0.6rem;
       cursor: pointer;
       transition: all 0.2s ease;
     }
