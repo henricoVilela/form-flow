@@ -222,8 +222,9 @@ public class ResponseService {
     /**
      * Exporta as respostas do formulário.
      * - Sem arquivos: retorna CSV direto.
-     * - Com arquivos: retorna ZIP contendo o CSV + arquivos organizados por resposta.
+     * - Com arquivos: retorna ZIP com arquivos organizados por versão → resposta → questão.
      */
+    @Transactional(readOnly = true)
     public ExportResult exportResponses(User user, UUID formId) {
         validateFormOwnership(user, formId);
 
@@ -232,18 +233,32 @@ public class ResponseService {
             return new ExportResult("Sem respostas".getBytes(StandardCharsets.UTF_8), false);
         }
 
-        FormVersion latestVersion = formVersionRepository.findLatestByFormId(formId).orElseThrow();
-        List<Question> questions = questionRepository.findByFormVersionIdOrderByOrderIndex(latestVersion.getId());
+        // Coleta versões únicas presentes nas respostas e carrega suas questões
+        Map<UUID, FormVersion> versionsById = responses.stream()
+                .map(Response::getFormVersion)
+                .collect(Collectors.toMap(FormVersion::getId, fv -> fv, (a, b) -> a));
+
+        Map<UUID, List<Question>> questionsByVersion = new java.util.HashMap<>();
+        for (UUID versionId : versionsById.keySet()) {
+            questionsByVersion.put(versionId,
+                    questionRepository.findByFormVersionIdOrderByOrderIndex(versionId));
+        }
+
+        // Mapa responseId → número da versão (para nomes de pasta)
+        Map<UUID, Integer> versionNumberByResponse = responses.stream()
+                .collect(Collectors.toMap(
+                        Response::getId,
+                        r -> r.getFormVersion().getVersion()
+                ));
 
         List<UploadedFile> allFiles = uploadedFileRepository.findByFormIdAndStatus(formId, UploadStatus.CONFIRMED);
-
-        // Mapa fileId → UploadedFile para exibir nomes originais no CSV
         Map<UUID, UploadedFile> fileById = allFiles.stream()
                 .collect(Collectors.toMap(UploadedFile::getId, f -> f));
 
-        // Agrupa arquivos por responseId preservando o label da questão (para subpastas no ZIP)
+        // Cada resposta usa as questões da sua própria versão
         Map<UUID, List<FileWithQuestion>> filesByResponse = new java.util.HashMap<>();
         for (Response r : responses) {
+            List<Question> questions = questionsByVersion.get(r.getFormVersion().getId());
             List<FileWithQuestion> responseFiles = new ArrayList<>();
             for (Question q : questions) {
                 if (!"file_upload".equals(q.getType())) continue;
@@ -261,26 +276,34 @@ public class ResponseService {
             }
         }
 
-        String csv = buildCsv(responses, questions, fileById);
+        // CSV usa as questões da versão mais recente
+        FormVersion latestVersion = formVersionRepository.findLatestByFormId(formId).orElseThrow();
+        List<Question> latestQuestions = questionsByVersion.getOrDefault(
+                latestVersion.getId(),
+                questionRepository.findByFormVersionIdOrderByOrderIndex(latestVersion.getId()));
+
+        String csv = buildCsv(responses, latestQuestions, fileById, versionNumberByResponse);
 
         if (filesByResponse.isEmpty()) {
             return new ExportResult(csv.getBytes(StandardCharsets.UTF_8), false);
         }
 
-        return new ExportResult(buildZip(csv, filesByResponse), true);
+        return new ExportResult(buildZip(csv, filesByResponse, versionNumberByResponse), true);
     }
 
     private record FileWithQuestion(String questionLabel, UploadedFile file) {}
 
-    private String buildCsv(List<Response> responses, List<Question> questions, Map<UUID, UploadedFile> fileById) {
+    private String buildCsv(List<Response> responses, List<Question> questions,
+                            Map<UUID, UploadedFile> fileById, Map<UUID, Integer> versionNumberByResponse) {
         StringBuilder csv = new StringBuilder();
 
-        csv.append("ID,Submetido em");
+        csv.append("ID,Versão,Submetido em");
         questions.forEach(q -> csv.append(",\"").append(q.getLabel().replace("\"", "\"\"")).append("\""));
         csv.append("\n");
 
         for (Response r : responses) {
-            csv.append(r.getId()).append(",").append(r.getSubmittedAt());
+            int version = versionNumberByResponse.getOrDefault(r.getId(), 0);
+            csv.append(r.getId()).append(",").append(version).append(",").append(r.getSubmittedAt());
             for (Question q : questions) {
                 JsonNode answer = r.getPayload().path(q.getId().toString());
                 String value = extractAnswerValue(answer, q.getType(), fileById);
@@ -292,7 +315,8 @@ public class ResponseService {
         return csv.toString();
     }
 
-    private byte[] buildZip(String csv, Map<UUID, List<FileWithQuestion>> filesByResponse) {
+    private byte[] buildZip(String csv, Map<UUID, List<FileWithQuestion>> filesByResponse,
+                            Map<UUID, Integer> versionNumberByResponse) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ZipOutputStream zip = new ZipOutputStream(baos)) {
 
@@ -302,8 +326,9 @@ public class ResponseService {
 
             for (Map.Entry<UUID, List<FileWithQuestion>> entry : filesByResponse.entrySet()) {
                 UUID responseId = entry.getKey();
+                int version = versionNumberByResponse.getOrDefault(responseId, 1);
+                String versionFolder = "versao_" + version;
 
-                // Agrupa por pasta de questão para controle de nomes únicos por questão
                 Map<String, List<FileWithQuestion>> byQuestion = entry.getValue().stream()
                         .collect(Collectors.groupingBy(fwq -> sanitizeFolderName(fwq.questionLabel())));
 
@@ -313,7 +338,7 @@ public class ResponseService {
 
                     for (FileWithQuestion fwq : qEntry.getValue()) {
                         String fileName = resolveUniqueName(usedNames, fwq.file().getOriginalName());
-                        String path = "arquivos/" + responseId + "/" + questionFolder + "/" + fileName;
+                        String path = "arquivos/" + versionFolder + "/" + responseId + "/" + questionFolder + "/" + fileName;
                         zip.putNextEntry(new ZipEntry(path));
                         try (InputStream is = storageService.downloadFile(fwq.file())) {
                             is.transferTo(zip);
