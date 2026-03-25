@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.cronos.formflow_api.api.dto.request.SubmitResponseRequest;
 import com.cronos.formflow_api.api.dto.response.ResponseDetailResponse;
+import com.cronos.formflow_api.api.dto.response.ResponseLookupResponse;
 import com.cronos.formflow_api.api.dto.response.ResponseSummaryResponse;
 import com.cronos.formflow_api.domain.form.Form;
 import com.cronos.formflow_api.domain.form.FormRepository;
@@ -157,6 +158,56 @@ public class ResponseService {
         Response response = responseRepository.findByIdAndFormId(responseId, formId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resposta não encontrada"));
         return ResponseDetailResponse.from(response);
+    }
+
+    /**
+     * Busca uma resposta pelo ID sem precisar informar o formId.
+     * Retorna o payload com os arquivos resolvidos (nome original, tipo, tamanho e questão de origem).
+     * Útil para correlacionar pastas de um export ZIP com os dados da resposta.
+     */
+    @Transactional(readOnly = true)
+    public ResponseLookupResponse lookupById(User user, UUID responseId) {
+        Response response = responseRepository.findById(responseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Resposta não encontrada"));
+
+        if (!response.getForm().getUser().getId().equals(user.getId())) {
+            throw new ResourceNotFoundException("Resposta não encontrada");
+        }
+
+        List<Question> questions = questionRepository.findByFormVersionIdOrderByOrderIndex(
+                response.getFormVersion().getId());
+
+        List<ResponseLookupResponse.FileEntry> files = new ArrayList<>();
+        for (Question q : questions) {
+            if (!"file_upload".equals(q.getType())) continue;
+            JsonNode answer = response.getPayload().path(q.getId().toString());
+            if (answer.isMissingNode()) continue;
+            answer.path("value").forEach(v -> {
+                try {
+                    UUID fileId = UUID.fromString(v.asString());
+                    uploadedFileRepository.findById(fileId).ifPresent(file ->
+                        files.add(new ResponseLookupResponse.FileEntry(
+                            file.getId(),
+                            q.getId().toString(),
+                            q.getLabel(),
+                            file.getOriginalName(),
+                            file.getMimeType(),
+                            file.getSizeBytes()
+                        ))
+                    );
+                } catch (IllegalArgumentException ignored) {}
+            });
+        }
+
+        return ResponseLookupResponse.builder()
+                .id(response.getId())
+                .formId(response.getForm().getId())
+                .formTitle(response.getForm().getTitle())
+                .formVersionId(response.getFormVersion().getId())
+                .submittedAt(response.getSubmittedAt())
+                .payload(response.getPayload())
+                .files(files)
+                .build();
     }
 
     /**
