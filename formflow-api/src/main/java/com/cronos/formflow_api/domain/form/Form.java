@@ -72,6 +72,16 @@ public class Form {
     @Column
     private String thankYouMessage;
 
+    @Column(name = "thank_you_redirect_url", length = 2048)
+    private String thankYouRedirectUrl;
+
+    @Column(name = "thank_you_redirect_delay")
+    private Integer thankYouRedirectDelay;
+
+    @Column(name = "thank_you_show_resubmit", nullable = false)
+    @Builder.Default
+    private Boolean thankYouShowResubmit = false;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

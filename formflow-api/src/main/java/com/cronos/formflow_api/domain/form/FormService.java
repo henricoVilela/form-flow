@@ -131,6 +131,11 @@ public class FormService {
                 ? request.getWelcomeMessage() : null);
         form.setThankYouMessage(request.getThankYouMessage() != null && !request.getThankYouMessage().isBlank()
                 ? request.getThankYouMessage() : null);
+        form.setThankYouRedirectUrl(request.getThankYouRedirectUrl() != null && !request.getThankYouRedirectUrl().isBlank()
+                ? request.getThankYouRedirectUrl() : null);
+        form.setThankYouRedirectDelay(request.getThankYouRedirectDelay() != null && request.getThankYouRedirectDelay() > 0
+                ? request.getThankYouRedirectDelay() : null);
+        form.setThankYouShowResubmit(request.getThankYouShowResubmit() != null && request.getThankYouShowResubmit());
 
         if (request.getPassword() != null) {
             form.setPasswordHash(request.getPassword().isBlank()

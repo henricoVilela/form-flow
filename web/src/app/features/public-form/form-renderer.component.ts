@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed, input } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal, computed, input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -226,7 +226,12 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
           } @else {
             <p class="text-sm text-surface-500 mb-6">Obrigado por preencher o formulário.</p>
           }
-          @if (!respondentToken) {
+          @if (redirectCountdown() !== null) {
+            <p class="text-xs text-surface-400 mb-4">
+              Redirecionando em {{ redirectCountdown() }} segundo{{ redirectCountdown() !== 1 ? 's' : '' }}…
+            </p>
+          }
+          @if (!respondentToken && formData()?.thankYouShowResubmit) {
             <button pButton label="Enviar outra resposta" icon="pi pi-refresh" severity="secondary" [outlined]="true" (click)="resetForm()"></button>
           }
         </div>
@@ -248,7 +253,7 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
   `,
   styles: [],
 })
-export class FormRendererComponent implements OnInit {
+export class FormRendererComponent implements OnInit, OnDestroy {
   private readonly formApi = inject(FormApiService);
   private readonly uploadApi = inject(UploadApiService);
   private readonly toast = inject(MessageService);
@@ -273,6 +278,8 @@ export class FormRendererComponent implements OnInit {
 
   readonly isSinglePage = computed(() => this.formData()?.layout === 'SINGLE_PAGE');
   readonly isKiosk = computed(() => this.formData()?.layout === 'KIOSK');
+  readonly redirectCountdown = signal<number | null>(null);
+  private redirectTimer: ReturnType<typeof setInterval> | null = null;
 
   readonly themeVars = computed(() => {
     const color = (this.formData()?.schema?.settings?.theme?.primaryColor as string | undefined)
@@ -308,6 +315,10 @@ export class FormRendererComponent implements OnInit {
     this.respondentToken = this.route.snapshot.queryParamMap.get('t');
     this.loadMeta();
     this.loadForm();
+  }
+
+  ngOnDestroy(): void {
+    this.clearRedirectTimer();
   }
 
   private loadMeta(): void {
@@ -368,8 +379,37 @@ export class FormRendererComponent implements OnInit {
   startForm(): void { this.state.set('form'); }
 
   resetForm(): void {
+    this.clearRedirectTimer();
     this.answers.set({}); this.errors.set({}); this.currentStep.set(0); this.fileNames.set({});
     this.state.set('form');
+  }
+
+  private clearRedirectTimer(): void {
+    if (this.redirectTimer !== null) {
+      clearInterval(this.redirectTimer);
+      this.redirectTimer = null;
+    }
+    this.redirectCountdown.set(null);
+  }
+
+  private startRedirect(): void {
+    const url = this.formData()?.thankYouRedirectUrl;
+    if (!url) return;
+    const delay = this.formData()?.thankYouRedirectDelay ?? 0;
+    if (delay <= 0) {
+      window.location.href = url;
+      return;
+    }
+    this.redirectCountdown.set(delay);
+    this.redirectTimer = setInterval(() => {
+      const current = this.redirectCountdown();
+      if (current === null || current <= 1) {
+        this.clearRedirectTimer();
+        window.location.href = url;
+      } else {
+        this.redirectCountdown.set(current - 1);
+      }
+    }, 1000);
   }
 
   // ── Answers ──
@@ -542,7 +582,7 @@ export class FormRendererComponent implements OnInit {
         userAgent: navigator.userAgent,
       },
     }, this.respondentToken ?? undefined).subscribe({
-      next: () => this.state.set('success'),
+      next: () => { this.state.set('success'); this.startRedirect(); },
       error: (err) => {
         const code = err.error?.error;
         if (code === 'FORM_RESPONSE_LIMIT_REACHED') {

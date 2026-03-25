@@ -206,6 +206,61 @@ import { FormApiService, FormResponse, FormVisibility, RespondentResponse } from
                 placeholder="Obrigado pela sua resposta! Entraremos em contato em breve."
               ></textarea>
             </div>
+
+            <!-- Botão "Enviar outra resposta" -->
+            <div class="flex items-center justify-between py-1">
+              <div>
+                <p class="text-sm font-medium text-surface-800 dark:text-surface-100">Permitir nova resposta</p>
+                <p class="text-xs text-surface-400 dark:text-surface-500 mt-0.5">Exibe o botão "Enviar outra resposta" após o envio</p>
+              </div>
+              <p-toggleswitch [(ngModel)]="thankYouShowResubmit" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Redirecionamento ── -->
+        <div class="ff-card">
+          <h2 class="text-base font-semibold text-surface-900 dark:text-surface-50 mb-4 flex items-center gap-2">
+            <i class="pi pi-external-link text-primary-500 text-sm"></i>
+            Redirecionamento após envio
+          </h2>
+
+          <div class="space-y-4">
+            <div>
+              <label class="ff-input-label">
+                URL de redirecionamento
+                <span class="text-surface-400 dark:text-surface-500 font-normal ml-1">(opcional)</span>
+              </label>
+              <input
+                pInputText
+                class="w-full"
+                [(ngModel)]="thankYouRedirectUrl"
+                placeholder="https://exemplo.com/obrigado"
+              />
+              <p class="text-xs text-surface-400 dark:text-surface-500 mt-1">
+                Após o envio, o respondente será redirecionado para esta URL.
+              </p>
+            </div>
+
+            @if (thankYouRedirectUrl) {
+              <div>
+                <label class="ff-input-label">
+                  Aguardar antes de redirecionar
+                  <span class="text-surface-400 dark:text-surface-500 font-normal ml-1">(segundos)</span>
+                </label>
+                <p-inputNumber
+                  [(ngModel)]="thankYouRedirectDelay"
+                  [min]="0"
+                  [max]="60"
+                  [showButtons]="true"
+                  styleClass="w-full"
+                  placeholder="0"
+                />
+                <p class="text-xs text-surface-400 dark:text-surface-500 mt-1">
+                  0 = redirecionar imediatamente. A mensagem de agradecimento será exibida durante a contagem.
+                </p>
+              </div>
+            }
           </div>
         </div>
 
@@ -334,6 +389,9 @@ export class FormSettingsComponent implements OnInit {
   expiresAt: Date | null = null;
   welcomeMessage = '';
   thankYouMessage = '';
+  thankYouRedirectUrl = '';
+  thankYouRedirectDelay: number | null = null;
+  thankYouShowResubmit = false;
 
   readonly visibilityOptions = [
     { label: 'Público — qualquer pessoa com o link pode acessar', value: 'PUBLIC' },
@@ -359,6 +417,9 @@ export class FormSettingsComponent implements OnInit {
         this.expiresAt = form.expiresAt ? new Date(form.expiresAt) : null;
         this.welcomeMessage = form.welcomeMessage ?? '';
         this.thankYouMessage = form.thankYouMessage ?? '';
+        this.thankYouRedirectUrl = form.thankYouRedirectUrl ?? '';
+        this.thankYouRedirectDelay = form.thankYouRedirectDelay ?? null;
+        this.thankYouShowResubmit = form.thankYouShowResubmit ?? false;
         this.loading.set(false);
         this.loadRespondents();
       },
@@ -461,6 +522,9 @@ export class FormSettingsComponent implements OnInit {
       expiresAt: this.expiresAt ? this.expiresAt.toISOString().replace('Z', '') : undefined,
       welcomeMessage: this.welcomeMessage || undefined,
       thankYouMessage: this.thankYouMessage || undefined,
+      thankYouRedirectUrl: this.thankYouRedirectUrl || undefined,
+      thankYouRedirectDelay: this.thankYouRedirectDelay && this.thankYouRedirectDelay > 0 ? this.thankYouRedirectDelay : undefined,
+      thankYouShowResubmit: this.thankYouShowResubmit,
     }).subscribe({
       next: (form) => {
         this.form.set(form);

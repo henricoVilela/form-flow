@@ -22,6 +22,9 @@ export interface FormResponse {
   updatedAt: string;
   welcomeMessage: string | null;
   thankYouMessage: string | null;
+  thankYouRedirectUrl: string | null;
+  thankYouRedirectDelay: number | null;
+  thankYouShowResubmit: boolean | null;
   visibility: FormVisibility | null;
   slug: string | null;
   maxResponses: number | null;
@@ -37,6 +40,9 @@ export interface FormSettingsRequest {
   expiresAt?: string;
   welcomeMessage?: string;
   thankYouMessage?: string;
+  thankYouRedirectUrl?: string;
+  thankYouRedirectDelay?: number;
+  thankYouShowResubmit?: boolean;
 }
 
 export interface PageResponse<T> {
@@ -75,6 +81,9 @@ export interface PublicFormResponse {
   schema: any;
   welcomeMessage: string | null;
   thankYouMessage: string | null;
+  thankYouRedirectUrl: string | null;
+  thankYouRedirectDelay: number | null;
+  thankYouShowResubmit: boolean | null;
 }
 
 export interface SubmitResponseRequest {

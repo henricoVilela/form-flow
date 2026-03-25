@@ -28,6 +28,9 @@ public class FormResponse {
     private JsonNode draftSchema;
     private String welcomeMessage;
     private String thankYouMessage;
+    private String thankYouRedirectUrl;
+    private Integer thankYouRedirectDelay;
+    private Boolean thankYouShowResubmit;
     private FormVisibility visibility;
     private String slug;
     private Integer maxResponses;
@@ -52,6 +55,9 @@ public class FormResponse {
                 .updatedAt(form.getUpdatedAt())
                 .welcomeMessage(form.getWelcomeMessage())
                 .thankYouMessage(form.getThankYouMessage())
+                .thankYouRedirectUrl(form.getThankYouRedirectUrl())
+                .thankYouRedirectDelay(form.getThankYouRedirectDelay())
+                .thankYouShowResubmit(form.getThankYouShowResubmit())
                 .visibility(form.getVisibility())
                 .slug(form.getSlug())
                 .maxResponses(form.getMaxResponses())

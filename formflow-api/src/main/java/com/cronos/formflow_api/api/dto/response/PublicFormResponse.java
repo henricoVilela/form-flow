@@ -27,6 +27,9 @@ public class PublicFormResponse {
     private JsonNode schema;
     private String welcomeMessage;
     private String thankYouMessage;
+    private String thankYouRedirectUrl;
+    private Integer thankYouRedirectDelay;
+    private Boolean thankYouShowResubmit;
 
     public static PublicFormResponse from(Form form, FormVersion formVersion) {
         return PublicFormResponse.builder()
@@ -39,6 +42,9 @@ public class PublicFormResponse {
             .schema(formVersion.getSchema())
             .welcomeMessage(form.getWelcomeMessage())
             .thankYouMessage(form.getThankYouMessage())
+            .thankYouRedirectUrl(form.getThankYouRedirectUrl())
+            .thankYouRedirectDelay(form.getThankYouRedirectDelay())
+            .thankYouShowResubmit(form.getThankYouShowResubmit())
             .build();
     }
 }

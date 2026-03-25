@@ -19,4 +19,7 @@ public class UpdateFormSettingsRequest {
     private LocalDateTime expiresAt;
     private String welcomeMessage;
     private String thankYouMessage;
+    private String thankYouRedirectUrl;
+    private Integer thankYouRedirectDelay;
+    private Boolean thankYouShowResubmit;
 }

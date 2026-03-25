@@ -206,7 +206,7 @@ GET    /public/forms/{formId}  → PublicFormResponse
 
 ## Custom Forms
   Fase 1 — Quick wins
-  1. Cor primária
+  ~~1~~. Cor primária
   2. Página de agradecimento customizada
   3. Tamanho base do texto
   4. Background da página
