@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.cronos.formflow_api.api.dto.request.SubmitResponseRequest;
 import com.cronos.formflow_api.api.dto.response.ResponseDetailResponse;
 import com.cronos.formflow_api.api.dto.response.ResponseSummaryResponse;
+import com.cronos.formflow_api.domain.response.ExportResult;
 import com.cronos.formflow_api.domain.response.ResponseService;
 import com.cronos.formflow_api.domain.user.User;
 import com.google.common.net.HttpHeaders;
@@ -60,13 +61,19 @@ public class ResponseController {
     }
 
     @GetMapping("/export/csv")
-    public ResponseEntity<byte[]> exportCsv(
+    public ResponseEntity<byte[]> exportResponses(
             @AuthenticationPrincipal User user,
             @PathVariable UUID formId) {
-        byte[] csv = responseService.exportCsv(user, formId);
+        ExportResult result = responseService.exportResponses(user, formId);
+        if (result.isZip()) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType("application/zip"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"respostas.zip\"")
+                    .body(result.data());
+        }
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("text/csv"))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"responses.csv\"")
-                .body(csv);
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"respostas.csv\"")
+                .body(result.data());
     }
 }

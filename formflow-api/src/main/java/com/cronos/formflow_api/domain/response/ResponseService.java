@@ -1,13 +1,20 @@
 package com.cronos.formflow_api.domain.response;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +38,7 @@ import com.cronos.formflow_api.domain.notfication.EmailNotification;
 import com.cronos.formflow_api.domain.notfication.EmailNotificationRepository;
 import com.cronos.formflow_api.domain.response.validation.PayloadValidator;
 import com.cronos.formflow_api.domain.user.User;
+import com.cronos.formflow_api.infrastructure.storage.StorageService;
 import com.cronos.formflow_api.shared.exception.BusinessException;
 import com.cronos.formflow_api.shared.exception.ResourceNotFoundException;
 
@@ -53,6 +61,7 @@ public class ResponseService {
     private final ConditionEvaluator conditionEvaluator;
     private final PayloadValidator payloadValidator;
     private final FormRespondentService respondentService;
+    private final StorageService storageService;
 
     /**
      * Submete uma resposta ao formulário.
@@ -150,15 +159,63 @@ public class ResponseService {
         return ResponseDetailResponse.from(response);
     }
 
-    public byte[] exportCsv(User user, UUID formId) {
+    /**
+     * Exporta as respostas do formulário.
+     * - Sem arquivos: retorna CSV direto.
+     * - Com arquivos: retorna ZIP contendo o CSV + arquivos organizados por resposta.
+     */
+    public ExportResult exportResponses(User user, UUID formId) {
         validateFormOwnership(user, formId);
 
         List<Response> responses = responseRepository.findAllByFormIdForExport(formId);
-        if (responses.isEmpty()) return "Sem respostas".getBytes();
+        if (responses.isEmpty()) {
+            return new ExportResult("Sem respostas".getBytes(StandardCharsets.UTF_8), false);
+        }
 
         FormVersion latestVersion = formVersionRepository.findLatestByFormId(formId).orElseThrow();
         List<Question> questions = questionRepository.findByFormVersionIdOrderByOrderIndex(latestVersion.getId());
 
+        List<UploadedFile> allFiles = uploadedFileRepository.findByFormIdAndStatus(formId, UploadStatus.CONFIRMED);
+
+        // Mapa fileId → UploadedFile para exibir nomes originais no CSV
+        Map<UUID, UploadedFile> fileById = allFiles.stream()
+                .collect(Collectors.toMap(UploadedFile::getId, f -> f));
+
+        // IDs das questões de arquivo para varrer os payloads
+        Set<String> fileQuestionIds = questions.stream()
+                .filter(q -> "file_upload".equals(q.getType()))
+                .map(q -> q.getId().toString())
+                .collect(Collectors.toSet());
+
+        // Agrupa arquivos por responseId usando o payload (response_id pode estar nulo no uploaded_files)
+        Map<UUID, List<UploadedFile>> filesByResponse = new java.util.HashMap<>();
+        for (Response r : responses) {
+            List<UploadedFile> responseFiles = new ArrayList<>();
+            for (String questionId : fileQuestionIds) {
+                JsonNode answer = r.getPayload().path(questionId);
+                if (answer.isMissingNode()) continue;
+                answer.path("value").forEach(v -> {
+                    try {
+                        UploadedFile file = fileById.get(UUID.fromString(v.asString()));
+                        if (file != null) responseFiles.add(file);
+                    } catch (IllegalArgumentException ignored) {}
+                });
+            }
+            if (!responseFiles.isEmpty()) {
+                filesByResponse.put(r.getId(), responseFiles);
+            }
+        }
+
+        String csv = buildCsv(responses, questions, fileById);
+
+        if (filesByResponse.isEmpty()) {
+            return new ExportResult(csv.getBytes(StandardCharsets.UTF_8), false);
+        }
+
+        return new ExportResult(buildZip(csv, filesByResponse), true);
+    }
+
+    private String buildCsv(List<Response> responses, List<Question> questions, Map<UUID, UploadedFile> fileById) {
         StringBuilder csv = new StringBuilder();
 
         csv.append("ID,Submetido em");
@@ -169,13 +226,61 @@ public class ResponseService {
             csv.append(r.getId()).append(",").append(r.getSubmittedAt());
             for (Question q : questions) {
                 JsonNode answer = r.getPayload().path(q.getId().toString());
-                String value = extractAnswerValue(answer);
+                String value = extractAnswerValue(answer, q.getType(), fileById);
                 csv.append(",\"").append(value.replace("\"", "\"\"")).append("\"");
             }
             csv.append("\n");
         }
 
-        return csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return csv.toString();
+    }
+
+    private byte[] buildZip(String csv, Map<UUID, List<UploadedFile>> filesByResponse) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ZipOutputStream zip = new ZipOutputStream(baos)) {
+
+            zip.putNextEntry(new ZipEntry("respostas.csv"));
+            zip.write(csv.getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+
+            for (Map.Entry<UUID, List<UploadedFile>> entry : filesByResponse.entrySet()) {
+                UUID responseId = entry.getKey();
+                List<UploadedFile> files = entry.getValue();
+                Set<String> usedNames = new HashSet<>();
+
+                for (UploadedFile file : files) {
+                    String fileName = resolveUniqueName(usedNames, file.getOriginalName());
+                    zip.putNextEntry(new ZipEntry("arquivos/" + responseId + "/" + fileName));
+                    try (InputStream is = storageService.downloadFile(file)) {
+                        is.transferTo(zip);
+                    } catch (Exception e) {
+                        log.warn("Falha ao incluir arquivo {} no ZIP: {}", file.getId(), e.getMessage());
+                    }
+                    zip.closeEntry();
+                }
+            }
+
+            zip.finish();
+            return baos.toByteArray();
+        } catch (IOException e) {
+            throw new BusinessException("EXPORT_ERROR", "Erro ao gerar arquivo de exportação");
+        }
+    }
+
+    private String resolveUniqueName(Set<String> usedNames, String originalName) {
+        if (usedNames.add(originalName)) return originalName;
+
+        int dotIndex = originalName.lastIndexOf('.');
+        String base = dotIndex > 0 ? originalName.substring(0, dotIndex) : originalName;
+        String ext  = dotIndex > 0 ? originalName.substring(dotIndex) : "";
+
+        int counter = 2;
+        String candidate;
+        do {
+            candidate = base + " (" + counter++ + ")" + ext;
+        } while (!usedNames.add(candidate));
+
+        return candidate;
     }
 
     private void saveAnswers(
@@ -281,9 +386,23 @@ public class ResponseService {
             .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
     }
 
-    private String extractAnswerValue(JsonNode answer) {
+    private String extractAnswerValue(JsonNode answer, String questionType, Map<UUID, UploadedFile> fileById) {
         if (answer == null || answer.isMissingNode()) return "";
         JsonNode value = answer.path("value");
+
+        if ("file_upload".equals(questionType) && value.isArray()) {
+            List<String> names = new ArrayList<>();
+            value.forEach(v -> {
+                try {
+                    UploadedFile file = fileById.get(UUID.fromString(v.asString()));
+                    names.add(file != null ? file.getOriginalName() : v.asString());
+                } catch (IllegalArgumentException e) {
+                    names.add(v.asString());
+                }
+            });
+            return String.join(", ", names);
+        }
+
         if (value.isArray()) {
             List<String> parts = new ArrayList<>();
             value.forEach(v -> parts.add(v.asString()));

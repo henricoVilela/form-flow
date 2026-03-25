@@ -53,7 +53,7 @@ import {
         ></button>
         <button
           pButton
-          label="Exportar CSV"
+          label="Exportar"
           icon="pi pi-download"
           severity="secondary"
           [loading]="exporting()"
@@ -443,19 +443,20 @@ export class FormResponsesComponent implements OnInit {
     const formTitle = this.form()?.title?.replace(/[^a-z0-9]/gi, '_').toLowerCase() ?? 'respostas';
     this.formApi.exportResponsesCsv(this.formId()).subscribe({
       next: (blob) => {
+        const ext = blob.type.includes('zip') ? 'zip' : 'csv';
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${formTitle}_respostas.csv`;
+        a.download = `${formTitle}_respostas.${ext}`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         this.exporting.set(false);
-        this.toast.add({ severity: 'success', summary: 'Exportado!', detail: 'CSV baixado com sucesso' });
+        this.toast.add({ severity: 'success', summary: 'Exportado!', detail: ext === 'zip' ? 'ZIP com arquivos baixado com sucesso' : 'CSV baixado com sucesso' });
       },
       error: () => {
-        this.toast.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao exportar CSV' });
+        this.toast.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao exportar respostas' });
         this.exporting.set(false);
       },
     });

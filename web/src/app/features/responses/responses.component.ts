@@ -86,20 +86,20 @@ import { FormApiService, FormResponse } from '@core/api/form-api.service';
                 [value]="statusLabel(form.status)"
                 [severity]="statusSeverity(form.status)"
               />
-              <span class="text-xs text-surface-500 dark:text-surface-400 min-w-[60px] text-right">
-                <i class="pi pi-inbox mr-1 text-[10px]"></i>
-                {{ form.responseCount }} {{ form.responseCount === 1 ? 'resposta' : 'respostas' }}
-              </span>
-              <button
-                pButton
-                label="Abrir"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                severity="secondary"
-                [outlined]="true"
-                size="small"
-                (click)="goToResponses(form.id)"
-              ></button>
+              @if (form.responseCount > 0) {
+                <span
+                  class="text-xs text-primary-600 dark:text-primary-300 min-w-[60px] text-right cursor-pointer hover:underline"
+                  (click)="goToResponses(form.id)"
+                >
+                  <i class="pi pi-inbox mr-1 text-[10px]"></i>
+                  {{ form.responseCount }} {{ form.responseCount === 1 ? 'resposta' : 'respostas' }}
+                </span>
+              } @else {
+                <span class="text-xs text-surface-400 dark:text-surface-500 min-w-[60px] text-right">
+                  <i class="pi pi-inbox mr-1 text-[10px]"></i>
+                  Sem respostas
+                </span>
+              }
             </div>
           </div>
         }

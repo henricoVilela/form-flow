@@ -19,6 +19,8 @@ public interface UploadedFileRepository extends JpaRepository<UploadedFile, UUID
 
     List<UploadedFile> findByResponseId(UUID responseId);
 
+    List<UploadedFile> findByFormIdAndStatus(UUID formId, UploadStatus status);
+
     /**
      * Conta arquivos de um formulário que estão nos status indicados.
      * Usado pelo UploadValidator para verificar limite de arquivos.

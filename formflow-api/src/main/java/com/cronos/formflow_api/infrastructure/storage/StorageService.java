@@ -16,9 +16,12 @@ import com.cronos.formflow_api.domain.response.UploadedFileRepository;
 import com.cronos.formflow_api.shared.exception.BusinessException;
 import com.cronos.formflow_api.shared.exception.ResourceNotFoundException;
 
+import io.minio.GetObjectArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.http.Method;
+
+import java.io.InputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -158,6 +161,23 @@ public class StorageService {
                 .sizeBytes(file.getSizeBytes())
                 .status(file.getStatus().name())
                 .build();
+    }
+
+    /**
+     * Retorna um InputStream para download direto do arquivo (usado no export ZIP).
+     */
+    public InputStream downloadFile(UploadedFile file) {
+        try {
+            return minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(minioProperties.getBucketUploads())
+                            .object(file.getStorageKey())
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("Erro ao baixar arquivo: fileId={}", file.getId(), e);
+            throw new BusinessException("STORAGE_ERROR", "Erro ao ler arquivo: " + file.getId());
+        }
     }
 
     /**
