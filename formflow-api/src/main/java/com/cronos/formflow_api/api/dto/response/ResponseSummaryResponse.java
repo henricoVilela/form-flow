@@ -14,6 +14,7 @@ import tools.jackson.databind.JsonNode;
 public class ResponseSummaryResponse {
     private UUID id;
     private UUID formVersionId;
+    private Integer formVersion;
     private LocalDateTime submittedAt;
     private JsonNode metadata;
 
@@ -21,6 +22,7 @@ public class ResponseSummaryResponse {
         return ResponseSummaryResponse.builder()
                 .id(r.getId())
                 .formVersionId(r.getFormVersion().getId())
+                .formVersion(r.getFormVersion().getVersion())
                 .submittedAt(r.getSubmittedAt())
                 .metadata(r.getMetadata())
                 .build();

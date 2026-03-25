@@ -1,5 +1,6 @@
 package com.cronos.formflow_api.api.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -50,6 +51,13 @@ public class ResponseController {
             @PathVariable UUID formId,
             @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(responseService.list(user, formId, pageable));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<ResponseSummaryResponse>> listAll(
+            @AuthenticationPrincipal User user,
+            @PathVariable UUID formId) {
+        return ResponseEntity.ok(responseService.listAll(user, formId));
     }
 
     @GetMapping("/{responseId}")

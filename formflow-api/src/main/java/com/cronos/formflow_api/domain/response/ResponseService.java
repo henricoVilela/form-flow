@@ -153,6 +153,15 @@ public class ResponseService {
                 .map(ResponseSummaryResponse::from);
     }
 
+    /** Retorna todas as respostas sem paginação — útil para consumo externo via API. */
+    public List<ResponseSummaryResponse> listAll(User user, UUID formId) {
+        validateFormOwnership(user, formId);
+        return responseRepository.findAllByFormIdForExport(formId)
+                .stream()
+                .map(ResponseSummaryResponse::from)
+                .toList();
+    }
+
     public ResponseDetailResponse getById(User user, UUID formId, UUID responseId) {
         validateFormOwnership(user, formId);
         Response response = responseRepository.findByIdAndFormId(responseId, formId)
@@ -232,23 +241,18 @@ public class ResponseService {
         Map<UUID, UploadedFile> fileById = allFiles.stream()
                 .collect(Collectors.toMap(UploadedFile::getId, f -> f));
 
-        // IDs das questões de arquivo para varrer os payloads
-        Set<String> fileQuestionIds = questions.stream()
-                .filter(q -> "file_upload".equals(q.getType()))
-                .map(q -> q.getId().toString())
-                .collect(Collectors.toSet());
-
-        // Agrupa arquivos por responseId usando o payload (response_id pode estar nulo no uploaded_files)
-        Map<UUID, List<UploadedFile>> filesByResponse = new java.util.HashMap<>();
+        // Agrupa arquivos por responseId preservando o label da questão (para subpastas no ZIP)
+        Map<UUID, List<FileWithQuestion>> filesByResponse = new java.util.HashMap<>();
         for (Response r : responses) {
-            List<UploadedFile> responseFiles = new ArrayList<>();
-            for (String questionId : fileQuestionIds) {
-                JsonNode answer = r.getPayload().path(questionId);
+            List<FileWithQuestion> responseFiles = new ArrayList<>();
+            for (Question q : questions) {
+                if (!"file_upload".equals(q.getType())) continue;
+                JsonNode answer = r.getPayload().path(q.getId().toString());
                 if (answer.isMissingNode()) continue;
                 answer.path("value").forEach(v -> {
                     try {
                         UploadedFile file = fileById.get(UUID.fromString(v.asString()));
-                        if (file != null) responseFiles.add(file);
+                        if (file != null) responseFiles.add(new FileWithQuestion(q.getLabel(), file));
                     } catch (IllegalArgumentException ignored) {}
                 });
             }
@@ -265,6 +269,8 @@ public class ResponseService {
 
         return new ExportResult(buildZip(csv, filesByResponse), true);
     }
+
+    private record FileWithQuestion(String questionLabel, UploadedFile file) {}
 
     private String buildCsv(List<Response> responses, List<Question> questions, Map<UUID, UploadedFile> fileById) {
         StringBuilder csv = new StringBuilder();
@@ -286,7 +292,7 @@ public class ResponseService {
         return csv.toString();
     }
 
-    private byte[] buildZip(String csv, Map<UUID, List<UploadedFile>> filesByResponse) {
+    private byte[] buildZip(String csv, Map<UUID, List<FileWithQuestion>> filesByResponse) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ZipOutputStream zip = new ZipOutputStream(baos)) {
 
@@ -294,20 +300,28 @@ public class ResponseService {
             zip.write(csv.getBytes(StandardCharsets.UTF_8));
             zip.closeEntry();
 
-            for (Map.Entry<UUID, List<UploadedFile>> entry : filesByResponse.entrySet()) {
+            for (Map.Entry<UUID, List<FileWithQuestion>> entry : filesByResponse.entrySet()) {
                 UUID responseId = entry.getKey();
-                List<UploadedFile> files = entry.getValue();
-                Set<String> usedNames = new HashSet<>();
 
-                for (UploadedFile file : files) {
-                    String fileName = resolveUniqueName(usedNames, file.getOriginalName());
-                    zip.putNextEntry(new ZipEntry("arquivos/" + responseId + "/" + fileName));
-                    try (InputStream is = storageService.downloadFile(file)) {
-                        is.transferTo(zip);
-                    } catch (Exception e) {
-                        log.warn("Falha ao incluir arquivo {} no ZIP: {}", file.getId(), e.getMessage());
+                // Agrupa por pasta de questão para controle de nomes únicos por questão
+                Map<String, List<FileWithQuestion>> byQuestion = entry.getValue().stream()
+                        .collect(Collectors.groupingBy(fwq -> sanitizeFolderName(fwq.questionLabel())));
+
+                for (Map.Entry<String, List<FileWithQuestion>> qEntry : byQuestion.entrySet()) {
+                    String questionFolder = qEntry.getKey();
+                    Set<String> usedNames = new HashSet<>();
+
+                    for (FileWithQuestion fwq : qEntry.getValue()) {
+                        String fileName = resolveUniqueName(usedNames, fwq.file().getOriginalName());
+                        String path = "arquivos/" + responseId + "/" + questionFolder + "/" + fileName;
+                        zip.putNextEntry(new ZipEntry(path));
+                        try (InputStream is = storageService.downloadFile(fwq.file())) {
+                            is.transferTo(zip);
+                        } catch (Exception e) {
+                            log.warn("Falha ao incluir arquivo {} no ZIP: {}", fwq.file().getId(), e.getMessage());
+                        }
+                        zip.closeEntry();
                     }
-                    zip.closeEntry();
                 }
             }
 
@@ -316,6 +330,11 @@ public class ResponseService {
         } catch (IOException e) {
             throw new BusinessException("EXPORT_ERROR", "Erro ao gerar arquivo de exportação");
         }
+    }
+
+    private String sanitizeFolderName(String name) {
+        if (name == null || name.isBlank()) return "Sem_titulo";
+        return name.replaceAll("[/\\\\:*?\"<>|]", "_").trim();
     }
 
     private String resolveUniqueName(Set<String> usedNames, String originalName) {
