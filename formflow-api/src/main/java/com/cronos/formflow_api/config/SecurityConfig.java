@@ -54,7 +54,7 @@ class SecurityConfig {
                 .requestMatchers("/upload/**").permitAll()
 
                 // ── Documentação API ──
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll()
 
                 // ── Tudo o mais requer autenticação ──
                 .anyRequest().authenticated()

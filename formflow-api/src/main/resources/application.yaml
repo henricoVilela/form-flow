@@ -48,6 +48,12 @@ server:
   servlet:
     context-path: /api/v1
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
 security:
   jwt:
     secret: ${JWT_SECRET:formflow-secret-key-change-in-production-min-256-bits}
