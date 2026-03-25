@@ -17,6 +17,7 @@ import com.cronos.formflow_api.api.dto.request.CreateFormRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateFormRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateFormSettingsRequest;
 import com.cronos.formflow_api.api.dto.response.DashboardStatsResponse;
+import com.cronos.formflow_api.api.dto.response.FormMetaResponse;
 import com.cronos.formflow_api.api.dto.response.FormResponse;
 import com.cronos.formflow_api.api.dto.response.FormVersionResponse;
 import com.cronos.formflow_api.api.dto.response.PublicFormResponse;
@@ -197,6 +198,33 @@ public class FormService {
         Form form = formRepository.findBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
         return buildPublicFormResponse(form, password, respondentToken);
+    }
+
+    public FormMetaResponse getFormMeta(UUID formId) {
+        Form form = formRepository.findById(formId)
+                .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
+        return buildFormMetaResponse(form);
+    }
+
+    public FormMetaResponse getFormMetaBySlug(String slug) {
+        Form form = formRepository.findBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
+        return buildFormMetaResponse(form);
+    }
+
+    private FormMetaResponse buildFormMetaResponse(Form form) {
+        if (form.getStatus() != FormStatus.PUBLISHED) {
+            throw new ResourceNotFoundException("Formulário não está disponível");
+        }
+        FormVersion latestVersion = formVersionRepository.findLatestByFormId(form.getId()).orElse(null);
+        String primaryColor = null;
+        if (latestVersion != null && latestVersion.getSchema() != null) {
+            JsonNode colorNode = latestVersion.getSchema().path("settings").path("theme").path("primaryColor");
+            if (!colorNode.isMissingNode() && !colorNode.isNull()) {
+                primaryColor = colorNode.asText();
+            }
+        }
+        return new FormMetaResponse(primaryColor);
     }
 
     public PublicFormResponse getPublicForm(UUID formId, String password, String respondentToken) {

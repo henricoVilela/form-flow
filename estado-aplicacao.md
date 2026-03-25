@@ -203,3 +203,19 @@ GET    /public/forms/{formId}  → PublicFormResponse
 | Services Angular | 3 + AuthStore |
 | Tipos de questão suportados | 14 |
 | Linhas de código total | ~10.000 |
+
+## Custom Forms
+  Fase 1 — Quick wins
+  1. Cor primária
+  2. Página de agradecimento customizada
+  3. Tamanho base do texto
+  4. Background da página
+
+  Fase 2 — Identidade visual
+  5. Banner/Header
+  6. Logo
+  7. Cover Page (boas-vindas)
+
+  Fase 3 — Polish
+  8. Barra de progresso
+  9. Estilo dos campos

@@ -44,7 +44,9 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
   template: `
     <p-toast position="top-center" />
 
-    <div [class]="isKiosk() && state() === 'form' ? '' : 'min-h-screen flex flex-col items-center px-4 pt-10 pb-[60px] bg-gradient-to-b from-surface-100 to-surface-200 max-[480px]:px-2 max-[480px]:pt-4 max-[480px]:pb-10'">
+    <div [class]="isKiosk() && state() === 'form' ? '' : 'min-h-screen flex flex-col items-center px-4 pt-10 pb-[60px] bg-gradient-to-b from-surface-100 to-surface-200 max-[480px]:px-2 max-[480px]:pt-4 max-[480px]:pb-10'"
+         [attr.style]="themeVars()"
+    >
 
       <!-- ── LOADING ── -->
       @if (state() === 'loading') {
@@ -266,10 +268,28 @@ export class FormRendererComponent implements OnInit {
   passwordInput = '';
   readonly passwordError = signal<string | null>(null);
   readonly passwordChecking = signal(false);
+  readonly pendingPrimaryColor = signal<string | null>(null);
   respondentToken: string | null = null;
 
   readonly isSinglePage = computed(() => this.formData()?.layout === 'SINGLE_PAGE');
   readonly isKiosk = computed(() => this.formData()?.layout === 'KIOSK');
+
+  readonly themeVars = computed(() => {
+    const color = (this.formData()?.schema?.settings?.theme?.primaryColor as string | undefined)
+      ?? this.pendingPrimaryColor()
+      ?? undefined;
+    if (!color) return null;
+    return [
+      `--ff-primary:${color}`,
+      `--p-button-primary-background:${color}`,
+      `--p-button-primary-hover-background:${color}`,
+      `--p-button-primary-active-background:${color}`,
+      `--p-button-primary-border-color:${color}`,
+      `--p-button-primary-hover-border-color:${color}`,
+      `--p-button-primary-active-border-color:${color}`,
+      `--p-primary-color:${color}`,
+    ].join(';');
+  });
   readonly currentSection = computed(() => this.sections()[this.currentStep()] ?? null);
   readonly progressPercent = computed(() => {
     const total = this.sections().length;
@@ -286,7 +306,21 @@ export class FormRendererComponent implements OnInit {
 
   ngOnInit(): void {
     this.respondentToken = this.route.snapshot.queryParamMap.get('t');
+    this.loadMeta();
     this.loadForm();
+  }
+
+  private loadMeta(): void {
+    const id = this.formId();
+    const request$ = this.UUID_REGEX.test(id)
+      ? this.formApi.getPublicFormMeta(id)
+      : this.formApi.getPublicFormMetaBySlug(id);
+    request$.subscribe({
+      next: (meta) => {
+        if (meta.primaryColor) this.pendingPrimaryColor.set(meta.primaryColor);
+      },
+      error: () => { /* silent — meta is best-effort */ },
+    });
   }
 
   private loadForm(password?: string): void {

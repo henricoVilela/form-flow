@@ -6,16 +6,17 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 
 import { FormApiService, CreateFormRequest, FormResponse } from '@core/api/form-api.service';
 import { MessageService } from 'primeng/api';
-import { finalize } from 'rxjs';
+import { finalize, switchMap, map, of } from 'rxjs';
 
 @Component({
   selector: 'app-create-form-dialog',
   imports: [
     CommonModule, ReactiveFormsModule,
-    DialogModule, InputTextModule, TextareaModule, SelectModule, ButtonModule,
+    DialogModule, InputTextModule, TextareaModule, SelectModule, ButtonModule, TooltipModule,
   ],
   template: `
     <p-dialog
@@ -75,6 +76,28 @@ import { finalize } from 'rxjs';
             @else { Uma seção por vez (wizard) }
           </small>
         </div>
+
+        <!-- Cor primária -->
+        <div>
+          <label class="ff-input-label">Cor primária</label>
+          <div class="flex items-center gap-3">
+            <div class="relative w-10 h-10 rounded-lg overflow-hidden border border-surface-200 cursor-pointer shadow-sm flex-shrink-0">
+              <div class="w-full h-full" [style.background]="primaryColor"></div>
+              <input
+                type="color"
+                [value]="primaryColor"
+                (input)="onColorInput($event)"
+                class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              />
+            </div>
+            <span class="text-sm font-mono text-surface-600 uppercase">{{ primaryColor }}</span>
+            @if (primaryColor !== DEFAULT_COLOR) {
+              <button pButton [text]="true" severity="secondary" size="small" icon="pi pi-refresh"
+                      (click)="primaryColor = DEFAULT_COLOR"
+                      pTooltip="Restaurar padrão" tooltipPosition="top"></button>
+            }
+          </div>
+        </div>
       </form>
 
       <ng-template #footer>
@@ -110,6 +133,9 @@ export class CreateFormDialogComponent {
   visible = false;
   saving = false;
 
+  readonly DEFAULT_COLOR = '#6366f1';
+  primaryColor = this.DEFAULT_COLOR;
+
   readonly layoutOptions = [
     { label: 'Multi-step (Wizard)', value: 'MULTI_STEP' },
     { label: 'Página única', value: 'SINGLE_PAGE' },
@@ -124,7 +150,12 @@ export class CreateFormDialogComponent {
 
   open(): void {
     this.form.reset({ title: '', description: '', layout: 'MULTI_STEP' });
+    this.primaryColor = this.DEFAULT_COLOR;
     this.visible = true;
+  }
+
+  onColorInput(event: Event): void {
+    this.primaryColor = (event.target as HTMLInputElement).value;
   }
 
   onClose(): void {
@@ -136,8 +167,19 @@ export class CreateFormDialogComponent {
 
     this.saving = true;
     const request: CreateFormRequest = this.form.getRawValue();
+    const color = this.primaryColor;
 
     this.formApi.create(request).pipe(
+      switchMap(form => {
+        if (color === this.DEFAULT_COLOR) return of(form);
+        return this.formApi.update(form.id, {
+          title: form.title,
+          schema: {
+            sections: [],
+            settings: { showProgressBar: true, showQuestionNumbers: false, theme: { primaryColor: color } },
+          },
+        }).pipe(map(() => form));
+      }),
       finalize(() => this.saving = false),
     ).subscribe({
       next: (form) => {

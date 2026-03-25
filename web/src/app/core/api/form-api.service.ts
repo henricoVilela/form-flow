@@ -5,6 +5,10 @@ import { environment } from '@env';
 
 export type FormVisibility = 'PUBLIC' | 'PRIVATE' | 'PASSWORD_PROTECTED';
 
+export interface FormMetaResponse {
+  primaryColor: string | null;
+}
+
 export interface FormResponse {
   id: string;
   title: string;
@@ -241,6 +245,14 @@ export class FormApiService {
     const headers = password ? new HttpHeaders({ 'X-Form-Password': password }) : new HttpHeaders();
     const params = respondentToken ? new HttpParams().set('t', respondentToken) : new HttpParams();
     return this.http.get<PublicFormResponse>(`${environment.apiUrl}/public/forms/slug/${slug}`, { headers, params });
+  }
+
+  getPublicFormMeta(formId: string): Observable<FormMetaResponse> {
+    return this.http.get<FormMetaResponse>(`${environment.apiUrl}/public/forms/${formId}/meta`);
+  }
+
+  getPublicFormMetaBySlug(slug: string): Observable<FormMetaResponse> {
+    return this.http.get<FormMetaResponse>(`${environment.apiUrl}/public/forms/slug/${slug}/meta`);
   }
 
   submitResponse(formId: string, request: SubmitResponseRequest, respondentToken?: string): Observable<SubmitResponseResponse> {

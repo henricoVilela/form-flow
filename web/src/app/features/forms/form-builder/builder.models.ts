@@ -104,10 +104,15 @@ export interface KioskSettings {
   theme: 'auto' | 'light' | 'dark'; // padrão: 'auto' (segue prefers-color-scheme)
 }
 
+export interface FormTheme {
+  primaryColor?: string; // hex, ex: '#6366f1'
+}
+
 export interface FormSettings {
   showProgressBar: boolean;
   showQuestionNumbers: boolean;
   kioskSettings?: KioskSettings;
+  theme?: FormTheme;
 }
 
 // ── Catalog of available question types ──

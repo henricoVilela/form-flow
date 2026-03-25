@@ -207,13 +207,31 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
             <p-select [(ngModel)]="editInfoForm.layout" [options]="layoutOptions"
                       optionLabel="label" optionValue="value" styleClass="w-full" />
           </div>
+          <div>
+            <label class="ff-input-label">Cor primária</label>
+            <div class="flex items-center gap-3">
+              <input
+                type="color"
+                [(ngModel)]="editInfoForm.primaryColor"
+                class="w-10 h-10 rounded-lg cursor-pointer border border-surface-200 p-0.5 bg-white"
+              />
+              <span class="text-sm text-surface-500 font-mono uppercase">{{ editInfoForm.primaryColor }}</span>
+              <button
+                pButton [text]="true" severity="secondary" size="small" icon="pi pi-refresh"
+                pTooltip="Restaurar padrão" tooltipPosition="top"
+                (click)="editInfoForm.primaryColor = DEFAULT_PRIMARY_COLOR"
+              ></button>
+            </div>
+          </div>
           @if (editInfoForm.layout === 'KIOSK') {
             <div>
               <label class="ff-input-label">Tema</label>
               <p-select
                 [(ngModel)]="editInfoForm.kioskTheme"
                 [options]="kioskThemeOptions"
-                optionLabel="label" optionValue="value"
+                optionLabel="label" 
+                optionValue="value"
+                appendTo="body"
                 styleClass="w-full"
               />
             </div>
@@ -276,7 +294,8 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
 
   // ── Editar informações ──
   editInfoVisible = false;
-  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5, kioskTheme: 'auto' as 'auto' | 'light' | 'dark' };
+  readonly DEFAULT_PRIMARY_COLOR = '#6366f1';
+  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5, kioskTheme: 'auto' as 'auto' | 'light' | 'dark', primaryColor: '#6366f1' };
   readonly editInfoSaving = signal(false);
   readonly layoutOptions = [
     { label: 'Multi-etapas (uma seção por vez)', value: 'MULTI_STEP' },
@@ -488,7 +507,8 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     const schema = this.store.toSchema();
     const kioskResetDelay = schema.settings?.kioskSettings?.resetDelay ?? 5;
     const kioskTheme = (schema.settings?.kioskSettings?.theme ?? 'auto') as 'auto' | 'light' | 'dark';
-    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay, kioskTheme };
+    const primaryColor = schema.settings?.theme?.primaryColor ?? this.DEFAULT_PRIMARY_COLOR;
+    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay, kioskTheme, primaryColor };
     this.editInfoVisible = true;
   }
 
@@ -502,6 +522,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
       kioskSettings: this.editInfoForm.layout === 'KIOSK'
         ? { resetDelay: this.editInfoForm.kioskResetDelay, theme: this.editInfoForm.kioskTheme }
         : undefined,
+      theme: { ...currentSchema.settings?.theme, primaryColor: this.editInfoForm.primaryColor },
     };
     this.store.settings.set(updatedSettings);
     this.formApi.update(this.id(), {

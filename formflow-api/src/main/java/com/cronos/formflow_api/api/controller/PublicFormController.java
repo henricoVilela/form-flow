@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cronos.formflow_api.api.dto.response.FormMetaResponse;
 import com.cronos.formflow_api.api.dto.response.PublicFormResponse;
 import com.cronos.formflow_api.domain.form.FormService;
 
@@ -57,5 +58,15 @@ public class PublicFormController {
             @RequestHeader(value = "X-Form-Password", required = false) String password,
             @RequestParam(value = "t", required = false) String respondentToken) {
         return ResponseEntity.ok(formService.getPublicFormBySlug(slug, password, respondentToken));
+    }
+
+    @GetMapping("/{formId}/meta")
+    public ResponseEntity<FormMetaResponse> getFormMeta(@PathVariable UUID formId) {
+        return ResponseEntity.ok(formService.getFormMeta(formId));
+    }
+
+    @GetMapping("/slug/{slug}/meta")
+    public ResponseEntity<FormMetaResponse> getFormMetaBySlug(@PathVariable String slug) {
+        return ResponseEntity.ok(formService.getFormMetaBySlug(slug));
     }
 }
