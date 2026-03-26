@@ -44,7 +44,7 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
   template: `
     <p-toast position="top-center" />
 
-    <div [class]="(isKiosk() && state() === 'form' ? '' : 'min-h-screen flex flex-col items-center px-4 pt-10 pb-[60px] bg-gradient-to-b from-surface-100 to-surface-200 max-[480px]:px-2 max-[480px]:pt-4 max-[480px]:pb-10') + ' ' + fontSizeClass()"
+    <div [class]="(isKiosk() && state() === 'form' ? '' : 'min-h-screen flex flex-col items-center px-4 pt-10 pb-[60px] max-[480px]:px-2 max-[480px]:pt-4 max-[480px]:pb-10' + (hasCustomBackground() ? '' : ' bg-gradient-to-b from-surface-100 to-surface-200')) + ' ' + fontSizeClass()"
          [attr.style]="themeVars()"
     >
 
@@ -286,21 +286,38 @@ export class FormRendererComponent implements OnInit, OnDestroy {
     return `ff-scale-${size}`;
   });
 
+  readonly hasCustomBackground = computed(() => {
+    const type = this.formData()?.schema?.settings?.theme?.backgroundType as string | undefined;
+    return type === 'color' || type === 'gradient';
+  });
+
   readonly themeVars = computed(() => {
+    const vars: string[] = [];
     const color = (this.formData()?.schema?.settings?.theme?.primaryColor as string | undefined)
       ?? this.pendingPrimaryColor()
       ?? undefined;
-    if (!color) return null;
-    return [
-      `--ff-primary:${color}`,
-      `--p-button-primary-background:${color}`,
-      `--p-button-primary-hover-background:${color}`,
-      `--p-button-primary-active-background:${color}`,
-      `--p-button-primary-border-color:${color}`,
-      `--p-button-primary-hover-border-color:${color}`,
-      `--p-button-primary-active-border-color:${color}`,
-      `--p-primary-color:${color}`,
-    ].join(';');
+    if (color) {
+      vars.push(
+        `--ff-primary:${color}`,
+        `--p-button-primary-background:${color}`,
+        `--p-button-primary-hover-background:${color}`,
+        `--p-button-primary-active-background:${color}`,
+        `--p-button-primary-border-color:${color}`,
+        `--p-button-primary-hover-border-color:${color}`,
+        `--p-button-primary-active-border-color:${color}`,
+        `--p-primary-color:${color}`,
+      );
+    }
+    const bgType = this.formData()?.schema?.settings?.theme?.backgroundType as string | undefined;
+    const bgColor = this.formData()?.schema?.settings?.theme?.backgroundColor as string | undefined;
+    const bgEnd = this.formData()?.schema?.settings?.theme?.backgroundColorEnd as string | undefined;
+    if (bgType === 'color' && bgColor) {
+      vars.push(`background:${bgColor}`);
+    } else if (bgType === 'gradient' && bgColor) {
+      const endColor = bgEnd ?? bgColor;
+      vars.push(`background:linear-gradient(to bottom,${bgColor},${endColor})`);
+    }
+    return vars.length ? vars.join(';') : null;
   });
   readonly currentSection = computed(() => this.sections()[this.currentStep()] ?? null);
   readonly progressPercent = computed(() => {

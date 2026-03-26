@@ -105,10 +105,14 @@ export interface KioskSettings {
 }
 
 export type FontSizeOption = 'sm' | 'md' | 'lg' | 'xl';
+export type BackgroundType = 'default' | 'color' | 'gradient';
 
 export interface FormTheme {
-  primaryColor?: string; // hex, ex: '#6366f1'
+  primaryColor?: string;        // hex, ex: '#6366f1'
   baseFontSize?: FontSizeOption; // default: 'md'
+  backgroundType?: BackgroundType; // default: 'default'
+  backgroundColor?: string;     // cor sólida ou início do gradiente
+  backgroundColorEnd?: string;  // fim do gradiente (só para 'gradient')
 }
 
 export interface FormSettings {

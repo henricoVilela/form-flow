@@ -208,8 +208,8 @@ GET    /public/forms/{formId}  → PublicFormResponse
   Fase 1 — Quick wins
   ~~1~~. Cor primária
   ~~2~~. Página de agradecimento customizada
-  3. Tamanho base do texto
-  4. Background da página
+  ~~3~~. Tamanho base do texto
+  ~~4~~. Background da página
 
   Fase 2 — Identidade visual
   5. Banner/Header

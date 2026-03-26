@@ -234,6 +234,39 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
               styleClass="w-full"
             />
           </div>
+          <div>
+            <label class="ff-input-label">Fundo da página</label>
+            <p-select
+              [(ngModel)]="editInfoForm.backgroundType"
+              [options]="backgroundTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="w-full"
+            />
+          </div>
+          @if (editInfoForm.backgroundType === 'color' || editInfoForm.backgroundType === 'gradient') {
+            <div class="flex gap-4">
+              <div class="flex-1">
+                <label class="ff-input-label">{{ editInfoForm.backgroundType === 'gradient' ? 'Cor inicial' : 'Cor do fundo' }}</label>
+                <div class="flex items-center gap-2">
+                  <input type="color" [(ngModel)]="editInfoForm.backgroundColor"
+                         class="w-10 h-10 rounded-lg cursor-pointer border border-surface-200 p-0.5 bg-white shrink-0" />
+                  <span class="text-sm text-surface-500 font-mono uppercase">{{ editInfoForm.backgroundColor }}</span>
+                </div>
+              </div>
+              @if (editInfoForm.backgroundType === 'gradient') {
+                <div class="flex-1">
+                  <label class="ff-input-label">Cor final</label>
+                  <div class="flex items-center gap-2">
+                    <input type="color" [(ngModel)]="editInfoForm.backgroundColorEnd"
+                           class="w-10 h-10 rounded-lg cursor-pointer border border-surface-200 p-0.5 bg-white shrink-0" />
+                    <span class="text-sm text-surface-500 font-mono uppercase">{{ editInfoForm.backgroundColorEnd }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
           @if (editInfoForm.layout === 'KIOSK') {
             <div>
               <label class="ff-input-label">Tema</label>
@@ -306,7 +339,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   // ── Editar informações ──
   editInfoVisible = false;
   readonly DEFAULT_PRIMARY_COLOR = '#6366f1';
-  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5, kioskTheme: 'auto' as 'auto' | 'light' | 'dark', primaryColor: '#6366f1', baseFontSize: 'md' as 'sm' | 'md' | 'lg' | 'xl' };
+  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5, kioskTheme: 'auto' as 'auto' | 'light' | 'dark', primaryColor: '#6366f1', baseFontSize: 'md' as 'sm' | 'md' | 'lg' | 'xl', backgroundType: 'default' as 'default' | 'color' | 'gradient', backgroundColor: '#f1f5f9', backgroundColorEnd: '#e2e8f0' };
   readonly editInfoSaving = signal(false);
   readonly layoutOptions = [
     { label: 'Multi-etapas (uma seção por vez)', value: 'MULTI_STEP' },
@@ -325,6 +358,12 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     { label: 'Médio (14px) — padrão', value: 'md' },
     { label: 'Grande (16px)', value: 'lg' },
     { label: 'Extra grande (18px)', value: 'xl' },
+  ];
+
+  readonly backgroundTypeOptions = [
+    { label: 'Padrão', value: 'default' },
+    { label: 'Cor sólida', value: 'color' },
+    { label: 'Gradiente', value: 'gradient' },
   ];
 
   private readonly destroy$ = new Subject<void>();
@@ -527,7 +566,10 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     const kioskTheme = (schema.settings?.kioskSettings?.theme ?? 'auto') as 'auto' | 'light' | 'dark';
     const primaryColor = schema.settings?.theme?.primaryColor ?? this.DEFAULT_PRIMARY_COLOR;
     const baseFontSize = (schema.settings?.theme?.baseFontSize ?? 'md') as 'sm' | 'md' | 'lg' | 'xl';
-    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay, kioskTheme, primaryColor, baseFontSize };
+    const backgroundType = (schema.settings?.theme?.backgroundType ?? 'default') as 'default' | 'color' | 'gradient';
+    const backgroundColor = schema.settings?.theme?.backgroundColor ?? '#f1f5f9';
+    const backgroundColorEnd = schema.settings?.theme?.backgroundColorEnd ?? '#e2e8f0';
+    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay, kioskTheme, primaryColor, baseFontSize, backgroundType, backgroundColor, backgroundColorEnd };
     this.editInfoVisible = true;
   }
 
@@ -541,7 +583,14 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
       kioskSettings: this.editInfoForm.layout === 'KIOSK'
         ? { resetDelay: this.editInfoForm.kioskResetDelay, theme: this.editInfoForm.kioskTheme }
         : undefined,
-      theme: { ...currentSchema.settings?.theme, primaryColor: this.editInfoForm.primaryColor, baseFontSize: this.editInfoForm.baseFontSize },
+      theme: {
+        ...currentSchema.settings?.theme,
+        primaryColor: this.editInfoForm.primaryColor,
+        baseFontSize: this.editInfoForm.baseFontSize,
+        backgroundType: this.editInfoForm.backgroundType,
+        backgroundColor: this.editInfoForm.backgroundColor,
+        backgroundColorEnd: this.editInfoForm.backgroundType === 'gradient' ? this.editInfoForm.backgroundColorEnd : undefined,
+      },
     };
     this.store.settings.set(updatedSettings);
     this.formApi.update(this.id(), {
