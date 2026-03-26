@@ -15,6 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, filter, takeUntil } from 'rxjs';
 
 import { FormApiService, FormResponse } from '@core/api/form-api.service';
+import { UploadApiService } from '@core/api/upload-api.service';
 import { BuilderStore } from './builder.store';
 import { BuilderToolboxComponent } from './toolbox/builder-toolbox.component';
 import { BuilderCanvasComponent } from './canvas/builder-canvas.component';
@@ -267,6 +268,38 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
               }
             </div>
           }
+          <!-- Banner/Header -->
+          <div>
+            <label class="ff-input-label">Banner / imagem de cabeçalho</label>
+            @if (bannerPreviewUrl()) {
+              <div class="relative mb-2 h-[100px] bg-surface-100 rounded-xl">
+                <img [src]="bannerPreviewUrl()!" alt="Banner" class="w-full h-full object-cover rounded-xl" />
+                <button
+                  type="button"
+                  class="absolute top-2 right-2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white shadow cursor-pointer border-0"
+                  (click)="removeBanner()"
+                >
+                  <i class="pi pi-trash text-xs"></i>
+                </button>
+              </div>
+            } @else {
+              <div
+                class="border-2 border-dashed border-surface-300 rounded-xl h-[72px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-colors"
+                (click)="bannerFileInput.click()"
+              >
+                @if (bannerUploading()) {
+                  <i class="pi pi-spin pi-spinner text-primary-400"></i>
+                  <span class="text-xs text-surface-400">Enviando...</span>
+                } @else {
+                  <i class="pi pi-image text-surface-300 text-lg"></i>
+                  <span class="text-xs text-surface-400">Clique para fazer upload (JPG, PNG, WebP)</span>
+                }
+              </div>
+            }
+            <input #bannerFileInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
+                   (change)="onBannerFileSelected($event)" />
+          </div>
+
           @if (editInfoForm.layout === 'KIOSK') {
             <div>
               <label class="ff-input-label">Tema</label>
@@ -326,6 +359,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   private readonly formApi = inject(FormApiService);
   private readonly toast = inject(MessageService);
   private readonly router = inject(Router);
+  private readonly uploadApi = inject(UploadApiService);
   readonly store = inject(BuilderStore);
 
   @ViewChild('previewDialog') previewDialog!: BuilderPreviewDialogComponent;
@@ -339,8 +373,10 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   // ── Editar informações ──
   editInfoVisible = false;
   readonly DEFAULT_PRIMARY_COLOR = '#6366f1';
-  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5, kioskTheme: 'auto' as 'auto' | 'light' | 'dark', primaryColor: '#6366f1', baseFontSize: 'md' as 'sm' | 'md' | 'lg' | 'xl', backgroundType: 'default' as 'default' | 'color' | 'gradient', backgroundColor: '#f1f5f9', backgroundColorEnd: '#e2e8f0' };
+  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5, kioskTheme: 'auto' as 'auto' | 'light' | 'dark', primaryColor: '#6366f1', baseFontSize: 'md' as 'sm' | 'md' | 'lg' | 'xl', backgroundType: 'default' as 'default' | 'color' | 'gradient', backgroundColor: '#f1f5f9', backgroundColorEnd: '#e2e8f0', bannerImageKey: null as string | null };
   readonly editInfoSaving = signal(false);
+  readonly bannerPreviewUrl = signal<string | null>(null);
+  readonly bannerUploading = signal(false);
   readonly layoutOptions = [
     { label: 'Multi-etapas (uma seção por vez)', value: 'MULTI_STEP' },
     { label: 'Página única (tudo em uma tela)', value: 'SINGLE_PAGE' },
@@ -569,7 +605,15 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     const backgroundType = (schema.settings?.theme?.backgroundType ?? 'default') as 'default' | 'color' | 'gradient';
     const backgroundColor = schema.settings?.theme?.backgroundColor ?? '#f1f5f9';
     const backgroundColorEnd = schema.settings?.theme?.backgroundColorEnd ?? '#e2e8f0';
-    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay, kioskTheme, primaryColor, baseFontSize, backgroundType, backgroundColor, backgroundColorEnd };
+    const bannerImageKey = schema.settings?.theme?.bannerImageKey ?? null;
+    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay, kioskTheme, primaryColor, baseFontSize, backgroundType, backgroundColor, backgroundColorEnd, bannerImageKey };
+    this.bannerPreviewUrl.set(null);
+    if (bannerImageKey) {
+      this.uploadApi.getDownloadUrl(bannerImageKey).subscribe({
+        next: (r) => this.bannerPreviewUrl.set(r.downloadUrl),
+        error: () => {},
+      });
+    }
     this.editInfoVisible = true;
   }
 
@@ -590,6 +634,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
         backgroundType: this.editInfoForm.backgroundType,
         backgroundColor: this.editInfoForm.backgroundColor,
         backgroundColorEnd: this.editInfoForm.backgroundType === 'gradient' ? this.editInfoForm.backgroundColorEnd : undefined,
+        bannerImageKey: this.editInfoForm.bannerImageKey ?? undefined,
       },
     };
     this.store.settings.set(updatedSettings);
@@ -610,6 +655,32 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
         this.toast.add({ severity: 'error', summary: 'Erro', detail: err.error?.message ?? 'Falha ao salvar' });
       },
     });
+  }
+
+  onBannerFileSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.bannerUploading.set(true);
+    this.uploadApi.uploadFile(this.id(), file).subscribe({
+      next: (fileId) => {
+        this.editInfoForm.bannerImageKey = fileId;
+        this.uploadApi.getDownloadUrl(fileId).subscribe({
+          next: (r) => this.bannerPreviewUrl.set(r.downloadUrl),
+          error: () => {},
+        });
+        this.bannerUploading.set(false);
+      },
+      error: () => {
+        this.bannerUploading.set(false);
+        this.toast.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao enviar imagem' });
+      },
+    });
+    (event.target as HTMLInputElement).value = '';
+  }
+
+  removeBanner(): void {
+    this.editInfoForm.bannerImageKey = null;
+    this.bannerPreviewUrl.set(null);
   }
 
   formatTimeSince(date: Date): string {

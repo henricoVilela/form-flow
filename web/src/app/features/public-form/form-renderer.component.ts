@@ -48,6 +48,13 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
          [attr.style]="themeVars()"
     >
 
+      <!-- ── BANNER ── -->
+      @if (bannerUrl() && !isKiosk()) {
+        <div class="w-full max-w-[640px] rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]">
+          <img [src]="bannerUrl()!" alt="" class="w-full h-[180px] object-cover" />
+        </div>
+      }
+
       <!-- ── LOADING ── -->
       @if (state() === 'loading') {
         <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up max-[480px]:p-5 max-[480px]:rounded-xl">
@@ -279,6 +286,7 @@ export class FormRendererComponent implements OnInit, OnDestroy {
   readonly isSinglePage = computed(() => this.formData()?.layout === 'SINGLE_PAGE');
   readonly isKiosk = computed(() => this.formData()?.layout === 'KIOSK');
   readonly redirectCountdown = signal<number | null>(null);
+  readonly bannerUrl = signal<string | null>(null);
   private redirectTimer: ReturnType<typeof setInterval> | null = null;
 
   readonly fontSizeClass = computed(() => {
@@ -367,6 +375,13 @@ export class FormRendererComponent implements OnInit, OnDestroy {
         this.formData.set(data);
         this.sections.set((data.schema?.sections ?? []).filter((s: any) => s.questions?.length > 0));
         this.passwordChecking.set(false);
+        const bannerKey = data.schema?.settings?.theme?.bannerImageKey as string | undefined;
+        if (bannerKey) {
+          this.uploadApi.getDownloadUrl(bannerKey).subscribe({
+            next: (r) => this.bannerUrl.set(r.downloadUrl),
+            error: () => {},
+          });
+        }
         // Kiosk nunca mostra welcome — vai direto para o formulário
         const showWelcome = data.layout !== 'KIOSK' && (!!data.welcomeMessage || !!data.description);
         this.state.set(showWelcome ? 'welcome' : 'form');

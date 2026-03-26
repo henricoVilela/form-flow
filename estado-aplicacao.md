@@ -212,7 +212,7 @@ GET    /public/forms/{formId}  → PublicFormResponse
   ~~4~~. Background da página
 
   Fase 2 — Identidade visual
-  5. Banner/Header
+  ~~5~~. Banner/Header
   6. Logo
   7. Cover Page (boas-vindas)
 
