@@ -223,6 +223,17 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
               ></button>
             </div>
           </div>
+          <div>
+            <label class="ff-input-label">Tamanho do texto</label>
+            <p-select
+              [(ngModel)]="editInfoForm.baseFontSize"
+              [options]="fontSizeOptions"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="w-full"
+            />
+          </div>
           @if (editInfoForm.layout === 'KIOSK') {
             <div>
               <label class="ff-input-label">Tema</label>
@@ -295,7 +306,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   // ── Editar informações ──
   editInfoVisible = false;
   readonly DEFAULT_PRIMARY_COLOR = '#6366f1';
-  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5, kioskTheme: 'auto' as 'auto' | 'light' | 'dark', primaryColor: '#6366f1' };
+  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5, kioskTheme: 'auto' as 'auto' | 'light' | 'dark', primaryColor: '#6366f1', baseFontSize: 'md' as 'sm' | 'md' | 'lg' | 'xl' };
   readonly editInfoSaving = signal(false);
   readonly layoutOptions = [
     { label: 'Multi-etapas (uma seção por vez)', value: 'MULTI_STEP' },
@@ -307,6 +318,13 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     { label: '🌗 Automático (segue o sistema)', value: 'auto' },
     { label: '☀️ Claro', value: 'light' },
     { label: '🌙 Escuro', value: 'dark' },
+  ];
+
+  readonly fontSizeOptions = [
+    { label: 'Pequeno (12px)', value: 'sm' },
+    { label: 'Médio (14px) — padrão', value: 'md' },
+    { label: 'Grande (16px)', value: 'lg' },
+    { label: 'Extra grande (18px)', value: 'xl' },
   ];
 
   private readonly destroy$ = new Subject<void>();
@@ -508,7 +526,8 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     const kioskResetDelay = schema.settings?.kioskSettings?.resetDelay ?? 5;
     const kioskTheme = (schema.settings?.kioskSettings?.theme ?? 'auto') as 'auto' | 'light' | 'dark';
     const primaryColor = schema.settings?.theme?.primaryColor ?? this.DEFAULT_PRIMARY_COLOR;
-    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay, kioskTheme, primaryColor };
+    const baseFontSize = (schema.settings?.theme?.baseFontSize ?? 'md') as 'sm' | 'md' | 'lg' | 'xl';
+    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay, kioskTheme, primaryColor, baseFontSize };
     this.editInfoVisible = true;
   }
 
@@ -522,7 +541,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
       kioskSettings: this.editInfoForm.layout === 'KIOSK'
         ? { resetDelay: this.editInfoForm.kioskResetDelay, theme: this.editInfoForm.kioskTheme }
         : undefined,
-      theme: { ...currentSchema.settings?.theme, primaryColor: this.editInfoForm.primaryColor },
+      theme: { ...currentSchema.settings?.theme, primaryColor: this.editInfoForm.primaryColor, baseFontSize: this.editInfoForm.baseFontSize },
     };
     this.store.settings.set(updatedSettings);
     this.formApi.update(this.id(), {

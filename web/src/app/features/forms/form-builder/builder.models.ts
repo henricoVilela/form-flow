@@ -104,8 +104,11 @@ export interface KioskSettings {
   theme: 'auto' | 'light' | 'dark'; // padrão: 'auto' (segue prefers-color-scheme)
 }
 
+export type FontSizeOption = 'sm' | 'md' | 'lg' | 'xl';
+
 export interface FormTheme {
   primaryColor?: string; // hex, ex: '#6366f1'
+  baseFontSize?: FontSizeOption; // default: 'md'
 }
 
 export interface FormSettings {

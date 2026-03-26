@@ -44,7 +44,7 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
   template: `
     <p-toast position="top-center" />
 
-    <div [class]="isKiosk() && state() === 'form' ? '' : 'min-h-screen flex flex-col items-center px-4 pt-10 pb-[60px] bg-gradient-to-b from-surface-100 to-surface-200 max-[480px]:px-2 max-[480px]:pt-4 max-[480px]:pb-10'"
+    <div [class]="(isKiosk() && state() === 'form' ? '' : 'min-h-screen flex flex-col items-center px-4 pt-10 pb-[60px] bg-gradient-to-b from-surface-100 to-surface-200 max-[480px]:px-2 max-[480px]:pt-4 max-[480px]:pb-10') + ' ' + fontSizeClass()"
          [attr.style]="themeVars()"
     >
 
@@ -280,6 +280,11 @@ export class FormRendererComponent implements OnInit, OnDestroy {
   readonly isKiosk = computed(() => this.formData()?.layout === 'KIOSK');
   readonly redirectCountdown = signal<number | null>(null);
   private redirectTimer: ReturnType<typeof setInterval> | null = null;
+
+  readonly fontSizeClass = computed(() => {
+    const size = (this.formData()?.schema?.settings?.theme?.baseFontSize as string | undefined) ?? 'md';
+    return `ff-scale-${size}`;
+  });
 
   readonly themeVars = computed(() => {
     const color = (this.formData()?.schema?.settings?.theme?.primaryColor as string | undefined)
