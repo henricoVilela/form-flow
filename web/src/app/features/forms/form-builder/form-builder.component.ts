@@ -250,131 +250,129 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
                 </div>
               </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="ff-input-label">Fundo da página</label>
-                <p-select [(ngModel)]="editInfoForm.backgroundType" [options]="backgroundTypeOptions"
-                          optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" />
-              </div>
-              @if (editInfoForm.backgroundType === 'color' || editInfoForm.backgroundType === 'gradient') {
-                <div class="flex gap-3">
-                  <div class="flex-1">
-                    <label class="ff-input-label">{{ editInfoForm.backgroundType === 'gradient' ? 'Cor inicial' : 'Cor do fundo' }}</label>
-                    <div class="flex items-center gap-2">
-                      <input type="color" [(ngModel)]="editInfoForm.backgroundColor"
-                             class="w-10 h-10 rounded-lg cursor-pointer border border-surface-200 p-0.5 bg-white shrink-0" />
-                      <span class="text-sm text-surface-500 font-mono uppercase">{{ editInfoForm.backgroundColor }}</span>
-                    </div>
-                  </div>
-                  @if (editInfoForm.backgroundType === 'gradient') {
+            @if (editInfoForm.layout !== 'KIOSK') {
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="ff-input-label">Fundo da página</label>
+                  <p-select [(ngModel)]="editInfoForm.backgroundType" [options]="backgroundTypeOptions"
+                            optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" />
+                </div>
+                @if (editInfoForm.backgroundType === 'color' || editInfoForm.backgroundType === 'gradient') {
+                  <div class="flex gap-3">
                     <div class="flex-1">
-                      <label class="ff-input-label">Cor final</label>
+                      <label class="ff-input-label">{{ editInfoForm.backgroundType === 'gradient' ? 'Cor inicial' : 'Cor do fundo' }}</label>
                       <div class="flex items-center gap-2">
-                        <input type="color" [(ngModel)]="editInfoForm.backgroundColorEnd"
+                        <input type="color" [(ngModel)]="editInfoForm.backgroundColor"
                                class="w-10 h-10 rounded-lg cursor-pointer border border-surface-200 p-0.5 bg-white shrink-0" />
-                        <span class="text-sm text-surface-500 font-mono uppercase">{{ editInfoForm.backgroundColorEnd }}</span>
+                        <span class="text-sm text-surface-500 font-mono uppercase">{{ editInfoForm.backgroundColor }}</span>
                       </div>
                     </div>
-                  }
-                </div>
-              }
-            </div>
-            @if (editInfoForm.backgroundType === 'image') {
-              <div>
-                <label class="ff-input-label">Imagem de fundo</label>
-                @if (backgroundImagePreviewUrl()) {
-                  <div class="relative h-[100px] rounded-xl overflow-hidden">
-                    <img [src]="backgroundImagePreviewUrl()!" alt="Fundo" class="w-full h-full object-cover" />
-                    <button type="button"
-                      class="absolute top-2 right-2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white shadow cursor-pointer border-0"
-                      (click)="removeBackgroundImage()">
-                      <i class="pi pi-trash text-xs"></i>
-                    </button>
-                  </div>
-                } @else {
-                  <div class="border-2 border-dashed border-surface-300 rounded-xl h-[100px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950 transition-colors"
-                       (click)="bgImageFileInput.click()">
-                    @if (backgroundImageUploading()) {
-                      <i class="pi pi-spin pi-spinner text-primary-400"></i>
-                      <span class="text-xs text-surface-400">Enviando...</span>
-                    } @else {
-                      <i class="pi pi-image text-surface-300 text-xl"></i>
-                      <span class="text-xs text-surface-400">Clique para fazer upload</span>
-                      <span class="text-[10px] text-surface-300">JPG, PNG, WebP</span>
+                    @if (editInfoForm.backgroundType === 'gradient') {
+                      <div class="flex-1">
+                        <label class="ff-input-label">Cor final</label>
+                        <div class="flex items-center gap-2">
+                          <input type="color" [(ngModel)]="editInfoForm.backgroundColorEnd"
+                                 class="w-10 h-10 rounded-lg cursor-pointer border border-surface-200 p-0.5 bg-white shrink-0" />
+                          <span class="text-sm text-surface-500 font-mono uppercase">{{ editInfoForm.backgroundColorEnd }}</span>
+                        </div>
+                      </div>
                     }
                   </div>
                 }
-                <input #bgImageFileInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
-                       (change)="onBackgroundImageSelected($event)" />
               </div>
+              @if (editInfoForm.backgroundType === 'image') {
+                <div>
+                  <label class="ff-input-label">Imagem de fundo</label>
+                  @if (backgroundImagePreviewUrl()) {
+                    <div class="relative h-[100px] rounded-xl overflow-hidden">
+                      <img [src]="backgroundImagePreviewUrl()!" alt="Fundo" class="w-full h-full object-cover" />
+                      <button type="button" class="img-remove-btn" (click)="removeBackgroundImage()">
+                        <i class="pi pi-trash text-xs"></i>
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="border-2 border-dashed border-surface-300 rounded-xl h-[100px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950 transition-colors"
+                         (click)="bgImageFileInput.click()">
+                      @if (backgroundImageUploading()) {
+                        <i class="pi pi-spin pi-spinner text-primary-400"></i>
+                        <span class="text-xs text-surface-400">Enviando...</span>
+                      } @else {
+                        <i class="pi pi-image text-surface-300 text-xl"></i>
+                        <span class="text-xs text-surface-400">Clique para fazer upload</span>
+                        <span class="text-[10px] text-surface-300">JPG, PNG, WebP</span>
+                      }
+                    </div>
+                  }
+                  <input #bgImageFileInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
+                         (change)="onBackgroundImageSelected($event)" />
+                </div>
+              }
             }
           </section>
 
-          <hr class="border-surface-100" />
+          @if (editInfoForm.layout !== 'KIOSK') {
+            <hr class="border-surface-100" />
 
-          <!-- IMAGENS -->
-          <section class="flex flex-col gap-3">
-            <p class="text-[11px] font-semibold text-surface-400 uppercase tracking-wider">Imagens</p>
-            <div class="flex gap-4 items-start">
+            <!-- IMAGENS -->
+            <section class="flex flex-col gap-3">
+              <p class="text-[11px] font-semibold text-surface-400 uppercase tracking-wider">Imagens</p>
+              <div class="flex gap-4 items-start">
 
-              <!-- Banner -->
-              <div class="flex-1 min-w-0">
-                <label class="ff-input-label">Banner / cabeçalho</label>
-                @if (bannerPreviewUrl()) {
-                  <div class="relative h-[104px] bg-surface-100 rounded-xl overflow-hidden">
-                    <img [src]="bannerPreviewUrl()!" alt="Banner" class="w-full h-full object-cover" />
-                    <button type="button"
-                      class="absolute top-2 right-2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white shadow cursor-pointer border-0"
-                      (click)="removeBanner()">
-                      <i class="pi pi-trash text-xs"></i>
-                    </button>
-                  </div>
-                } @else {
-                  <div class="border-2 border-dashed border-surface-300 rounded-xl h-[104px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950 transition-colors"
-                       (click)="bannerFileInput.click()">
-                    @if (bannerUploading()) {
-                      <i class="pi pi-spin pi-spinner text-primary-400"></i>
-                      <span class="text-xs text-surface-400">Enviando...</span>
-                    } @else {
-                      <i class="pi pi-image text-surface-300 text-xl"></i>
-                      <span class="text-xs text-surface-400">Clique para fazer upload</span>
-                      <span class="text-[10px] text-surface-300">JPG, PNG, WebP</span>
-                    }
-                  </div>
-                }
-                <input #bannerFileInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
-                       (change)="onBannerFileSelected($event)" />
+                <!-- Banner -->
+                <div class="flex-1 min-w-0">
+                  <label class="ff-input-label">Banner / cabeçalho</label>
+                  @if (bannerPreviewUrl()) {
+                    <div class="relative h-[104px] bg-surface-100 rounded-xl overflow-hidden">
+                      <img [src]="bannerPreviewUrl()!" alt="Banner" class="w-full h-full object-cover" />
+                      <button type="button" class="img-remove-btn" (click)="removeBanner()">
+                        <i class="pi pi-trash text-xs"></i>
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="border-2 border-dashed border-surface-300 rounded-xl h-[104px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950 transition-colors"
+                         (click)="bannerFileInput.click()">
+                      @if (bannerUploading()) {
+                        <i class="pi pi-spin pi-spinner text-primary-400"></i>
+                        <span class="text-xs text-surface-400">Enviando...</span>
+                      } @else {
+                        <i class="pi pi-image text-surface-300 text-xl"></i>
+                        <span class="text-xs text-surface-400">Clique para fazer upload</span>
+                        <span class="text-[10px] text-surface-300">JPG, PNG, WebP</span>
+                      }
+                    </div>
+                  }
+                  <input #bannerFileInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
+                         (change)="onBannerFileSelected($event)" />
+                </div>
+
+                <!-- Logo -->
+                <div class="w-[104px] shrink-0">
+                  <label class="ff-input-label">Logo</label>
+                  @if (logoPreviewUrl()) {
+                    <div class="relative w-[104px] h-[104px] rounded-xl overflow-hidden border border-surface-200 bg-surface-50">
+                      <img [src]="logoPreviewUrl()!" alt="Logo" class="w-full h-full object-contain" />
+                      <button type="button" class="img-remove-btn" (click)="removeLogo()">
+                        <i class="pi pi-trash text-xs"></i>
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="border-2 border-dashed border-surface-300 rounded-xl w-[104px] h-[104px] flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950 transition-colors"
+                         (click)="logoFileInput.click()">
+                      @if (logoUploading()) {
+                        <i class="pi pi-spin pi-spinner text-primary-400"></i>
+                      } @else {
+                        <i class="pi pi-image text-surface-300 text-lg"></i>
+                        <span class="text-[10px] text-surface-400 text-center leading-tight px-1">Logo</span>
+                      }
+                    </div>
+                  }
+                  <input #logoFileInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
+                         (change)="onLogoFileSelected($event)" />
+                </div>
+
               </div>
-
-              <!-- Logo -->
-              <div class="w-[104px] shrink-0">
-                <label class="ff-input-label">Logo</label>
-                @if (logoPreviewUrl()) {
-                  <div class="relative w-[104px] h-[104px]">
-                    <img [src]="logoPreviewUrl()!" alt="Logo" class="w-full h-full object-contain rounded-xl border border-surface-200 bg-surface-50" />
-                    <button type="button"
-                      class="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white shadow cursor-pointer border-0"
-                      (click)="removeLogo()">
-                      <i class="pi pi-times text-[10px]"></i>
-                    </button>
-                  </div>
-                } @else {
-                  <div class="border-2 border-dashed border-surface-300 rounded-xl w-[104px] h-[104px] flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950 transition-colors"
-                       (click)="logoFileInput.click()">
-                    @if (logoUploading()) {
-                      <i class="pi pi-spin pi-spinner text-primary-400"></i>
-                    } @else {
-                      <i class="pi pi-image text-surface-300 text-lg"></i>
-                      <span class="text-[10px] text-surface-400 text-center leading-tight px-1">Logo</span>
-                    }
-                  </div>
-                }
-                <input #logoFileInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
-                       (change)="onLogoFileSelected($event)" />
-              </div>
-
-            </div>
-          </section>
+            </section>
+          }
 
           @if (editInfoForm.layout === 'KIOSK') {
             <hr class="border-surface-100" />
@@ -412,6 +410,17 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
       height: calc(100vh - var(--ff-topbar-height));
       margin: -28px -32px;
     }
+
+    .img-remove-btn {
+      position: absolute; top: 8px; right: 8px; z-index: 10;
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 9999px; border: 0;
+      background: #ef4444; color: #fff;
+      cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.25);
+      transition: background 150ms;
+    }
+    .img-remove-btn:hover { background: #dc2626; }
 
     @media (max-width: 768px) {
       :host { margin: -20px -16px; }
