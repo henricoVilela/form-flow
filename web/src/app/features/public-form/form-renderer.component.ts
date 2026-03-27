@@ -135,9 +135,15 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
       <!-- ── WELCOME ── -->
       @if (state() === 'welcome' && formData()) {
         <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up text-center max-[480px]:p-5 max-[480px]:rounded-xl">
-          <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-primary-50 flex items-center justify-center">
-            <i class="pi pi-file-edit text-2xl text-primary-500"></i>
-          </div>
+          @if (logoUrl()) {
+            <div class="flex justify-center mb-5">
+              <img [src]="logoUrl()!" alt="" class="w-16 h-16 object-contain rounded-xl border border-surface-100 shadow-sm" />
+            </div>
+          } @else {
+            <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-primary-50 flex items-center justify-center">
+              <i class="pi pi-file-edit text-2xl text-primary-500"></i>
+            </div>
+          }
           <h1 class="text-2xl font-display font-bold text-surface-900 mb-2">{{ formData()!.title }}</h1>
           @if (formData()!.description) {
             <p class="text-sm text-surface-500 mb-4 max-w-md mx-auto">{{ formData()!.description }}</p>
@@ -160,6 +166,11 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
       <!-- ── FORM: Normal ── -->
       @if (state() === 'form' && formData() && !isKiosk()) {
         <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up max-[480px]:p-5 max-[480px]:rounded-xl">
+          @if (logoUrl()) {
+            <div class="mb-4">
+              <img [src]="logoUrl()!" alt="" class="w-14 h-14 object-contain rounded-xl border border-surface-100 shadow-sm" />
+            </div>
+          }
           <div class="mb-2">
             <h1 class="text-xl font-display font-bold text-surface-900">{{ formData()!.title }}</h1>
             @if (!isSinglePage() && sections().length > 1) {
@@ -287,6 +298,7 @@ export class FormRendererComponent implements OnInit, OnDestroy {
   readonly isKiosk = computed(() => this.formData()?.layout === 'KIOSK');
   readonly redirectCountdown = signal<number | null>(null);
   readonly bannerUrl = signal<string | null>(null);
+  readonly logoUrl = signal<string | null>(null);
   private redirectTimer: ReturnType<typeof setInterval> | null = null;
 
   readonly fontSizeClass = computed(() => {
@@ -379,6 +391,13 @@ export class FormRendererComponent implements OnInit, OnDestroy {
         if (bannerKey) {
           this.uploadApi.getDownloadUrl(bannerKey).subscribe({
             next: (r) => this.bannerUrl.set(r.downloadUrl),
+            error: () => {},
+          });
+        }
+        const logoKey = data.schema?.settings?.theme?.logoImageKey as string | undefined;
+        if (logoKey) {
+          this.uploadApi.getDownloadUrl(logoKey).subscribe({
+            next: (r) => this.logoUrl.set(r.downloadUrl),
             error: () => {},
           });
         }

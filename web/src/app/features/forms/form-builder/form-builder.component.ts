@@ -100,6 +100,12 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
           ></button>
           @if (form()!.status === 'PUBLISHED') {
             <button
+              pButton icon="pi pi-link"
+              severity="secondary" [outlined]="true" size="small"
+              pTooltip="Copiar link do formulário" tooltipPosition="bottom"
+              (click)="copyFormLink()"
+            ></button>
+            <button
               pButton label="Respostas" icon="pi pi-inbox"
               severity="secondary" [outlined]="true" size="small"
               pTooltip="Ver respostas recebidas" tooltipPosition="bottom"
@@ -192,139 +198,170 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
         [(visible)]="editInfoVisible"
         header="Editar formulário"
         [modal]="true"
-        [style]="{ width: '480px', minHeight: '40rem' }"
+        [style]="{ width: 'min(92vw, 760px)' }"
         [draggable]="false">
-        <div class="flex flex-col gap-4 pt-2">
-          <div>
-            <label class="ff-input-label">Título <span class="text-red-500">*</span></label>
-            <input pInputText class="w-full" placeholder="Título do formulário" [(ngModel)]="editInfoForm.title" />
-          </div>
-          <div>
-            <label class="ff-input-label">Descrição <span class="text-surface-400 font-normal">(opcional)</span></label>
-            <textarea pTextarea class="w-full" [rows]="3" placeholder="Descrição breve..." [(ngModel)]="editInfoForm.description"></textarea>
-          </div>
-          <div>
-            <label class="ff-input-label">Layout</label>
-            <p-select [(ngModel)]="editInfoForm.layout" [options]="layoutOptions"
-                      optionLabel="label" optionValue="value" styleClass="w-full" />
-          </div>
-          <div>
-            <label class="ff-input-label">Cor primária</label>
-            <div class="flex items-center gap-3">
-              <input
-                type="color"
-                [(ngModel)]="editInfoForm.primaryColor"
-                class="w-10 h-10 rounded-lg cursor-pointer border border-surface-200 p-0.5 bg-white"
-              />
-              <span class="text-sm text-surface-500 font-mono uppercase">{{ editInfoForm.primaryColor }}</span>
-              <button
-                pButton [text]="true" severity="secondary" size="small" icon="pi pi-refresh"
-                pTooltip="Restaurar padrão" tooltipPosition="top"
-                (click)="editInfoForm.primaryColor = DEFAULT_PRIMARY_COLOR"
-              ></button>
+        <div class="flex flex-col gap-6 pt-1">
+
+          <!-- INFORMAÇÕES -->
+          <section class="flex flex-col gap-3">
+            <p class="text-[11px] font-semibold text-surface-400 uppercase tracking-wider">Informações</p>
+            <div>
+              <label class="ff-input-label">Título <span class="text-red-500">*</span></label>
+              <input pInputText class="w-full" placeholder="Título do formulário" [(ngModel)]="editInfoForm.title" />
             </div>
-          </div>
-          <div>
-            <label class="ff-input-label">Tamanho do texto</label>
-            <p-select
-              [(ngModel)]="editInfoForm.baseFontSize"
-              [options]="fontSizeOptions"
-              optionLabel="label"
-              optionValue="value"
-              appendTo="body"
-              styleClass="w-full"
-            />
-          </div>
-          <div>
-            <label class="ff-input-label">Fundo da página</label>
-            <p-select
-              [(ngModel)]="editInfoForm.backgroundType"
-              [options]="backgroundTypeOptions"
-              optionLabel="label"
-              optionValue="value"
-              appendTo="body"
-              styleClass="w-full"
-            />
-          </div>
-          @if (editInfoForm.backgroundType === 'color' || editInfoForm.backgroundType === 'gradient') {
-            <div class="flex gap-4">
-              <div class="flex-1">
-                <label class="ff-input-label">{{ editInfoForm.backgroundType === 'gradient' ? 'Cor inicial' : 'Cor do fundo' }}</label>
+            <div>
+              <label class="ff-input-label">Descrição <span class="text-surface-400 font-normal">(opcional)</span></label>
+              <textarea pTextarea class="w-full" [rows]="2" placeholder="Descrição breve..." [(ngModel)]="editInfoForm.description"></textarea>
+            </div>
+            <div>
+              <label class="ff-input-label">Layout</label>
+              <p-select [(ngModel)]="editInfoForm.layout" [options]="layoutOptions"
+                        optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" />
+            </div>
+          </section>
+
+          <hr class="border-surface-100" />
+
+          <!-- APARÊNCIA -->
+          <section class="flex flex-col gap-3">
+            <p class="text-[11px] font-semibold text-surface-400 uppercase tracking-wider">Aparência</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="ff-input-label">Tamanho do texto</label>
+                <p-select [(ngModel)]="editInfoForm.baseFontSize" [options]="fontSizeOptions"
+                          optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" />
+              </div>
+              <div>
+                <label class="ff-input-label">Cor primária</label>
                 <div class="flex items-center gap-2">
-                  <input type="color" [(ngModel)]="editInfoForm.backgroundColor"
+                  <input type="color" [(ngModel)]="editInfoForm.primaryColor"
                          class="w-10 h-10 rounded-lg cursor-pointer border border-surface-200 p-0.5 bg-white shrink-0" />
-                  <span class="text-sm text-surface-500 font-mono uppercase">{{ editInfoForm.backgroundColor }}</span>
+                  <span class="text-sm text-surface-500 font-mono uppercase flex-1">{{ editInfoForm.primaryColor }}</span>
+                  <button pButton [text]="true" severity="secondary" size="small" icon="pi pi-refresh"
+                          pTooltip="Restaurar padrão" tooltipPosition="top"
+                          (click)="editInfoForm.primaryColor = DEFAULT_PRIMARY_COLOR"></button>
                 </div>
               </div>
-              @if (editInfoForm.backgroundType === 'gradient') {
-                <div class="flex-1">
-                  <label class="ff-input-label">Cor final</label>
-                  <div class="flex items-center gap-2">
-                    <input type="color" [(ngModel)]="editInfoForm.backgroundColorEnd"
-                           class="w-10 h-10 rounded-lg cursor-pointer border border-surface-200 p-0.5 bg-white shrink-0" />
-                    <span class="text-sm text-surface-500 font-mono uppercase">{{ editInfoForm.backgroundColorEnd }}</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="ff-input-label">Fundo da página</label>
+                <p-select [(ngModel)]="editInfoForm.backgroundType" [options]="backgroundTypeOptions"
+                          optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" />
+              </div>
+              @if (editInfoForm.backgroundType === 'color' || editInfoForm.backgroundType === 'gradient') {
+                <div class="flex gap-3">
+                  <div class="flex-1">
+                    <label class="ff-input-label">{{ editInfoForm.backgroundType === 'gradient' ? 'Cor inicial' : 'Cor do fundo' }}</label>
+                    <div class="flex items-center gap-2">
+                      <input type="color" [(ngModel)]="editInfoForm.backgroundColor"
+                             class="w-10 h-10 rounded-lg cursor-pointer border border-surface-200 p-0.5 bg-white shrink-0" />
+                      <span class="text-sm text-surface-500 font-mono uppercase">{{ editInfoForm.backgroundColor }}</span>
+                    </div>
                   </div>
+                  @if (editInfoForm.backgroundType === 'gradient') {
+                    <div class="flex-1">
+                      <label class="ff-input-label">Cor final</label>
+                      <div class="flex items-center gap-2">
+                        <input type="color" [(ngModel)]="editInfoForm.backgroundColorEnd"
+                               class="w-10 h-10 rounded-lg cursor-pointer border border-surface-200 p-0.5 bg-white shrink-0" />
+                        <span class="text-sm text-surface-500 font-mono uppercase">{{ editInfoForm.backgroundColorEnd }}</span>
+                      </div>
+                    </div>
+                  }
                 </div>
               }
             </div>
-          }
-          <!-- Banner/Header -->
-          <div>
-            <label class="ff-input-label">Banner / imagem de cabeçalho</label>
-            @if (bannerPreviewUrl()) {
-              <div class="relative mb-2 h-[100px] bg-surface-100 rounded-xl">
-                <img [src]="bannerPreviewUrl()!" alt="Banner" class="w-full h-full object-cover rounded-xl" />
-                <button
-                  type="button"
-                  class="absolute top-2 right-2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white shadow cursor-pointer border-0"
-                  (click)="removeBanner()"
-                >
-                  <i class="pi pi-trash text-xs"></i>
-                </button>
-              </div>
-            } @else {
-              <div
-                class="border-2 border-dashed border-surface-300 rounded-xl h-[72px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-colors"
-                (click)="bannerFileInput.click()"
-              >
-                @if (bannerUploading()) {
-                  <i class="pi pi-spin pi-spinner text-primary-400"></i>
-                  <span class="text-xs text-surface-400">Enviando...</span>
+          </section>
+
+          <hr class="border-surface-100" />
+
+          <!-- IMAGENS -->
+          <section class="flex flex-col gap-3">
+            <p class="text-[11px] font-semibold text-surface-400 uppercase tracking-wider">Imagens</p>
+            <div class="flex gap-4 items-start">
+
+              <!-- Banner -->
+              <div class="flex-1 min-w-0">
+                <label class="ff-input-label">Banner / cabeçalho</label>
+                @if (bannerPreviewUrl()) {
+                  <div class="relative h-[104px] bg-surface-100 rounded-xl overflow-hidden">
+                    <img [src]="bannerPreviewUrl()!" alt="Banner" class="w-full h-full object-cover" />
+                    <button type="button"
+                      class="absolute top-2 right-2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white shadow cursor-pointer border-0"
+                      (click)="removeBanner()">
+                      <i class="pi pi-trash text-xs"></i>
+                    </button>
+                  </div>
                 } @else {
-                  <i class="pi pi-image text-surface-300 text-lg"></i>
-                  <span class="text-xs text-surface-400">Clique para fazer upload (JPG, PNG, WebP)</span>
+                  <div class="border-2 border-dashed border-surface-300 rounded-xl h-[104px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-colors"
+                       (click)="bannerFileInput.click()">
+                    @if (bannerUploading()) {
+                      <i class="pi pi-spin pi-spinner text-primary-400"></i>
+                      <span class="text-xs text-surface-400">Enviando...</span>
+                    } @else {
+                      <i class="pi pi-image text-surface-300 text-xl"></i>
+                      <span class="text-xs text-surface-400">Clique para fazer upload</span>
+                      <span class="text-[10px] text-surface-300">JPG, PNG, WebP</span>
+                    }
+                  </div>
                 }
+                <input #bannerFileInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
+                       (change)="onBannerFileSelected($event)" />
               </div>
-            }
-            <input #bannerFileInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
-                   (change)="onBannerFileSelected($event)" />
-          </div>
+
+              <!-- Logo -->
+              <div class="w-[104px] shrink-0">
+                <label class="ff-input-label">Logo</label>
+                @if (logoPreviewUrl()) {
+                  <div class="relative w-[104px] h-[104px]">
+                    <img [src]="logoPreviewUrl()!" alt="Logo" class="w-full h-full object-contain rounded-xl border border-surface-200 bg-surface-50" />
+                    <button type="button"
+                      class="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white shadow cursor-pointer border-0"
+                      (click)="removeLogo()">
+                      <i class="pi pi-times text-[10px]"></i>
+                    </button>
+                  </div>
+                } @else {
+                  <div class="border-2 border-dashed border-surface-300 rounded-xl w-[104px] h-[104px] flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-colors"
+                       (click)="logoFileInput.click()">
+                    @if (logoUploading()) {
+                      <i class="pi pi-spin pi-spinner text-primary-400"></i>
+                    } @else {
+                      <i class="pi pi-image text-surface-300 text-lg"></i>
+                      <span class="text-[10px] text-surface-400 text-center leading-tight px-1">Logo</span>
+                    }
+                  </div>
+                }
+                <input #logoFileInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
+                       (change)="onLogoFileSelected($event)" />
+              </div>
+
+            </div>
+          </section>
 
           @if (editInfoForm.layout === 'KIOSK') {
-            <div>
-              <label class="ff-input-label">Tema</label>
-              <p-select
-                [(ngModel)]="editInfoForm.kioskTheme"
-                [options]="kioskThemeOptions"
-                optionLabel="label" 
-                optionValue="value"
-                appendTo="body"
-                styleClass="w-full"
-              />
-            </div>
-            <div>
-              <label class="ff-input-label">
-                Tempo de reset automático
-                <span class="text-surface-400 font-normal ml-1">(segundos após o agradecimento)</span>
-              </label>
-              <p-inputNumber
-                [(ngModel)]="editInfoForm.kioskResetDelay"
-                [min]="2" [max]="30" [showButtons]="true"
-                styleClass="w-full"
-                suffix=" s"
-              />
-            </div>
+            <hr class="border-surface-100" />
+            <section class="flex flex-col gap-3">
+              <p class="text-[11px] font-semibold text-surface-400 uppercase tracking-wider">Configurações do Kiosk</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="ff-input-label">Tema</label>
+                  <p-select [(ngModel)]="editInfoForm.kioskTheme" [options]="kioskThemeOptions"
+                            optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" />
+                </div>
+                <div>
+                  <label class="ff-input-label">
+                    Reset automático
+                    <span class="text-surface-400 font-normal ml-1">(s após agradecimento)</span>
+                  </label>
+                  <p-inputNumber [(ngModel)]="editInfoForm.kioskResetDelay" [min]="2" [max]="30"
+                                 [showButtons]="true" styleClass="w-full" suffix=" s" />
+                </div>
+              </div>
+            </section>
           }
+
         </div>
         <ng-template pTemplate="footer">
           <button pButton label="Cancelar" severity="secondary" [text]="true" (click)="editInfoVisible = false"></button>
@@ -373,10 +410,12 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   // ── Editar informações ──
   editInfoVisible = false;
   readonly DEFAULT_PRIMARY_COLOR = '#6366f1';
-  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5, kioskTheme: 'auto' as 'auto' | 'light' | 'dark', primaryColor: '#6366f1', baseFontSize: 'md' as 'sm' | 'md' | 'lg' | 'xl', backgroundType: 'default' as 'default' | 'color' | 'gradient', backgroundColor: '#f1f5f9', backgroundColorEnd: '#e2e8f0', bannerImageKey: null as string | null };
+  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5, kioskTheme: 'auto' as 'auto' | 'light' | 'dark', primaryColor: '#6366f1', baseFontSize: 'md' as 'sm' | 'md' | 'lg' | 'xl', backgroundType: 'default' as 'default' | 'color' | 'gradient', backgroundColor: '#f1f5f9', backgroundColorEnd: '#e2e8f0', bannerImageKey: null as string | null, logoImageKey: null as string | null };
   readonly editInfoSaving = signal(false);
   readonly bannerPreviewUrl = signal<string | null>(null);
   readonly bannerUploading = signal(false);
+  readonly logoPreviewUrl = signal<string | null>(null);
+  readonly logoUploading = signal(false);
   readonly layoutOptions = [
     { label: 'Multi-etapas (uma seção por vez)', value: 'MULTI_STEP' },
     { label: 'Página única (tudo em uma tela)', value: 'SINGLE_PAGE' },
@@ -595,6 +634,13 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     this.router.navigate(['/forms', this.id(), 'settings']);
   }
 
+  copyFormLink(): void {
+    const url = `${window.location.origin}/f/${this.id()}`;
+    navigator.clipboard.writeText(url).then(() => {
+      this.toast.add({ severity: 'success', summary: 'Link copiado!', detail: url, life: 3000 });
+    });
+  }
+
   openEditInfo(): void {
     const f = this.form()!;
     const schema = this.store.toSchema();
@@ -606,11 +652,19 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     const backgroundColor = schema.settings?.theme?.backgroundColor ?? '#f1f5f9';
     const backgroundColorEnd = schema.settings?.theme?.backgroundColorEnd ?? '#e2e8f0';
     const bannerImageKey = schema.settings?.theme?.bannerImageKey ?? null;
-    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay, kioskTheme, primaryColor, baseFontSize, backgroundType, backgroundColor, backgroundColorEnd, bannerImageKey };
+    const logoImageKey = schema.settings?.theme?.logoImageKey ?? null;
+    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay, kioskTheme, primaryColor, baseFontSize, backgroundType, backgroundColor, backgroundColorEnd, bannerImageKey, logoImageKey };
     this.bannerPreviewUrl.set(null);
     if (bannerImageKey) {
       this.uploadApi.getDownloadUrl(bannerImageKey).subscribe({
         next: (r) => this.bannerPreviewUrl.set(r.downloadUrl),
+        error: () => {},
+      });
+    }
+    this.logoPreviewUrl.set(null);
+    if (logoImageKey) {
+      this.uploadApi.getDownloadUrl(logoImageKey).subscribe({
+        next: (r) => this.logoPreviewUrl.set(r.downloadUrl),
         error: () => {},
       });
     }
@@ -635,6 +689,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
         backgroundColor: this.editInfoForm.backgroundColor,
         backgroundColorEnd: this.editInfoForm.backgroundType === 'gradient' ? this.editInfoForm.backgroundColorEnd : undefined,
         bannerImageKey: this.editInfoForm.bannerImageKey ?? undefined,
+        logoImageKey: this.editInfoForm.logoImageKey ?? undefined,
       },
     };
     this.store.settings.set(updatedSettings);
@@ -681,6 +736,32 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   removeBanner(): void {
     this.editInfoForm.bannerImageKey = null;
     this.bannerPreviewUrl.set(null);
+  }
+
+  onLogoFileSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.logoUploading.set(true);
+    this.uploadApi.uploadFile(this.id(), file).subscribe({
+      next: (fileId) => {
+        this.editInfoForm.logoImageKey = fileId;
+        this.uploadApi.getDownloadUrl(fileId).subscribe({
+          next: (r) => this.logoPreviewUrl.set(r.downloadUrl),
+          error: () => {},
+        });
+        this.logoUploading.set(false);
+      },
+      error: () => {
+        this.logoUploading.set(false);
+        this.toast.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao enviar logo' });
+      },
+    });
+    (event.target as HTMLInputElement).value = '';
+  }
+
+  removeLogo(): void {
+    this.editInfoForm.logoImageKey = null;
+    this.logoPreviewUrl.set(null);
   }
 
   formatTimeSince(date: Date): string {

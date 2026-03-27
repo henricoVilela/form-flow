@@ -114,6 +114,7 @@ export interface FormTheme {
   backgroundColor?: string;     // cor sólida ou início do gradiente
   backgroundColorEnd?: string;  // fim do gradiente (só para 'gradient')
   bannerImageKey?: string | null; // fileId do banner (MinIO)
+  logoImageKey?: string | null;   // fileId do logo (MinIO)
 }
 
 export interface FormSettings {
