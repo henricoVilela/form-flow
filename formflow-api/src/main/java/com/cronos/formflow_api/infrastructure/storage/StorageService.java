@@ -19,6 +19,7 @@ import com.cronos.formflow_api.shared.exception.ResourceNotFoundException;
 import io.minio.GetObjectArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
+import io.minio.RemoveObjectArgs;
 import io.minio.http.Method;
 
 import java.io.InputStream;
@@ -145,6 +146,36 @@ public class StorageService {
             log.error("Erro ao gerar URL de download: fileId={}", fileId, e);
             throw new BusinessException("STORAGE_ERROR", "Erro ao gerar URL de download");
         }
+    }
+
+    /**
+     * Deleta um arquivo do MinIO e marca como DELETED no banco.
+     * Ignorado silenciosamente se o arquivo não existir no MinIO.
+     */
+    @Transactional
+    public void delete(UUID fileId) {
+        UploadedFile file = uploadedFileRepository.findById(fileId)
+                .orElseThrow(() -> new ResourceNotFoundException("Arquivo não encontrado"));
+
+        if (file.getStatus() == UploadStatus.DELETED) {
+            return;
+        }
+
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(minioProperties.getBucketUploads())
+                            .object(file.getStorageKey())
+                            .build()
+            );
+        } catch (Exception e) {
+            log.warn("Falha ao remover arquivo do MinIO (fileId={}): {}", fileId, e.getMessage());
+        }
+
+        file.setStatus(UploadStatus.DELETED);
+        uploadedFileRepository.save(file);
+
+        log.info("Arquivo deletado: fileId={}, key={}", fileId, file.getStorageKey());
     }
 
     /**

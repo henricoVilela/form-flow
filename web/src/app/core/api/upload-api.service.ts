@@ -55,6 +55,11 @@ export class UploadApiService {
     return this.http.get<any>(`${this.baseUrl}/${fileId}/download`);
   }
 
+  /** Deleta um arquivo do MinIO (requer autenticação) */
+  deleteFile(fileId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${fileId}`);
+  }
+
   /**
    * Fluxo completo: presign → upload → confirm.
    * Retorna o fileId do arquivo confirmado.

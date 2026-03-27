@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -66,6 +67,18 @@ public class FileController {
     @PostMapping("/{id}/confirm")
     public ResponseEntity<Void> confirm(@PathVariable UUID id) {
         storageService.confirm(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Deleta um arquivo do MinIO e marca como DELETED.
+     * Requer autenticação (dono do formulário).
+     *
+     * @param id UUID do arquivo
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        storageService.delete(id);
         return ResponseEntity.noContent().build();
     }
 

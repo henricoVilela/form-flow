@@ -226,7 +226,7 @@ public class FormService {
         if (latestVersion != null && latestVersion.getSchema() != null) {
             JsonNode colorNode = latestVersion.getSchema().path("settings").path("theme").path("primaryColor");
             if (!colorNode.isMissingNode() && !colorNode.isNull()) {
-                primaryColor = colorNode.asText();
+                primaryColor = colorNode.asString();
             }
         }
         return new FormMetaResponse(primaryColor);

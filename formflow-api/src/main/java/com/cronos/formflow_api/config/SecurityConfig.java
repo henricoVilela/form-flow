@@ -51,6 +51,7 @@ class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/forms/*/responses").permitAll()
 
                 // ── Upload de arquivos (respondente faz upload sem login) ──
+                .requestMatchers(HttpMethod.DELETE, "/upload/**").authenticated()
                 .requestMatchers("/upload/**").permitAll()
 
                 // ── Documentação API ──

@@ -213,8 +213,8 @@ GET    /public/forms/{formId}  → PublicFormResponse
 
   Fase 2 — Identidade visual
   ~~5~~. Banner/Header
-  6. Logo
-  7. Cover Page (boas-vindas)
+  ~~6~~. Logo
+  ~~7~~. Cover Page (boas-vindas)
 
   Fase 3 — Polish
   8. Barra de progresso

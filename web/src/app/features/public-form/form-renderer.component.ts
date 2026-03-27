@@ -151,7 +151,7 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
           @if (formData()!.welcomeMessage) {
             <p class="text-sm text-surface-600 mb-6 max-w-md mx-auto whitespace-pre-line">{{ formData()!.welcomeMessage }}</p>
           }
-          <button pButton label="Começar" icon="pi pi-arrow-right" iconPos="right" (click)="startForm()"></button>
+          <button pButton [label]="formData()!.schema?.settings?.theme?.welcomeButtonLabel || 'Começar'" icon="pi pi-arrow-right" iconPos="right" (click)="startForm()"></button>
         </div>
       }
 
@@ -299,6 +299,7 @@ export class FormRendererComponent implements OnInit, OnDestroy {
   readonly redirectCountdown = signal<number | null>(null);
   readonly bannerUrl = signal<string | null>(null);
   readonly logoUrl = signal<string | null>(null);
+  readonly backgroundImageUrl = signal<string | null>(null);
   private redirectTimer: ReturnType<typeof setInterval> | null = null;
 
   readonly fontSizeClass = computed(() => {
@@ -308,7 +309,7 @@ export class FormRendererComponent implements OnInit, OnDestroy {
 
   readonly hasCustomBackground = computed(() => {
     const type = this.formData()?.schema?.settings?.theme?.backgroundType as string | undefined;
-    return type === 'color' || type === 'gradient';
+    return type === 'color' || type === 'gradient' || (type === 'image' && !!this.backgroundImageUrl());
   });
 
   readonly themeVars = computed(() => {
@@ -336,6 +337,13 @@ export class FormRendererComponent implements OnInit, OnDestroy {
     } else if (bgType === 'gradient' && bgColor) {
       const endColor = bgEnd ?? bgColor;
       vars.push(`background:linear-gradient(to bottom,${bgColor},${endColor})`);
+    } else if (bgType === 'image' && this.backgroundImageUrl()) {
+      vars.push(
+        `background-image:url('${this.backgroundImageUrl()}')`,
+        `background-size:cover`,
+        `background-position:center`,
+        `background-attachment:fixed`,
+      );
     }
     return vars.length ? vars.join(';') : null;
   });
@@ -387,6 +395,13 @@ export class FormRendererComponent implements OnInit, OnDestroy {
         this.formData.set(data);
         this.sections.set((data.schema?.sections ?? []).filter((s: any) => s.questions?.length > 0));
         this.passwordChecking.set(false);
+        const bgImageKey = data.schema?.settings?.theme?.backgroundImageKey as string | undefined;
+        if (bgImageKey) {
+          this.uploadApi.getDownloadUrl(bgImageKey).subscribe({
+            next: (r) => this.backgroundImageUrl.set(r.downloadUrl),
+            error: () => {},
+          });
+        }
         const bannerKey = data.schema?.settings?.theme?.bannerImageKey as string | undefined;
         if (bannerKey) {
           this.uploadApi.getDownloadUrl(bannerKey).subscribe({

@@ -218,6 +218,13 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
               <p-select [(ngModel)]="editInfoForm.layout" [options]="layoutOptions"
                         optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" />
             </div>
+            <div>
+              <label class="ff-input-label">
+                Texto do botão de início
+                <span class="text-surface-400 font-normal ml-1">(tela de boas-vindas)</span>
+              </label>
+              <input pInputText class="w-full" placeholder="Começar" [(ngModel)]="editInfoForm.welcomeButtonLabel" />
+            </div>
           </section>
 
           <hr class="border-surface-100" />
@@ -272,6 +279,35 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
                 </div>
               }
             </div>
+            @if (editInfoForm.backgroundType === 'image') {
+              <div>
+                <label class="ff-input-label">Imagem de fundo</label>
+                @if (backgroundImagePreviewUrl()) {
+                  <div class="relative h-[100px] rounded-xl overflow-hidden">
+                    <img [src]="backgroundImagePreviewUrl()!" alt="Fundo" class="w-full h-full object-cover" />
+                    <button type="button"
+                      class="absolute top-2 right-2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white shadow cursor-pointer border-0"
+                      (click)="removeBackgroundImage()">
+                      <i class="pi pi-trash text-xs"></i>
+                    </button>
+                  </div>
+                } @else {
+                  <div class="border-2 border-dashed border-surface-300 rounded-xl h-[100px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950 transition-colors"
+                       (click)="bgImageFileInput.click()">
+                    @if (backgroundImageUploading()) {
+                      <i class="pi pi-spin pi-spinner text-primary-400"></i>
+                      <span class="text-xs text-surface-400">Enviando...</span>
+                    } @else {
+                      <i class="pi pi-image text-surface-300 text-xl"></i>
+                      <span class="text-xs text-surface-400">Clique para fazer upload</span>
+                      <span class="text-[10px] text-surface-300">JPG, PNG, WebP</span>
+                    }
+                  </div>
+                }
+                <input #bgImageFileInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
+                       (change)="onBackgroundImageSelected($event)" />
+              </div>
+            }
           </section>
 
           <hr class="border-surface-100" />
@@ -294,7 +330,7 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
                     </button>
                   </div>
                 } @else {
-                  <div class="border-2 border-dashed border-surface-300 rounded-xl h-[104px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-colors"
+                  <div class="border-2 border-dashed border-surface-300 rounded-xl h-[104px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950 transition-colors"
                        (click)="bannerFileInput.click()">
                     @if (bannerUploading()) {
                       <i class="pi pi-spin pi-spinner text-primary-400"></i>
@@ -323,7 +359,7 @@ import { BuilderPreviewDialogComponent } from './preview/builder-preview-dialog.
                     </button>
                   </div>
                 } @else {
-                  <div class="border-2 border-dashed border-surface-300 rounded-xl w-[104px] h-[104px] flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-colors"
+                  <div class="border-2 border-dashed border-surface-300 rounded-xl w-[104px] h-[104px] flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950 transition-colors"
                        (click)="logoFileInput.click()">
                     @if (logoUploading()) {
                       <i class="pi pi-spin pi-spinner text-primary-400"></i>
@@ -410,8 +446,10 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   // ── Editar informações ──
   editInfoVisible = false;
   readonly DEFAULT_PRIMARY_COLOR = '#6366f1';
-  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5, kioskTheme: 'auto' as 'auto' | 'light' | 'dark', primaryColor: '#6366f1', baseFontSize: 'md' as 'sm' | 'md' | 'lg' | 'xl', backgroundType: 'default' as 'default' | 'color' | 'gradient', backgroundColor: '#f1f5f9', backgroundColorEnd: '#e2e8f0', bannerImageKey: null as string | null, logoImageKey: null as string | null };
+  editInfoForm = { title: '', description: '', layout: 'MULTI_STEP' as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay: 5, kioskTheme: 'auto' as 'auto' | 'light' | 'dark', primaryColor: '#6366f1', baseFontSize: 'md' as 'sm' | 'md' | 'lg' | 'xl', backgroundType: 'default' as 'default' | 'color' | 'gradient' | 'image', backgroundColor: '#f1f5f9', backgroundColorEnd: '#e2e8f0', backgroundImageKey: null as string | null, bannerImageKey: null as string | null, logoImageKey: null as string | null, welcomeButtonLabel: '' };
   readonly editInfoSaving = signal(false);
+  readonly backgroundImagePreviewUrl = signal<string | null>(null);
+  readonly backgroundImageUploading = signal(false);
   readonly bannerPreviewUrl = signal<string | null>(null);
   readonly bannerUploading = signal(false);
   readonly logoPreviewUrl = signal<string | null>(null);
@@ -439,6 +477,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     { label: 'Padrão', value: 'default' },
     { label: 'Cor sólida', value: 'color' },
     { label: 'Gradiente', value: 'gradient' },
+    { label: 'Imagem', value: 'image' },
   ];
 
   private readonly destroy$ = new Subject<void>();
@@ -651,9 +690,18 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     const backgroundType = (schema.settings?.theme?.backgroundType ?? 'default') as 'default' | 'color' | 'gradient';
     const backgroundColor = schema.settings?.theme?.backgroundColor ?? '#f1f5f9';
     const backgroundColorEnd = schema.settings?.theme?.backgroundColorEnd ?? '#e2e8f0';
+    const backgroundImageKey = schema.settings?.theme?.backgroundImageKey ?? null;
     const bannerImageKey = schema.settings?.theme?.bannerImageKey ?? null;
     const logoImageKey = schema.settings?.theme?.logoImageKey ?? null;
-    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay, kioskTheme, primaryColor, baseFontSize, backgroundType, backgroundColor, backgroundColorEnd, bannerImageKey, logoImageKey };
+    const welcomeButtonLabel = schema.settings?.theme?.welcomeButtonLabel ?? '';
+    this.editInfoForm = { title: f.title, description: f.description ?? '', layout: f.layout as 'MULTI_STEP' | 'SINGLE_PAGE' | 'KIOSK', kioskResetDelay, kioskTheme, primaryColor, baseFontSize, backgroundType, backgroundColor, backgroundColorEnd, backgroundImageKey, bannerImageKey, logoImageKey, welcomeButtonLabel };
+    this.backgroundImagePreviewUrl.set(null);
+    if (backgroundImageKey) {
+      this.uploadApi.getDownloadUrl(backgroundImageKey).subscribe({
+        next: (r) => this.backgroundImagePreviewUrl.set(r.downloadUrl),
+        error: () => {},
+      });
+    }
     this.bannerPreviewUrl.set(null);
     if (bannerImageKey) {
       this.uploadApi.getDownloadUrl(bannerImageKey).subscribe({
@@ -688,8 +736,10 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
         backgroundType: this.editInfoForm.backgroundType,
         backgroundColor: this.editInfoForm.backgroundColor,
         backgroundColorEnd: this.editInfoForm.backgroundType === 'gradient' ? this.editInfoForm.backgroundColorEnd : undefined,
+        backgroundImageKey: this.editInfoForm.backgroundType === 'image' ? (this.editInfoForm.backgroundImageKey ?? undefined) : undefined,
         bannerImageKey: this.editInfoForm.bannerImageKey ?? undefined,
         logoImageKey: this.editInfoForm.logoImageKey ?? undefined,
+        welcomeButtonLabel: this.editInfoForm.welcomeButtonLabel || undefined,
       },
     };
     this.store.settings.set(updatedSettings);
@@ -710,6 +760,35 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
         this.toast.add({ severity: 'error', summary: 'Erro', detail: err.error?.message ?? 'Falha ao salvar' });
       },
     });
+  }
+
+  onBackgroundImageSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.backgroundImageUploading.set(true);
+    this.uploadApi.uploadFile(this.id(), file).subscribe({
+      next: (fileId) => {
+        this.editInfoForm.backgroundImageKey = fileId;
+        this.uploadApi.getDownloadUrl(fileId).subscribe({
+          next: (r) => this.backgroundImagePreviewUrl.set(r.downloadUrl),
+          error: () => {},
+        });
+        this.backgroundImageUploading.set(false);
+      },
+      error: () => {
+        this.backgroundImageUploading.set(false);
+        this.toast.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao enviar imagem de fundo' });
+      },
+    });
+    (event.target as HTMLInputElement).value = '';
+  }
+
+  removeBackgroundImage(): void {
+    if (this.editInfoForm.backgroundImageKey) {
+      this.uploadApi.deleteFile(this.editInfoForm.backgroundImageKey).subscribe({ error: () => {} });
+    }
+    this.editInfoForm.backgroundImageKey = null;
+    this.backgroundImagePreviewUrl.set(null);
   }
 
   onBannerFileSelected(event: Event): void {
@@ -734,6 +813,9 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   }
 
   removeBanner(): void {
+    if (this.editInfoForm.bannerImageKey) {
+      this.uploadApi.deleteFile(this.editInfoForm.bannerImageKey).subscribe({ error: () => {} });
+    }
     this.editInfoForm.bannerImageKey = null;
     this.bannerPreviewUrl.set(null);
   }
@@ -760,6 +842,9 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   }
 
   removeLogo(): void {
+    if (this.editInfoForm.logoImageKey) {
+      this.uploadApi.deleteFile(this.editInfoForm.logoImageKey).subscribe({ error: () => {} });
+    }
     this.editInfoForm.logoImageKey = null;
     this.logoPreviewUrl.set(null);
   }

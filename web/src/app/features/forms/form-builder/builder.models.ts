@@ -105,7 +105,7 @@ export interface KioskSettings {
 }
 
 export type FontSizeOption = 'sm' | 'md' | 'lg' | 'xl';
-export type BackgroundType = 'default' | 'color' | 'gradient';
+export type BackgroundType = 'default' | 'color' | 'gradient' | 'image';
 
 export interface FormTheme {
   primaryColor?: string;        // hex, ex: '#6366f1'
@@ -113,8 +113,10 @@ export interface FormTheme {
   backgroundType?: BackgroundType; // default: 'default'
   backgroundColor?: string;     // cor sólida ou início do gradiente
   backgroundColorEnd?: string;  // fim do gradiente (só para 'gradient')
-  bannerImageKey?: string | null; // fileId do banner (MinIO)
-  logoImageKey?: string | null;   // fileId do logo (MinIO)
+  backgroundImageKey?: string | null; // fileId da imagem de fundo (MinIO)
+  bannerImageKey?: string | null;    // fileId do banner (MinIO)
+  logoImageKey?: string | null;      // fileId do logo (MinIO)
+  welcomeButtonLabel?: string;       // label do botão na tela de boas-vindas (padrão: 'Começar')
 }
 
 export interface FormSettings {
