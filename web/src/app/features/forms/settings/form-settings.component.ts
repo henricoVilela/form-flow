@@ -16,7 +16,8 @@ import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
-import { FormApiService, FormResponse, FormVisibility, RespondentResponse } from '@core/api/form-api.service';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { FormApiService, FormResponse, FormVisibility, RespondentResponse, UploadConfigResponse } from '@core/api/form-api.service';
 
 @Component({
   selector: 'app-form-settings',
@@ -24,7 +25,7 @@ import { FormApiService, FormResponse, FormVisibility, RespondentResponse } from
     CommonModule, FormsModule,
     ButtonModule, InputTextModule, TextareaModule, InputNumberModule,
     SelectModule, DatePickerModule, SkeletonModule, DividerModule, TooltipModule,
-    ToggleSwitchModule, TagModule, DialogModule, ConfirmDialogModule,
+    ToggleSwitchModule, TagModule, DialogModule, ConfirmDialogModule, MultiSelectModule,
   ],
   providers: [ConfirmationService],
   template: `
@@ -319,6 +320,54 @@ import { FormApiService, FormResponse, FormVisibility, RespondentResponse } from
           }
         </div>
 
+        <!-- ── Upload de arquivos ── -->
+        <div class="ff-card">
+          <h2 class="text-base font-semibold text-surface-900 dark:text-surface-50 mb-1 flex items-center gap-2">
+            <i class="pi pi-upload text-primary-500 text-sm"></i>
+            Upload de arquivos
+          </h2>
+          <p class="text-xs text-surface-400 dark:text-surface-500 mb-4">
+            Regras aplicadas a questões do tipo "Upload" neste formulário.
+          </p>
+
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="ff-input-label">
+                  Tamanho máximo por arquivo
+                  <span class="text-surface-400 font-normal ml-1">(MB)</span>
+                </label>
+                <p-inputNumber
+                  [(ngModel)]="uploadMaxFileSizeMb"
+                  [min]="1" [max]="100" [showButtons]="true"
+                  styleClass="w-full"
+                  suffix=" MB"
+                />
+              </div>
+              <div>
+                <label class="ff-input-label">Total máximo de arquivos</label>
+                <p-inputNumber
+                  [(ngModel)]="uploadMaxFilesTotal"
+                  [min]="1" [max]="500" [showButtons]="true"
+                  styleClass="w-full"
+                />
+              </div>
+            </div>
+            <div>
+              <label class="ff-input-label">Tipos de arquivo permitidos</label>
+              <p-multiselect
+                [(ngModel)]="uploadAllowedTypes"
+                [options]="uploadTypeOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Selecione os tipos"
+                styleClass="w-full"
+                display="chip"
+              />
+            </div>
+          </div>
+        </div>
+
         <!-- Save button (bottom) -->
         <div class="flex justify-end">
           <button
@@ -381,6 +430,24 @@ export class FormSettingsComponent implements OnInit {
   readonly saving = signal(false);
   readonly form = signal<FormResponse | null>(null);
 
+  // ── Upload config fields ──
+  uploadMaxFileSizeMb = 10;
+  uploadMaxFilesTotal = 20;
+  uploadAllowedTypes: string[] = ['image/jpeg', 'image/png', 'application/pdf'];
+
+  readonly uploadTypeOptions = [
+    { label: 'JPEG', value: 'image/jpeg' },
+    { label: 'PNG', value: 'image/png' },
+    { label: 'WebP', value: 'image/webp' },
+    { label: 'GIF', value: 'image/gif' },
+    { label: 'PDF', value: 'application/pdf' },
+    { label: 'Word (.docx)', value: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+    { label: 'Excel (.xlsx)', value: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+    { label: 'Qualquer imagem', value: 'image/*' },
+    { label: 'Qualquer vídeo', value: 'video/*' },
+    { label: 'Qualquer arquivo', value: '*/*' },
+  ];
+
   // ── Form fields ──
   visibility: FormVisibility = 'PUBLIC';
   slug = '';
@@ -422,11 +489,23 @@ export class FormSettingsComponent implements OnInit {
         this.thankYouShowResubmit = form.thankYouShowResubmit ?? false;
         this.loading.set(false);
         this.loadRespondents();
+        this.loadUploadConfig();
       },
       error: () => {
         this.toast.add({ severity: 'error', summary: 'Erro', detail: 'Formulário não encontrado' });
         this.router.navigate(['/forms']);
       },
+    });
+  }
+
+  private loadUploadConfig(): void {
+    this.formApi.getUploadConfig(this.id()).subscribe({
+      next: (config) => {
+        this.uploadMaxFileSizeMb = config.maxFileSizeMb;
+        this.uploadMaxFilesTotal = config.maxFilesTotal;
+        this.uploadAllowedTypes = config.allowedTypes;
+      },
+      error: () => {},
     });
   }
 
@@ -531,6 +610,11 @@ export class FormSettingsComponent implements OnInit {
         this.password = '';
         this.saving.set(false);
         this.toast.add({ severity: 'success', summary: 'Salvo!', detail: 'Configurações atualizadas com sucesso' });
+        this.formApi.updateUploadConfig(this.id(), {
+          maxFileSizeMb: this.uploadMaxFileSizeMb,
+          maxFilesTotal: this.uploadMaxFilesTotal,
+          allowedTypes: this.uploadAllowedTypes,
+        }).subscribe({ error: () => {} });
       },
       error: (err) => {
         this.saving.set(false);

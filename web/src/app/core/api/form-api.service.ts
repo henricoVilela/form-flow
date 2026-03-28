@@ -315,6 +315,26 @@ export class FormApiService {
   deleteRespondent(formId: string, respondentId: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${formId}/respondents/${respondentId}`);
   }
+
+  getUploadConfig(formId: string): Observable<UploadConfigResponse> {
+    return this.http.get<UploadConfigResponse>(`${this.baseUrl}/${formId}/upload-config`);
+  }
+
+  updateUploadConfig(formId: string, request: UploadConfigRequest): Observable<UploadConfigResponse> {
+    return this.http.put<UploadConfigResponse>(`${this.baseUrl}/${formId}/upload-config`, request);
+  }
+}
+
+export interface UploadConfigResponse {
+  maxFileSizeMb: number;
+  maxFilesTotal: number;
+  allowedTypes: string[];
+}
+
+export interface UploadConfigRequest {
+  maxFileSizeMb: number;
+  maxFilesTotal: number;
+  allowedTypes: string[];
 }
 
 export interface RespondentResponse {

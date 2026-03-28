@@ -13,15 +13,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Arrays;
+
 import com.cronos.formflow_api.api.dto.request.CreateFormRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateFormRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateFormSettingsRequest;
+import com.cronos.formflow_api.api.dto.request.UpdateUploadConfigRequest;
 import com.cronos.formflow_api.api.dto.response.DashboardStatsResponse;
 import com.cronos.formflow_api.api.dto.response.FormMetaResponse;
 import com.cronos.formflow_api.api.dto.response.FormResponse;
 import com.cronos.formflow_api.api.dto.response.FormVersionResponse;
 import com.cronos.formflow_api.api.dto.response.PublicFormResponse;
 import com.cronos.formflow_api.api.dto.response.PublishResponse;
+import com.cronos.formflow_api.api.dto.response.UploadConfigResponse;
 import com.cronos.formflow_api.domain.response.ResponseRepository;
 import com.cronos.formflow_api.domain.form.validation.SchemaConditionValidator;
 import com.cronos.formflow_api.domain.user.User;
@@ -45,6 +49,7 @@ public class FormService {
     private final PasswordEncoder passwordEncoder;
     private final FormRespondentService respondentService;
     private final ResponseRepository responseRepository;
+    private final FormUploadConfigRepository uploadConfigRepository;
 
     @Transactional
     public FormResponse create(User user, CreateFormRequest request) {
@@ -466,6 +471,41 @@ public class FormService {
                 idMapping.put(oldId, newId);
             }
         }
+    }
+
+    public UploadConfigResponse getUploadConfig(User user, UUID formId) {
+        formRepository.findByIdAndUserId(formId, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
+
+        FormUploadConfig config = uploadConfigRepository.findByFormId(formId)
+                .orElse(FormUploadConfig.builder().build());
+
+        return toUploadConfigResponse(config);
+    }
+
+    @Transactional
+    public UploadConfigResponse updateUploadConfig(User user, UUID formId, UpdateUploadConfigRequest request) {
+        Form form = formRepository.findByIdAndUserId(formId, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Formulário não encontrado"));
+
+        FormUploadConfig config = uploadConfigRepository.findByFormId(formId)
+                .orElse(FormUploadConfig.builder().form(form).build());
+
+        config.setMaxFileSize(request.getMaxFileSizeMb() * 1_048_576L);
+        config.setMaxFilesTotal(request.getMaxFilesTotal());
+        config.setAllowedTypes(request.getAllowedTypes().toArray(new String[0]));
+
+        uploadConfigRepository.save(config);
+
+        return toUploadConfigResponse(config);
+    }
+
+    private UploadConfigResponse toUploadConfigResponse(FormUploadConfig config) {
+        return UploadConfigResponse.builder()
+                .maxFileSizeMb(config.getMaxFileSize() / 1_048_576L)
+                .maxFilesTotal(config.getMaxFilesTotal())
+                .allowedTypes(Arrays.asList(config.getAllowedTypes()))
+                .build();
     }
 
     /**

@@ -22,10 +22,12 @@ import com.cronos.formflow_api.api.dto.request.CreateFormRequest;
 import com.cronos.formflow_api.api.dto.request.PublishFormRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateFormRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateFormSettingsRequest;
+import com.cronos.formflow_api.api.dto.request.UpdateUploadConfigRequest;
 import com.cronos.formflow_api.api.dto.response.DashboardStatsResponse;
 import com.cronos.formflow_api.api.dto.response.FormResponse;
 import com.cronos.formflow_api.api.dto.response.FormVersionResponse;
 import com.cronos.formflow_api.api.dto.response.PublishResponse;
+import com.cronos.formflow_api.api.dto.response.UploadConfigResponse;
 import com.cronos.formflow_api.domain.form.FormService;
 import com.cronos.formflow_api.domain.user.User;
 
@@ -134,5 +136,20 @@ public class FormController {
             @PathVariable UUID id) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(formService.duplicate(user, id));
+    }
+
+    @GetMapping("/{id}/upload-config")
+    public ResponseEntity<UploadConfigResponse> getUploadConfig(
+            @AuthenticationPrincipal User user,
+            @PathVariable UUID id) {
+        return ResponseEntity.ok(formService.getUploadConfig(user, id));
+    }
+
+    @PutMapping("/{id}/upload-config")
+    public ResponseEntity<UploadConfigResponse> updateUploadConfig(
+            @AuthenticationPrincipal User user,
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateUploadConfigRequest request) {
+        return ResponseEntity.ok(formService.updateUploadConfig(user, id, request));
     }
 }

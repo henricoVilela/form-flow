@@ -213,29 +213,39 @@ function buildEmojiSet(max: number): string[] {
 
     <!-- ── THANKS STATE ── -->
     @if (kioskState() === 'thanks') {
-      <div class="thanks-bg min-h-screen flex flex-col items-center justify-center px-6 text-center animate-slide-up relative">
-        <div class="text-7xl sm:text-8xl mb-6 select-none">✅</div>
+      <div class="thanks-bg min-h-screen flex flex-col items-center justify-center px-6 text-center relative overflow-hidden">
 
-        <h1 class="k-thanks-heading text-3xl sm:text-4xl font-bold mb-4">Obrigado!</h1>
+        <!-- Ícone com ripple -->
+        <div class="relative flex items-center justify-center mb-10">
+          <div class="absolute w-64 h-64 rounded-full thanks-ring" style="animation-delay: 0.9s"></div>
+          <div class="absolute w-48 h-48 rounded-full thanks-ring" style="animation-delay: 0s"></div>
+          <div class="relative z-10 w-32 h-32 rounded-full thanks-icon-circle flex items-center justify-center thanks-pop-in">
+            <i class="pi pi-check thanks-check-color"></i>
+          </div>
+        </div>
+
+        <h1 class="k-thanks-heading text-4xl sm:text-5xl font-bold mb-4 leading-tight">
+          {{ formData().thankYouMessage ? 'Obrigado!' : 'Avaliação enviada!' }}
+        </h1>
 
         @if (formData().thankYouMessage) {
-          <p class="k-thanks-body text-lg max-w-md mb-10 whitespace-pre-line leading-relaxed">
+          <p class="k-thanks-body text-lg max-w-sm mb-12 whitespace-pre-line leading-relaxed">
             {{ formData().thankYouMessage }}
           </p>
         } @else {
-          <p class="k-thanks-body text-lg mb-10">
-            Sua avaliação foi registrada com sucesso.
+          <p class="k-thanks-body text-base mb-12 max-w-xs leading-relaxed">
+            Sua resposta foi registrada com sucesso.
           </p>
         }
 
-        <div class="k-countdown-track w-64 h-1.5 rounded-full overflow-hidden mb-3">
+        <div class="k-countdown-track w-56 h-1.5 rounded-full overflow-hidden mb-3">
           <div
             class="k-countdown-bar h-full rounded-full"
             [style.width.%]="countdownPercent()"
             style="transition: width 1s linear"
           ></div>
         </div>
-        <p class="k-thanks-faint text-sm mb-8">Nova avaliação em {{ countdown() }}s</p>
+        <p class="k-thanks-faint text-sm mb-10">Nova avaliação em {{ countdown() }}s</p>
 
         <button
           pButton
@@ -246,7 +256,6 @@ function buildEmojiSet(max: number): string[] {
           (click)="resetKiosk()"
         ></button>
 
-        <!-- Theme toggle também na tela de agradecimento -->
         @if (themeSetting() === 'auto') {
           <button
             class="kiosk-theme-toggle absolute bottom-5 right-5"
@@ -294,11 +303,14 @@ function buildEmojiSet(max: number): string[] {
 
       --k-progress-track:  rgba(255,255,255,0.10);
 
-      --k-thanks-heading:  #ffffff;
-      --k-thanks-body:     rgba(255,255,255,0.70);
-      --k-thanks-faint:    rgba(255,255,255,0.40);
-      --k-cdown-track:     rgba(255,255,255,0.20);
-      --k-cdown-bar:       rgba(255,255,255,0.70);
+      --k-thanks-heading:    #ffffff;
+      --k-thanks-body:       rgba(255,255,255,0.70);
+      --k-thanks-faint:      rgba(255,255,255,0.40);
+      --k-cdown-track:       rgba(255,255,255,0.20);
+      --k-cdown-bar:         rgba(255,255,255,0.70);
+      --k-thanks-icon-bg:    rgba(16,185,129,0.25);
+      --k-thanks-icon-color: #6ee7b7;
+      --k-thanks-ring-bg:    rgba(16,185,129,0.12);
 
       --k-toggle-bg:       rgba(255,255,255,0.10);
       --k-toggle-text:     rgba(255,255,255,0.55);
@@ -342,11 +354,14 @@ function buildEmojiSet(max: number): string[] {
 
       --k-progress-track:  rgba(15,23,42,0.10);
 
-      --k-thanks-heading:  #064e3b;
-      --k-thanks-body:     rgba(6,78,59,0.70);
-      --k-thanks-faint:    rgba(6,78,59,0.45);
-      --k-cdown-track:     rgba(6,78,59,0.15);
-      --k-cdown-bar:       rgba(6,78,59,0.55);
+      --k-thanks-heading:    #064e3b;
+      --k-thanks-body:       rgba(6,78,59,0.70);
+      --k-thanks-faint:      rgba(6,78,59,0.45);
+      --k-cdown-track:       rgba(6,78,59,0.15);
+      --k-cdown-bar:         rgba(6,78,59,0.55);
+      --k-thanks-icon-bg:    rgba(5,150,105,0.15);
+      --k-thanks-icon-color: #059669;
+      --k-thanks-ring-bg:    rgba(5,150,105,0.08);
 
       --k-toggle-bg:       rgba(15,23,42,0.08);
       --k-toggle-text:     rgba(15,23,42,0.50);
@@ -490,6 +505,37 @@ function buildEmojiSet(max: number): string[] {
     }
     .kiosk-theme-toggle:hover {
       background: var(--k-toggle-hov);
+    }
+
+    /* ─────────────────────────────────────────────
+       Thanks screen — ícone + animações
+    ───────────────────────────────────────────── */
+    .thanks-icon-circle {
+      background: var(--k-thanks-icon-bg);
+    }
+    .thanks-check-color {
+      color: var(--k-thanks-icon-color);
+      font-size: 3.5rem;
+    }
+
+    .thanks-ring {
+      background: var(--k-thanks-ring-bg);
+      animation: k-ripple 2.8s ease-out infinite;
+    }
+
+    .thanks-pop-in {
+      animation: k-pop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    @keyframes k-ripple {
+      0%   { transform: scale(0.85); opacity: 0; }
+      18%  { opacity: 0.55; }
+      100% { transform: scale(1.55); opacity: 0; }
+    }
+
+    @keyframes k-pop-in {
+      from { transform: scale(0.3); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
     }
 
     /* ─────────────────────────────────────────────
