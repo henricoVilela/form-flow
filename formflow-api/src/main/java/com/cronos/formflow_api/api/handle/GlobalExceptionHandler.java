@@ -97,6 +97,10 @@ public class GlobalExceptionHandler {
             case "EMAIL_ALREADY_EXISTS", "SLUG_ALREADY_TAKEN" -> HttpStatus.CONFLICT;
             case "FORM_NOT_PUBLISHED", "VERSION_MISMATCH", "FILE_NOT_CONFIRMED" -> HttpStatus.CONFLICT;
             case "INVALID_TOKEN", "PASSWORD_REQUIRED", "TOKEN_INVALID" -> HttpStatus.UNAUTHORIZED;
+            case "TOKEN_EXPIRED" -> HttpStatus.GONE;
+            case "ALREADY_VERIFIED" -> HttpStatus.CONFLICT;
+            case "EMAIL_NOT_VERIFIED" -> HttpStatus.FORBIDDEN;
+            case "INVALID_CREDENTIALS" -> HttpStatus.UNAUTHORIZED;
             case "WRONG_PASSWORD" -> HttpStatus.FORBIDDEN;
             case "RESPONDENT_LIMIT_REACHED", "FORM_RESPONSE_LIMIT_REACHED" -> HttpStatus.FORBIDDEN;
             default -> HttpStatus.UNPROCESSABLE_CONTENT;

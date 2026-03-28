@@ -1,5 +1,8 @@
 package com.cronos.formflow_api.domain.user;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,7 +17,9 @@ import com.cronos.formflow_api.api.dto.request.LoginRequest;
 import com.cronos.formflow_api.api.dto.request.RegisterRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateProfileRequest;
 import com.cronos.formflow_api.api.dto.response.AuthResponse;
+import com.cronos.formflow_api.api.dto.response.RegisterResponse;
 import com.cronos.formflow_api.api.dto.response.UserResponse;
+import com.cronos.formflow_api.infrastructure.mail.EmailService;
 import com.cronos.formflow_api.infrastructure.security.JwtService;
 import com.cronos.formflow_api.shared.exception.BusinessException;
 
@@ -27,6 +32,7 @@ public class AuthService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final EmailService emailService;
     private final ApplicationContext applicationContext;
 
     // Lazy via ApplicationContext para evitar dependência circular com SecurityConfig
@@ -41,28 +47,63 @@ public class AuthService implements UserDetailsService {
     }
 
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public RegisterResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BusinessException("EMAIL_ALREADY_EXISTS", "E-mail já cadastrado");
         }
+
+        String token = UUID.randomUUID().toString().replace("-", "");
 
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .emailVerified(false)
+                .verificationToken(token)
+                .verificationTokenExpiresAt(LocalDateTime.now().plusHours(24))
                 .build();
 
+        userRepository.save(user);
+        emailService.sendVerificationEmail(user, token);
+
+        return RegisterResponse.builder()
+                .message("Conta criada! Verifique seu e-mail para ativar.")
+                .email(request.getEmail())
+                .build();
+    }
+
+    @Transactional
+    public AuthResponse verifyEmail(String token) {
+        User user = userRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new BusinessException("INVALID_TOKEN", "Token de verificação inválido"));
+
+        if (user.isEmailVerified()) {
+            throw new BusinessException("ALREADY_VERIFIED", "E-mail já verificado");
+        }
+
+        if (user.getVerificationTokenExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new BusinessException("TOKEN_EXPIRED", "Token de verificação expirado");
+        }
+
+        user.setEmailVerified(true);
+        user.setVerificationToken(null);
+        user.setVerificationTokenExpiresAt(null);
         userRepository.save(user);
 
         return buildAuthResponse(user);
     }
 
     public AuthResponse login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BusinessException("INVALID_CREDENTIALS", "E-mail ou senha inválidos"));
+
+        if (!user.isEmailVerified()) {
+            throw new BusinessException("EMAIL_NOT_VERIFIED", "Por favor, verifique seu e-mail antes de fazer login");
+        }
+
         getAuthManager().authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
 
         return buildAuthResponse(user);
     }

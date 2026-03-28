@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
@@ -12,7 +11,7 @@ import { AuthStore } from '@core/auth/auth.store';
 @Component({
     selector: 'app-register',
     imports: [
-        CommonModule, ReactiveFormsModule, RouterLink,
+        ReactiveFormsModule, RouterLink,
         InputTextModule, PasswordModule, ButtonModule,
     ],
     template: `

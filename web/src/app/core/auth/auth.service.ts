@@ -5,7 +5,7 @@ import { MessageService } from 'primeng/api';
 
 import { environment } from '@env';
 import { AuthStore } from './auth.store';
-import { AuthResponse, LoginRequest, RegisterRequest, UserProfile } from './auth.models';
+import { AuthResponse, LoginRequest, RegisterRequest, RegisterResponse, UserProfile } from './auth.models';
 import { Router } from '@angular/router';
 
 @Injectable({ providedIn: 'root' })
@@ -18,19 +18,38 @@ export class AuthService {
 
   /**
    * Registra um novo usuário.
-   * Após sucesso: salva tokens + redireciona ao dashboard.
+   * Após sucesso: redireciona para a tela de verificação de e-mail.
    */
-  register(request: RegisterRequest): Observable<AuthResponse> {
+  register(request: RegisterRequest): Observable<RegisterResponse> {
     this.store.setLoading(true);
-    return this.http.post<AuthResponse>(`${this.baseUrl}/register`, request).pipe(
+    return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, request).pipe(
       tap(response => {
-        this.store.setAuth(response);
-        this.toast.add({ severity: 'success', summary: 'Conta criada!', detail: `Bem-vindo, ${response.user.name}` });
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/verify-email'], { queryParams: { email: response.email } });
       }),
       catchError(err => {
         const msg = err.error?.message ?? 'Erro ao criar conta';
         this.toast.add({ severity: 'error', summary: 'Erro', detail: msg });
+        return throwError(() => err);
+      }),
+      finalize(() => this.store.setLoading(false)),
+    );
+  }
+
+  /**
+   * Verifica o e-mail com o token recebido por e-mail.
+   * Após sucesso: salva tokens + redireciona ao dashboard.
+   */
+  verifyEmail(token: string): Observable<AuthResponse> {
+    this.store.setLoading(true);
+    return this.http.post<AuthResponse>(`${this.baseUrl}/verify-email`, { token }).pipe(
+      tap(response => {
+        this.store.setAuth(response);
+        this.toast.add({ severity: 'success', summary: 'E-mail verificado!', detail: `Bem-vindo, ${response.user.name}` });
+        this.router.navigate(['/dashboard']);
+      }),
+      catchError(err => {
+        const msg = err.error?.message ?? 'Token inválido ou expirado';
+        this.toast.add({ severity: 'error', summary: 'Erro na verificação', detail: msg });
         return throwError(() => err);
       }),
       finalize(() => this.store.setLoading(false)),

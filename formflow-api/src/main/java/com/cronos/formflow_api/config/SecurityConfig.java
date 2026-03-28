@@ -42,7 +42,7 @@ class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 // ── Autenticação ──
-                .requestMatchers("/auth/register", "/auth/login", "/auth/refresh").permitAll()
+                .requestMatchers("/auth/register", "/auth/login", "/auth/refresh", "/auth/verify-email").permitAll()
 
                 // ── Formulário público (respondente visualiza sem login) ──
                 .requestMatchers(HttpMethod.GET, "/public/forms/**").permitAll()

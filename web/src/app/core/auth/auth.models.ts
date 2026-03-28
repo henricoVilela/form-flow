@@ -21,6 +21,11 @@ export interface UserProfile {
   email: string;
 }
 
+export interface RegisterResponse {
+  message: string;
+  email: string;
+}
+
 export interface AuthState {
   user: UserProfile | null;
   accessToken: string | null;

@@ -15,7 +15,9 @@ import com.cronos.formflow_api.api.dto.request.LoginRequest;
 import com.cronos.formflow_api.api.dto.request.RegisterRequest;
 import com.cronos.formflow_api.api.dto.request.UpdatePasswordRequest;
 import com.cronos.formflow_api.api.dto.request.UpdateProfileRequest;
+import com.cronos.formflow_api.api.dto.request.VerifyEmailRequest;
 import com.cronos.formflow_api.api.dto.response.AuthResponse;
+import com.cronos.formflow_api.api.dto.response.RegisterResponse;
 import com.cronos.formflow_api.api.dto.response.UserResponse;
 import com.cronos.formflow_api.domain.user.AuthService;
 import com.cronos.formflow_api.domain.user.User;
@@ -31,8 +33,13 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<AuthResponse> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        return ResponseEntity.ok(authService.verifyEmail(request.getToken()));
     }
 
     @PostMapping("/login")
