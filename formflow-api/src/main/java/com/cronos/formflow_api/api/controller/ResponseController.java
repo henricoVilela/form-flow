@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cronos.formflow_api.api.dto.request.SubmitResponseRequest;
+import com.cronos.formflow_api.api.dto.response.ResolvedResponseResponse;
 import com.cronos.formflow_api.api.dto.response.ResponseDetailResponse;
 import com.cronos.formflow_api.api.dto.response.ResponseSummaryResponse;
 import com.cronos.formflow_api.domain.response.ExportResult;
@@ -66,6 +67,14 @@ public class ResponseController {
             @PathVariable UUID formId,
             @PathVariable UUID responseId) {
         return ResponseEntity.ok(responseService.getById(user, formId, responseId));
+    }
+
+    @GetMapping("/{responseId}/resolved")
+    public ResponseEntity<ResolvedResponseResponse> getResolved(
+            @AuthenticationPrincipal User user,
+            @PathVariable UUID formId,
+            @PathVariable UUID responseId) {
+        return ResponseEntity.ok(responseService.resolveResponse(user, formId, responseId));
     }
 
     @GetMapping("/export/csv")

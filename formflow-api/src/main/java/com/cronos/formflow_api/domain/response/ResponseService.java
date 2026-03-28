@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.cronos.formflow_api.api.dto.request.SubmitResponseRequest;
+import com.cronos.formflow_api.api.dto.response.ResolvedResponseResponse;
 import com.cronos.formflow_api.api.dto.response.ResponseDetailResponse;
 import com.cronos.formflow_api.api.dto.response.ResponseLookupResponse;
 import com.cronos.formflow_api.api.dto.response.ResponseSummaryResponse;
@@ -167,6 +168,83 @@ public class ResponseService {
         Response response = responseRepository.findByIdAndFormId(responseId, formId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resposta não encontrada"));
         return ResponseDetailResponse.from(response);
+    }
+
+    /**
+     * Retorna uma resposta com todas as questões resolvidas (label + tipo + valor).
+     * Para questões do tipo file_upload, inclui URL de download pré-assinada para cada arquivo.
+     */
+    @Transactional(readOnly = true)
+    public ResolvedResponseResponse resolveResponse(User user, UUID formId, UUID responseId) {
+        validateFormOwnership(user, formId);
+
+        Response response = responseRepository.findByIdAndFormId(responseId, formId)
+                .orElseThrow(() -> new ResourceNotFoundException("Resposta não encontrada"));
+
+        List<Question> questions = questionRepository.findByFormVersionIdOrderByOrderIndex(
+                response.getFormVersion().getId());
+
+        List<ResolvedResponseResponse.ResolvedAnswer> answers = new ArrayList<>();
+
+        for (Question q : questions) {
+            if ("statement".equals(q.getType())) continue;
+
+            JsonNode answerNode = response.getPayload().path(q.getId().toString());
+            if (answerNode.isMissingNode()) continue;
+
+            JsonNode value = answerNode.path("value");
+
+            if ("file_upload".equals(q.getType())) {
+                List<ResolvedResponseResponse.ResolvedFile> files = new ArrayList<>();
+                value.forEach(v -> {
+                    try {
+                        UUID fileId = UUID.fromString(v.asString());
+                        uploadedFileRepository.findById(fileId).ifPresent(file -> {
+                            String downloadUrl = null;
+                            if (file.getStatus() != UploadStatus.DELETED) {
+                                try {
+                                    downloadUrl = storageService.getDownloadUrl(fileId);
+                                } catch (Exception e) {
+                                    log.warn("Falha ao gerar URL de download para fileId={}", fileId);
+                                }
+                            }
+                            files.add(ResolvedResponseResponse.ResolvedFile.builder()
+                                    .fileId(file.getId())
+                                    .originalName(file.getOriginalName())
+                                    .mimeType(file.getMimeType())
+                                    .sizeBytes(file.getSizeBytes())
+                                    .downloadUrl(downloadUrl)
+                                    .downloadUrlExpiresIn(storageService.getPresignedUrlExpiry())
+                                    .build());
+                        });
+                    } catch (IllegalArgumentException ignored) {}
+                });
+                answers.add(ResolvedResponseResponse.ResolvedAnswer.builder()
+                        .questionId(q.getId().toString())
+                        .questionLabel(q.getLabel())
+                        .questionType(q.getType())
+                        .files(files)
+                        .build());
+            } else {
+                answers.add(ResolvedResponseResponse.ResolvedAnswer.builder()
+                        .questionId(q.getId().toString())
+                        .questionLabel(q.getLabel())
+                        .questionType(q.getType())
+                        .value(value)
+                        .build());
+            }
+        }
+
+        return ResolvedResponseResponse.builder()
+                .id(response.getId())
+                .formId(response.getForm().getId())
+                .formTitle(response.getForm().getTitle())
+                .formVersionId(response.getFormVersion().getId())
+                .formVersion(response.getFormVersion().getVersion())
+                .submittedAt(response.getSubmittedAt())
+                .metadata(response.getMetadata())
+                .answers(answers)
+                .build();
     }
 
     /**
