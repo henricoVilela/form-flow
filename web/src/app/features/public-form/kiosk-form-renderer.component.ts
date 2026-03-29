@@ -59,7 +59,7 @@ function buildEmojiSet(max: number): string[] {
       <div class="kiosk-bg min-h-screen flex flex-col items-center justify-center px-6 py-10 relative">
 
         <!-- Form title -->
-        <p class="k-muted text-xs uppercase tracking-[0.2em] mb-6 font-medium">
+        <p class="k-muted text-base uppercase tracking-[0.2em] mb-6 font-medium">
           {{ formData().title }}
         </p>
 

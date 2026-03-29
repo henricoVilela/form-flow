@@ -683,7 +683,9 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   }
 
   copyFormLink(): void {
-    const url = `${window.location.origin}/f/${this.id()}`;
+    const form = this.form();
+    const slug = form?.slug || this.id();
+    const url = `${window.location.origin}/f/${slug}`;
     navigator.clipboard.writeText(url).then(() => {
       this.toast.add({ severity: 'success', summary: 'Link copiado!', detail: url, life: 3000 });
     });
