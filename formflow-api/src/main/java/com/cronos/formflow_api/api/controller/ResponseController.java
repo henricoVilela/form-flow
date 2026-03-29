@@ -77,6 +77,13 @@ public class ResponseController {
         return ResponseEntity.ok(responseService.resolveResponse(user, formId, responseId));
     }
 
+    @GetMapping("/export/json")
+    public ResponseEntity<List<ResolvedResponseResponse>> exportJson(
+            @AuthenticationPrincipal User user,
+            @PathVariable UUID formId) {
+        return ResponseEntity.ok(responseService.exportJson(user, formId));
+    }
+
     @GetMapping("/export/csv")
     public ResponseEntity<byte[]> exportResponses(
             @AuthenticationPrincipal User user,

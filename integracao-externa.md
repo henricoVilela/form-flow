@@ -85,11 +85,11 @@
   ---
   Fase 1 — Fundação (sem isso o resto não faz sentido)
 
-  Step 1: Endpoint de resposta enriquecida
+  Step 1: Endpoint de resposta enriquecida ✅
   Criar GET /forms/{id}/responses/{responseId}/resolved que retorna respostas já com label de cada questão + URLs de
    download para arquivos. Base para tudo que vem depois — o webhook e o export JSON vão usar essa mesma estrutura.
 
-  Step 2: Export JSON
+  Step 2: Export JSON ✅
   GET /forms/{id}/responses/export/json — array de respostas resolvidas, pronto para consumir programaticamente.
   Aproveita a lógica do Step 1.
 

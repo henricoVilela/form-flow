@@ -181,6 +181,10 @@ public class ResponseService {
         Response response = responseRepository.findByIdAndFormId(responseId, formId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resposta não encontrada"));
 
+        return buildResolvedResponse(response);
+    }
+
+    private ResolvedResponseResponse buildResolvedResponse(Response response) {
         List<Question> questions = questionRepository.findByFormVersionIdOrderByOrderIndex(
                 response.getFormVersion().getId());
 
@@ -245,6 +249,21 @@ public class ResponseService {
                 .metadata(response.getMetadata())
                 .answers(answers)
                 .build();
+    }
+
+    /**
+     * Exporta todas as respostas do formulário no formato JSON resolvido.
+     * Cada item do array contém labels das questões, valores e URLs de download para arquivos.
+     */
+    @Transactional(readOnly = true)
+    public List<ResolvedResponseResponse> exportJson(User user, UUID formId) {
+        validateFormOwnership(user, formId);
+
+        List<Response> responses = responseRepository.findAllByFormIdForExport(formId);
+
+        return responses.stream()
+                .map(this::buildResolvedResponse)
+                .toList();
     }
 
     /**
