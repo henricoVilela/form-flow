@@ -30,6 +30,7 @@ export interface FormResponse {
   maxResponses: number | null;
   expiresAt: string | null;
   responseCount: number;
+  webhookUrl: string | null;
 }
 
 export interface FormSettingsRequest {
@@ -43,6 +44,7 @@ export interface FormSettingsRequest {
   thankYouRedirectUrl?: string;
   thankYouRedirectDelay?: number;
   thankYouShowResubmit?: boolean;
+  webhookUrl?: string;
 }
 
 export interface PageResponse<T> {

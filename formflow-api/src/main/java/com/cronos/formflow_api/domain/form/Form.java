@@ -106,6 +106,9 @@ public class Form {
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
 
+    @Column(name = "webhook_url", length = 2048)
+    private String webhookUrl;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

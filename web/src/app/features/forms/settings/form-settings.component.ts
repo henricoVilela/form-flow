@@ -368,6 +368,33 @@ import { FormApiService, FormResponse, FormVisibility, RespondentResponse, Uploa
           </div>
         </div>
 
+        <!-- ── Integração / Webhook ── -->
+        <div class="ff-card">
+          <h2 class="text-base font-semibold text-surface-900 dark:text-surface-50 mb-1 flex items-center gap-2">
+            <i class="pi pi-bolt text-primary-500 text-sm"></i>
+            Webhook
+          </h2>
+          <p class="text-xs text-surface-400 dark:text-surface-500 mb-4">
+            Ao receber uma nova resposta, enviamos um <code class="font-mono bg-surface-100 dark:bg-surface-700 px-1 rounded">POST</code> para a URL configurada com o payload resolvido (questões com labels e arquivos com URLs de download).
+          </p>
+
+          <div>
+            <label class="ff-input-label">
+              URL do Webhook
+              <span class="text-surface-400 dark:text-surface-500 font-normal ml-1">(opcional)</span>
+            </label>
+            <input
+              pInputText
+              class="w-full font-mono text-sm"
+              [(ngModel)]="webhookUrl"
+              placeholder="https://hooks.exemplo.com/formflow"
+            />
+            <p class="text-xs text-surface-400 dark:text-surface-500 mt-1">
+              Tentativas automáticas em caso de falha: imediata → 5 min → 30 min.
+            </p>
+          </div>
+        </div>
+
         <!-- Save button (bottom) -->
         <div class="flex justify-end">
           <button
@@ -459,6 +486,7 @@ export class FormSettingsComponent implements OnInit {
   thankYouRedirectUrl = '';
   thankYouRedirectDelay: number | null = null;
   thankYouShowResubmit = false;
+  webhookUrl = '';
 
   readonly visibilityOptions = [
     { label: 'Público — qualquer pessoa com o link pode acessar', value: 'PUBLIC' },
@@ -487,6 +515,7 @@ export class FormSettingsComponent implements OnInit {
         this.thankYouRedirectUrl = form.thankYouRedirectUrl ?? '';
         this.thankYouRedirectDelay = form.thankYouRedirectDelay ?? null;
         this.thankYouShowResubmit = form.thankYouShowResubmit ?? false;
+        this.webhookUrl = form.webhookUrl ?? '';
         this.loading.set(false);
         this.loadRespondents();
         this.loadUploadConfig();
@@ -604,6 +633,7 @@ export class FormSettingsComponent implements OnInit {
       thankYouRedirectUrl: this.thankYouRedirectUrl || undefined,
       thankYouRedirectDelay: this.thankYouRedirectDelay && this.thankYouRedirectDelay > 0 ? this.thankYouRedirectDelay : undefined,
       thankYouShowResubmit: this.thankYouShowResubmit,
+      webhookUrl: this.webhookUrl || undefined,
     }).subscribe({
       next: (form) => {
         this.form.set(form);

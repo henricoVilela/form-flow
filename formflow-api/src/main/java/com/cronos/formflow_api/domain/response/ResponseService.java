@@ -40,6 +40,8 @@ import com.cronos.formflow_api.domain.notfication.EmailNotification;
 import com.cronos.formflow_api.domain.notfication.EmailNotificationRepository;
 import com.cronos.formflow_api.domain.response.validation.PayloadValidator;
 import com.cronos.formflow_api.domain.user.User;
+import com.cronos.formflow_api.domain.webhook.WebhookDelivery;
+import com.cronos.formflow_api.domain.webhook.WebhookDeliveryRepository;
 import com.cronos.formflow_api.infrastructure.storage.StorageService;
 import com.cronos.formflow_api.shared.exception.BusinessException;
 import com.cronos.formflow_api.shared.exception.ResourceNotFoundException;
@@ -47,6 +49,7 @@ import com.cronos.formflow_api.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -60,10 +63,12 @@ public class ResponseService {
     private final ResponseAnswerRepository responseAnswerRepository;
     private final UploadedFileRepository uploadedFileRepository;
     private final EmailNotificationRepository emailNotificationRepository;
+    private final WebhookDeliveryRepository webhookDeliveryRepository;
     private final ConditionEvaluator conditionEvaluator;
     private final PayloadValidator payloadValidator;
     private final FormRespondentService respondentService;
     private final StorageService storageService;
+    private final ObjectMapper objectMapper;
 
     /**
      * Submete uma resposta ao formulário.
@@ -144,6 +149,11 @@ public class ResponseService {
 
         // Agenda notificação por email
         scheduleEmailNotification(response, form.getUser().getEmail());
+
+        // Agenda entrega de webhook (se configurado)
+        if (form.getWebhookUrl() != null) {
+            scheduleWebhookDelivery(response, form.getWebhookUrl());
+        }
 
         return ResponseDetailResponse.from(response);
     }
@@ -571,6 +581,21 @@ public class ResponseService {
             .build();
 
         emailNotificationRepository.save(notification);
+    }
+
+    private void scheduleWebhookDelivery(Response response, String webhookUrl) {
+        try {
+            ResolvedResponseResponse resolved = buildResolvedResponse(response);
+            JsonNode payload = objectMapper.valueToTree(resolved);
+            webhookDeliveryRepository.save(WebhookDelivery.builder()
+                    .form(response.getForm())
+                    .response(response)
+                    .webhookUrl(webhookUrl)
+                    .payload(payload)
+                    .build());
+        } catch (Exception e) {
+            log.error("Falha ao agendar webhook para responseId={}: {}", response.getId(), e.getMessage());
+        }
     }
 
     private void validateFormOwnership(User user, UUID formId) {

@@ -36,6 +36,7 @@ public class FormResponse {
     private Integer maxResponses;
     private LocalDateTime expiresAt;
     private long responseCount;
+    private String webhookUrl;
 
     public static FormResponse from(Form form, FormVersion version) {
         return from(form, version, 0L);
@@ -63,6 +64,7 @@ public class FormResponse {
                 .maxResponses(form.getMaxResponses())
                 .expiresAt(form.getExpiresAt())
                 .responseCount(responseCount)
+                .webhookUrl(form.getWebhookUrl())
                 .build();
     }
 }

@@ -141,6 +141,8 @@ public class FormService {
         form.setThankYouRedirectDelay(request.getThankYouRedirectDelay() != null && request.getThankYouRedirectDelay() > 0
                 ? request.getThankYouRedirectDelay() : null);
         form.setThankYouShowResubmit(request.getThankYouShowResubmit() != null && request.getThankYouShowResubmit());
+        form.setWebhookUrl(request.getWebhookUrl() != null && !request.getWebhookUrl().isBlank()
+                ? request.getWebhookUrl().trim() : null);
 
         if (request.getPassword() != null) {
             form.setPasswordHash(request.getPassword().isBlank()

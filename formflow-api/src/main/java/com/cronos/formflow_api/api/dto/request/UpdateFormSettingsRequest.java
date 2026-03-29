@@ -22,4 +22,5 @@ public class UpdateFormSettingsRequest {
     private String thankYouRedirectUrl;
     private Integer thankYouRedirectDelay;
     private Boolean thankYouShowResubmit;
+    private String webhookUrl;
 }

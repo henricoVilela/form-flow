@@ -108,7 +108,7 @@
   ---
   Fase 3 — Tempo real
 
-  Step 5: Webhooks
+  Step 5: Webhooks ✅
   Campo webhookUrl nas settings do formulário. Quando uma resposta é submetida, dispara POST assíncrono com o
   payload resolvido (estrutura do Step 1). Retries automáticos com backoff.
 
