@@ -118,6 +118,7 @@ export class SidebarComponent {
   ];
 
   readonly accountNav: NavItem[] = [
-    { label: 'Meu Perfil', icon: 'pi pi-user', route: '/settings/profile' },
+    { label: 'Meu Perfil', icon: 'pi pi-user',  route: '/settings/profile' },
+    { label: 'API Keys',   icon: 'pi pi-key',   route: '/settings/api-keys' },
   ];
 }

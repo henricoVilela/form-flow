@@ -22,6 +22,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.cronos.formflow_api.infrastructure.security.ApiKeyAuthFilter;
 import com.cronos.formflow_api.infrastructure.security.JwtAuthFilter;
 
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final ApiKeyAuthFilter apiKeyAuthFilter;
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
 
@@ -64,7 +66,8 @@ class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(apiKeyAuthFilter, JwtAuthFilter.class);
 
         return http.build();
     }

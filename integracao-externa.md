@@ -96,11 +96,12 @@
   ---
   Fase 2 — Acesso externo
 
-  Step 3: API Keys
+  Step 3: API Keys ✅
   Gerar chaves estáticas nas configurações do usuário. Header X-API-Key como alternativa ao JWT. Sem isso, os steps
   seguintes não têm como ser usados por sistemas externos.
 
-  Step 4: Rota de listagem via API Key
+  Step 4: Rota de listagem via API Key ✅ (automático — filter autentica para todos os endpoints)
+  Fix: JwtAuthFilter blindado para não quebrar com tokens malformados (ex: API Key no Authorization header).
   Liberar os endpoints de leitura de respostas para acesso com API Key (sem precisar de JWT). Inclui o endpoint
   resolvido do Step 1 e o export do Step 2.
 

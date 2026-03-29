@@ -63,6 +63,10 @@ export const routes: Routes = [
         path: 'settings/profile',
         loadComponent: () => import('./features/settings/profile/user-profile.component').then(m => m.UserProfileComponent),
       },
+      {
+        path: 'settings/api-keys',
+        loadComponent: () => import('./features/settings/api-keys/api-keys.component').then(m => m.ApiKeysComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
