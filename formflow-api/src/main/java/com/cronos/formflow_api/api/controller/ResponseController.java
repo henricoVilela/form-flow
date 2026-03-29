@@ -1,11 +1,13 @@
 package com.cronos.formflow_api.api.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -50,8 +52,10 @@ public class ResponseController {
     public ResponseEntity<Page<ResponseSummaryResponse>> list(
             @AuthenticationPrincipal User user,
             @PathVariable UUID formId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(responseService.list(user, formId, pageable));
+        return ResponseEntity.ok(responseService.list(user, formId, from, to, pageable));
     }
 
     @GetMapping("/all")

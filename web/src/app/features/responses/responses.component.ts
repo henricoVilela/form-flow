@@ -31,7 +31,7 @@ import { FormApiService, FormResponse } from '@core/api/form-api.service';
       <p-iconfield class="w-full sm:w-80">
         <p-inputicon styleClass="pi pi-search" />
         <input pInputText type="text" placeholder="Buscar formulários..."
-               class="w-full" [(ngModel)]="searchQuery" />
+               class="w-full" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
       </p-iconfield>
     </div>
 
@@ -56,8 +56,8 @@ import { FormApiService, FormResponse } from '@core/api/form-api.service';
       <div class="text-center py-16 text-surface-400 dark:text-surface-500">
         <i class="pi pi-inbox text-4xl mb-3 block"></i>
         <p class="text-sm">
-          @if (searchQuery) {
-            Nenhum formulário encontrado para "{{ searchQuery }}"
+          @if (searchQuery()) {
+            Nenhum formulário encontrado para "{{ searchQuery() }}"
           } @else {
             Nenhum formulário publicado ainda
           }
@@ -113,10 +113,10 @@ export class ResponsesComponent implements OnInit {
 
   readonly loading = signal(true);
   readonly forms = signal<FormResponse[]>([]);
-  searchQuery = '';
+  readonly searchQuery = signal('');
 
   readonly filtered = computed(() => {
-    const q = this.searchQuery.toLowerCase();
+    const q = this.searchQuery().toLowerCase();
     return this.forms().filter(f =>
       !q || f.title.toLowerCase().includes(q)
     );

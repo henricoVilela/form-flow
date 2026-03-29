@@ -77,11 +77,11 @@ import {
         (onSelect)="onDateRangeSelect()"
         styleClass="w-full sm:w-72"
       />
-      @if (dateRange && (dateRange[0] || dateRange[1])) {
+      @if (hasActiveFilters()) {
         <button
-          pButton [text]="true" severity="secondary" icon="pi pi-times" label="Limpar filtro"
+          pButton [text]="true" severity="secondary" icon="pi pi-filter-slash" label="Limpar filtros"
           size="small"
-          (click)="clearDateFilter()"
+          (click)="clearFilters()"
         ></button>
       }
     </div>
@@ -99,16 +99,16 @@ import {
       }
 
       <!-- Empty state -->
-      @else if (filteredResponses().length === 0) {
+      @else if (responses().length === 0) {
         <div class="text-center py-16">
           <div class="w-20 h-20 mx-auto mb-5 bg-surface-50 dark:bg-surface-700 rounded-2xl flex items-center justify-center">
             <i class="pi pi-inbox text-3xl text-surface-300"></i>
           </div>
-          @if (dateRange && (dateRange[0] || dateRange[1])) {
-            <h3 class="text-lg font-semibold text-surface-700 dark:text-surface-200 mb-1">Nenhuma resposta no período</h3>
-            <p class="text-sm text-surface-500 mb-5">Tente um intervalo de datas diferente.</p>
+          @if (hasActiveFilters()) {
+            <h3 class="text-lg font-semibold text-surface-700 dark:text-surface-200 mb-1">Nenhuma resposta encontrada</h3>
+            <p class="text-sm text-surface-500 mb-5">Tente ajustar os filtros.</p>
             <button pButton [text]="true" severity="secondary" icon="pi pi-filter-slash"
-              label="Limpar filtro" (click)="clearDateFilter()"></button>
+              label="Limpar filtros" (click)="clearFilters()"></button>
           } @else {
             <h3 class="text-lg font-semibold text-surface-700 dark:text-surface-200 mb-1">Nenhuma resposta ainda</h3>
             <p class="text-sm text-surface-500">Compartilhe o link do formulário para começar a receber respostas.</p>
@@ -119,7 +119,7 @@ import {
       <!-- Table -->
       @else {
         <p-table
-          [value]="filteredResponses()"
+          [value]="responses()"
           [loading]="loading()"
           dataKey="id"
           styleClass="w-full"
@@ -304,8 +304,12 @@ export class FormResponsesComponent implements OnInit {
   readonly selectedRowIndex = signal(0);
   readonly showMetadata = signal(false);
 
-  // ── Date filter ──
+  // ── Filters ──
   dateRange: Date[] | null = null;
+
+  readonly hasActiveFilters = computed(() =>
+    !!(this.dateRange?.[0] || this.dateRange?.[1])
+  );
 
   // ── Computed ──
 
@@ -319,23 +323,6 @@ export class FormResponsesComponent implements OnInit {
       }
     }
     return map;
-  });
-
-  readonly filteredResponses = computed(() => {
-    const all = this.responses();
-    if (!this.dateRange || (!this.dateRange[0] && !this.dateRange[1])) return all;
-
-    const [from, to] = this.dateRange;
-    return all.filter(r => {
-      const date = new Date(r.submittedAt);
-      if (from && date < from) return false;
-      if (to) {
-        const toEnd = new Date(to);
-        toEnd.setHours(23, 59, 59, 999);
-        if (date > toEnd) return false;
-      }
-      return true;
-    });
   });
 
   readonly visiblePages = computed(() => {
@@ -402,7 +389,11 @@ export class FormResponsesComponent implements OnInit {
   private loadResponses(page: number): void {
     this.loading.set(true);
     this.currentPage.set(page);
-    this.formApi.listResponses(this.formId(), page, this.pageSize).subscribe({
+    const [from, to] = this.dateRange ?? [null, null];
+    this.formApi.listResponses(this.formId(), page, this.pageSize, {
+      from: from ?? undefined,
+      to: to ?? undefined,
+    }).subscribe({
       next: (data) => {
         this.responses.set(data.content);
         this.totalElements.set(data.page.totalElements);
@@ -476,18 +467,22 @@ export class FormResponsesComponent implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // ── Date filter ──
+  // ── Filters ──
 
   onDateRangeSelect(): void {
-    // filter is reactive via filteredResponses computed
+    if (this.dateRange?.[0] && this.dateRange?.[1]) {
+      this.loadResponses(0);
+    }
   }
 
   onDateRangeClear(): void {
     this.dateRange = null;
+    this.loadResponses(0);
   }
 
-  clearDateFilter(): void {
+  clearFilters(): void {
     this.dateRange = null;
+    this.loadResponses(0);
   }
 
   // ── Formatters ──

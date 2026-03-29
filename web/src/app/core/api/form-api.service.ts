@@ -271,11 +271,17 @@ export class FormApiService {
     return this.http.post<SubmitResponseResponse>(`${this.baseUrl}/${formId}/responses`, request, { params });
   }
 
-  listResponses(formId: string, page = 0, size = 20): Observable<PageResponse<ResponseSummaryResponse>> {
-    const params = new HttpParams()
+  listResponses(formId: string, page = 0, size = 20, filters: { from?: Date; to?: Date } = {}): Observable<PageResponse<ResponseSummaryResponse>> {
+    let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sort', 'submittedAt,desc');
+    if (filters.from) params = params.set('from', filters.from.toISOString().replace('Z', ''));
+    if (filters.to) {
+      const toEnd = new Date(filters.to);
+      toEnd.setHours(23, 59, 59, 999);
+      params = params.set('to', toEnd.toISOString().replace('Z', ''));
+    }
     return this.http.get<PageResponse<ResponseSummaryResponse>>(`${this.baseUrl}/${formId}/responses`, { params });
   }
 

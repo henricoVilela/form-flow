@@ -18,6 +18,7 @@ import java.util.zip.ZipOutputStream;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -158,9 +159,15 @@ public class ResponseService {
         return ResponseDetailResponse.from(response);
     }
 
-    public Page<ResponseSummaryResponse> list(User user, UUID formId, Pageable pageable) {
+    public Page<ResponseSummaryResponse> list(User user, UUID formId,
+            java.time.LocalDateTime from, java.time.LocalDateTime to, Pageable pageable) {
         validateFormOwnership(user, formId);
-        return responseRepository.findByFormId(formId, pageable)
+        java.time.LocalDateTime effectiveFrom = from != null ? from : java.time.LocalDateTime.of(2000, 1, 1, 0, 0);
+        java.time.LocalDateTime effectiveTo   = to   != null ? to   : java.time.LocalDateTime.of(2099, 12, 31, 23, 59);
+        // Native query já tem ORDER BY — removemos o sort do Pageable para evitar conflito
+        org.springframework.data.domain.Pageable unsorted = org.springframework.data.domain.PageRequest.of(
+                pageable.getPageNumber(), pageable.getPageSize());
+        return responseRepository.findByFormIdFiltered(formId, effectiveFrom, effectiveTo, unsorted)
                 .map(ResponseSummaryResponse::from);
     }
 
