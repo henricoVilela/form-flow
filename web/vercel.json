@@ -1,0 +1,28 @@
+{
+  "buildCommand": "npm run build -- --configuration production",
+  "outputDirectory": "dist/formflow-web/browser",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://SUBSTITUIR_PELA_URL_DO_RAILWAY/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/(.*\\.js|.*\\.css)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ]
+}
