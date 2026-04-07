@@ -57,10 +57,9 @@ management:
   endpoint:
     health:
       show-details: never
-      status:
-        http-mapping:
-          down: 200
-          out-of-service: 200
+  health:
+    defaults:
+      enabled: false
 
 springdoc:
   swagger-ui:
