@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://SUBSTITUIR_PELA_URL_DO_RAILWAY/api/:path*"
+      "destination": "https://form-flow-production.up.railway.app/api/:path*"
     },
     {
       "source": "/(.*)",
