@@ -56,6 +56,9 @@ class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/upload/**").authenticated()
                 .requestMatchers("/upload/**").permitAll()
 
+                // ── Actuator (health check Railway) ──
+                .requestMatchers("/actuator/health").permitAll()
+
                 // ── Documentação API ──
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll()
 
