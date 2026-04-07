@@ -57,8 +57,10 @@ management:
   endpoint:
     health:
       show-details: never
-  server:
-    base-path: /api/v1
+      status:
+        http-mapping:
+          down: 200
+          out-of-service: 200
 
 springdoc:
   swagger-ui:
