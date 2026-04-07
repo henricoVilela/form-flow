@@ -232,6 +232,17 @@ type RendererState = 'loading' | 'password' | 'welcome' | 'form' | 'submitting' 
         </div>
       }
 
+      <!-- ── SUBMITTING ── -->
+      @if (state() === 'submitting') {
+        <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up text-center py-16 max-[480px]:p-5 max-[480px]:rounded-xl">
+          <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-primary-50 flex items-center justify-center">
+            <i class="pi pi-spinner pi-spin text-2xl text-primary-500"></i>
+          </div>
+          <h2 class="text-xl font-display font-bold text-surface-900 mb-2">Enviando resposta…</h2>
+          <p class="text-sm text-surface-500">Aguarde um momento.</p>
+        </div>
+      }
+
       <!-- ── SUCCESS ── -->
       @if (state() === 'success' && !isKiosk()) {
         <div class="w-full max-w-[640px] bg-white rounded-2xl p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] animate-slide-up text-center max-[480px]:p-5 max-[480px]:rounded-xl">
@@ -644,7 +655,9 @@ export class FormRendererComponent implements OnInit, OnDestroy {
       }
     }
 
-    this.formApi.submitResponse(form.formId, {
+    const minDelay = new Promise<void>(res => setTimeout(res, 1000));
+
+    const submit$ = this.formApi.submitResponse(form.formId, {
       formVersionId: form.formVersionId,
       payload,
       metadata: {
@@ -652,17 +665,22 @@ export class FormRendererComponent implements OnInit, OnDestroy {
         submittedAt: new Date().toISOString(),
         userAgent: navigator.userAgent,
       },
-    }, this.respondentToken ?? undefined).subscribe({
-      next: () => { this.state.set('success'); this.startRedirect(); },
-      error: (err) => {
-        const code = err.error?.error;
-        if (code === 'FORM_RESPONSE_LIMIT_REACHED') {
-          this.state.set('form-limit');
-        } else {
-          this.state.set('form');
-          this.toast.add({ severity: 'error', summary: 'Erro', detail: err.error?.message ?? 'Erro ao enviar resposta', life: 6000 });
-        }
-      },
+    }, this.respondentToken ?? undefined);
+
+    Promise.all([
+      minDelay,
+      new Promise<void>((resolve, reject) => submit$.subscribe({ next: () => resolve(), error: (e) => reject(e) })),
+    ]).then(() => {
+      this.state.set('success');
+      this.startRedirect();
+    }).catch((err) => {
+      const code = err.error?.error;
+      if (code === 'FORM_RESPONSE_LIMIT_REACHED') {
+        this.state.set('form-limit');
+      } else {
+        this.state.set('form');
+        this.toast.add({ severity: 'error', summary: 'Erro', detail: err.error?.message ?? 'Erro ao enviar resposta', life: 6000 });
+      }
     });
   }
 
