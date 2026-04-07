@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class AuthService implements UserDetailsService {
 
     private final UserRepository userRepository;
@@ -64,7 +65,11 @@ public class AuthService implements UserDetailsService {
                 .build();
 
         userRepository.save(user);
-        emailService.sendVerificationEmail(user, token);
+        try {
+            emailService.sendVerificationEmail(user, token);
+        } catch (Exception e) {
+            log.warn("Falha ao enviar email de verificação para {}: {}", user.getEmail(), e.getMessage());
+        }
 
         return RegisterResponse.builder()
                 .message("Conta criada! Verifique seu e-mail para ativar.")
